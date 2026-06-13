@@ -700,20 +700,86 @@ class HDK_DB {
         }
     }
 
-    public static function notify_favoriting_users($story_id, $chapter_number, $chapter_title, $story_title, $story_slug) {
+    public static function create_report($user_id, $story_id, $chapter_number, $type, $note) {
         global $wpdb;
-        $fav_table = self::table('hdk_favorites');
-        $fans = $wpdb->get_results($wpdb->prepare(
-            "SELECT user_id FROM $fav_table WHERE story_id = %d", $story_id
+        $wpdb->insert(self::table('hdk_chapter_reports'), [
+            'user_id' => $user_id, 'story_id' => $story_id,
+            'chapter_number' => $chapter_number, 'report_type' => $type,
+            'note' => $note, 'created_at' => current_time('mysql'),
+        ]);
+        return $wpdb->insert_id;
+    }
+
+    public static function get_reports($filters = [], $page = 1, $per_page = 20) {
+        global $wpdb;
+        $table = self::table('hdk_chapter_reports');
+        $story_table = self::table('hdk_stories');
+        $user_table = $wpdb->users;
+        $offset = ($page - 1) * $per_page;
+
+        $where = ["1=1"];
+        if (!empty($filters['status'])) $where[] = $wpdb->prepare("r.status = %s", $filters['status']);
+        if (!empty($filters['type'])) $where[] = $wpdb->prepare("r.report_type = %s", $filters['type']);
+
+        $where_sql = implode(' AND ', $where);
+        $total = $wpdb->get_var("SELECT COUNT(*) FROM $table r WHERE $where_sql");
+        $rows = $wpdb->get_results($wpdb->prepare(
+            "SELECT r.*, s.title as story_title, s.slug as story_slug, u.display_name
+             FROM $table r JOIN $story_table s ON r.story_id = s.id
+             JOIN $user_table u ON r.user_id = u.ID
+             WHERE $where_sql ORDER BY r.created_at DESC LIMIT %d OFFSET %d",
+            $per_page, $offset
         ));
-        $link = home_url('/' . $story_slug . '?chuong=' . $chapter_number);
-        foreach ($fans as $fan) {
-            self::create_notification(
-                $fan->user_id, 'chapter_published',
-                'Chương mới: ' . $story_title,
-                $chapter_title . ' vừa được đăng.',
-                $link
-            );
+        return ['rows' => $rows, 'total' => (int)$total, 'pages' => (int)ceil($total / $per_page)];
+    }
+
+    public static function update_report_status($id, $status) {
+        global $wpdb;
+        $wpdb->update(self::table('hdk_chapter_reports'), ['status' => $status], ['id' => $id]);
+    }
+
+    public static function get_all_comments($filters = [], $page = 1, $per_page = 20) {
+        global $wpdb;
+        $offset = ($page - 1) * $per_page;
+
+        $where = ["c.comment_approved != 'trash'"];
+        if (!empty($filters['status']) && $filters['status'] !== 'all') {
+            $where[] = $wpdb->prepare("c.comment_approved = %s", $filters['status'] === 'approved' ? '1' : '0');
         }
+
+        $where_sql = implode(' AND ', $where);
+
+        $total = $wpdb->get_var(
+            "SELECT COUNT(*) FROM $wpdb->comments c
+             JOIN $wpdb->commentmeta cm ON c.comment_ID = cm.comment_id AND cm.meta_key = 'hdk_story_id'
+             WHERE $where_sql"
+        );
+
+        $rows = $wpdb->get_results($wpdb->prepare(
+            "SELECT c.*, u.display_name as user_name,
+                    (SELECT meta_value FROM $wpdb->commentmeta WHERE comment_id = c.comment_ID AND meta_key = 'hdk_story_id') as story_id,
+                    (SELECT meta_value FROM $wpdb->commentmeta WHERE comment_id = c.comment_ID AND meta_key = 'hdk_chapter_number') as chapter_number
+             FROM $wpdb->comments c
+             JOIN $wpdb->users u ON c.user_id = u.ID
+             JOIN $wpdb->commentmeta cm ON c.comment_ID = cm.comment_id AND cm.meta_key = 'hdk_story_id'
+             WHERE $where_sql
+             ORDER BY c.comment_date DESC LIMIT %d OFFSET %d",
+            $per_page, $offset
+        ));
+
+        if (!empty($rows)) {
+            $story_ids = array_unique(array_map(function($r) { return (int)$r->story_id; }, $rows));
+            $ids_list = implode(',', $story_ids);
+            $stories = $wpdb->get_results("SELECT id, title, slug FROM " . self::table('hdk_stories') . " WHERE id IN ($ids_list)");
+            $story_map = [];
+            foreach ($stories as $s) $story_map[$s->id] = $s;
+            foreach ($rows as $row) {
+                $sid = (int)$row->story_id;
+                $row->story_title = isset($story_map[$sid]) ? $story_map[$sid]->title : '';
+                $row->story_slug = isset($story_map[$sid]) ? $story_map[$sid]->slug : '';
+            }
+        }
+
+        return ['rows' => $rows, 'total' => (int)$total, 'pages' => (int)ceil($total / $per_page)];
     }
 }

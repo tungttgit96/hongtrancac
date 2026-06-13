@@ -265,6 +265,20 @@ class HDK_Schema {
             updated_at DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
         ) $charset;";
 
+        // Chapter Error Reports
+        $sql[] = "CREATE TABLE IF NOT EXISTS {$wpdb->prefix}hdk_chapter_reports (
+            id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+            user_id BIGINT UNSIGNED NOT NULL,
+            story_id BIGINT UNSIGNED NOT NULL,
+            chapter_number INT UNSIGNED NOT NULL,
+            report_type ENUM('typo','wrong_content','display_error','other') NOT NULL,
+            note TEXT,
+            status ENUM('pending','resolved') DEFAULT 'pending',
+            created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+            INDEX idx_status (status),
+            INDEX idx_story (story_id)
+        ) $charset;";
+
         foreach ($sql as $query) {
             dbDelta($query);
         }
