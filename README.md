@@ -11,18 +11,44 @@ Nền tảng đọc truyện chữ online xây dựng trên **WordPress** + cust
 
 ## Tính năng
 
+### Đọc truyện
 - 📚 Đọc truyện theo chương (`/ten-truyen?chuong=1`)
+- 🎛 Tùy chỉnh trải nghiệm đọc: cỡ chữ, font, giãn dòng, theme (sáng/tối/sepia), chiều rộng
+- 📋 Danh sách chương nổi (floating TOC) ngay trong reader
+- 🚫 Anti-scraping (mã hóa nội dung, chống copy/click phải/in)
+
+### Khám phá
 - 🔍 Tìm kiếm truyện, tác giả, thể loại (REST API)
 - 🏆 Bảng xếp hạng (lượt xem / yêu thích / đánh giá × ngày / tuần / tháng / năm)
 - 📂 Danh sách truyện với filter (thể loại, trạng thái, sắp xếp)
+- ⭐ Đề cử biên tập + 🔥 Hot tuần trên trang chủ
+
+### Người dùng
+- 👤 Trang tài khoản độc giả (`/tai-khoan`): tủ truyện, đang đọc, đã mua, lịch sử đọc
 - ❤️ Yêu thích, đánh giá sao, bình luận
-- 📖 Tủ truyện, lịch sử đọc, auto-save tiến độ đọc
+- 🔔 Thông báo (chương mới, trả lời bình luận, mua thành công)
+- 📖 Auto-save tiến độ đọc
+
+### Ví hạt & Thanh toán
 - 💎 Hệ thống mua chương bằng "hạt" (coin)
-- 🔒 Paywall cho chương trả phí
-- 📝 Admin CMS: CRUD truyện, chương, tác giả, thể loại, nhân vật
+- 💳 Ví hạt: số dư, lịch sử giao dịch, nạp hạt
+- 📅 Điểm danh hàng ngày nhận hạt
+- 🔒 Paywall cho chương trả phí (giá từng chương + giá full truyện)
+
+### Admin CMS
+- 📝 CRUD truyện, chương, tác giả, thể loại, nhân vật
 - 📤 Đăng nhiều chương (paste text hoặc upload file .txt)
-- 🌙 Dark mode (via darkify plugin)
-- 🔍 SEO: canonical URL, Open Graph, Twitter Cards, JSON-LD, XML Sitemap
+- 📥 Import CSV/JSON (truyện, chương, tác giả, thể loại) + preview + chống trùng
+- 💎 Quản lý hạt (cộng/trừ thủ công, gói nạp, lịch sử giao dịch)
+- 💬 Quản lý bình luận (duyệt/xóa)
+- 🚩 Xử lý báo lỗi chương từ người dùng
+- 📊 Thống kê vận hành (views, top truyện, biểu đồ 7 ngày)
+- 🎨 Cấu hình banner trang chủ
+
+### SEO & Bảo mật
+- 🔍 SEO: canonical URL, Open Graph, Twitter Cards, JSON-LD (BreadcrumbList, Book, Article), XML Sitemap
+- 🛡 Nonce cho REST API (purchase, daily-claim)
+- 🌙 Dark mode (theme built-in + darkify plugin)
 - 📱 Responsive (375px - 1440px)
 
 ---
@@ -227,8 +253,9 @@ Các plugin này cần mua từ Envato Elements và đặt vào `wp-content/plug
 ## WP-CLI Commands
 
 ```bash
-wp hdk seed    # Tạo dữ liệu mẫu (5 tác giả, 10 thể loại, 30 truyện)
-wp hdk import  # Import truyện từ file CSV/JSON (đang phát triển)
+wp hdk seed                   # Tạo dữ liệu mẫu (5 tác giả, 10 thể loại, 30 truyện)
+wp hdk import --source=file   # Import truyện từ file CSV/JSON
+wp hdk create_account_page    # Tạo trang /tai-khoan nếu chưa có
 ```
 
 ---
@@ -237,15 +264,17 @@ wp hdk import  # Import truyện từ file CSV/JSON (đang phát triển)
 
 | URL | Mô tả |
 |-----|-------|
-| `/` | Trang chủ |
+| `/` | Trang chủ (hero, đề cử, hot tuần, danh mục) |
 | `/danh-sach-truyen` | Danh sách truyện + filter |
 | `/bang-xep-hang` | Bảng xếp hạng |
 | `/the-loai` | Tất cả thể loại |
 | `/the-loai/{slug}` | Truyện theo thể loại |
 | `/tac-gia/{slug}` | Truyện theo tác giả |
+| `/nhan-vat/{slug}` | Truyện theo nhân vật |
 | `/hoan-thanh` | Truyện hoàn thành |
 | `/truyen-free` | Truyện miễn phí |
 | `/tin-tuc` | Tin tức (WP posts) |
-| `/{story-slug}` | Chi tiết truyện |
+| `/tai-khoan` | Trang tài khoản độc giả (tủ truyện, ví hạt, thông báo...) |
+| `/{story-slug}` | Chi tiết truyện + danh sách chương |
 | `/{story-slug}?chuong={n}` | Đọc chương |
 | `/sitemap.xml` | XML Sitemap |
