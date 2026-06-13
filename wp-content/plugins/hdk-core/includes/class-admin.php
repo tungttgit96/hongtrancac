@@ -141,6 +141,7 @@ class HDK_Admin {
 
             $credit_table = HDK_DB::table('hdk_user_credits');
             $current = (int)$wpdb->get_var($wpdb->prepare("SELECT credits FROM $credit_table WHERE user_id = %d", $uid));
+            $stats = $wpdb->get_row($wpdb->prepare("SELECT total_earned, total_spent FROM $credit_table WHERE user_id = %d", $uid));
             if ($current === null && !$wpdb->last_error) {
                 $wpdb->insert($credit_table, ['user_id' => $uid, 'credits' => 0]);
                 $current = 0;
@@ -149,8 +150,8 @@ class HDK_Admin {
 
             $wpdb->update($credit_table, [
                 'credits' => $new_balance,
-                'total_earned' => $amount > 0 ? $current + $amount : $current,
-                'total_spent' => $amount < 0 ? abs($amount) : 0,
+                'total_earned' => $amount > 0 ? (int)($stats->total_earned ?? 0) + $amount : (int)($stats->total_earned ?? 0),
+                'total_spent' => $amount < 0 ? (int)($stats->total_spent ?? 0) + abs($amount) : (int)($stats->total_spent ?? 0),
             ], ['user_id' => $uid]);
 
             HDK_DB::log_credit_transaction($uid, $type, $amount, 'admin', 0, $note);

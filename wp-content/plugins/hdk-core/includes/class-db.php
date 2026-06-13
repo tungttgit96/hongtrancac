@@ -543,7 +543,7 @@ class HDK_DB {
         $credit_table = self::table('hdk_user_credits');
         $daily_amount = (int)get_option('hdk_daily_credits', 10);
 
-        $row = $wpdb->get_row($wpdb->prepare("SELECT credits, last_daily_at FROM $credit_table WHERE user_id = %d", $user_id));
+        $row = $wpdb->get_row($wpdb->prepare("SELECT credits, total_earned, last_daily_at FROM $credit_table WHERE user_id = %d", $user_id));
 
         $today = current_time('Y-m-d');
         if ($row && $row->last_daily_at) {
@@ -559,7 +559,7 @@ class HDK_DB {
         if ($row) {
             $wpdb->update($credit_table, [
                 'credits' => $new_balance,
-                'total_earned' => $current + $daily_amount,
+                'total_earned' => (int)$row->total_earned + $daily_amount,
                 'last_daily_at' => current_time('mysql'),
             ], ['user_id' => $user_id]);
         } else {
