@@ -30,7 +30,24 @@ if (defined('WP_CLI') && WP_CLI) {
             if (!$source || !file_exists($source)) {
                 WP_CLI::error('Source file not found: ' . $source);
             }
-            WP_CLI::success('Import not implemented yet. Source: ' . $source);
+
+            $ext = pathinfo($source, PATHINFO_EXTENSION);
+            $content = file_get_contents($source);
+
+            if ($ext === 'json') {
+                $rows = json_decode($content, true);
+                if (!is_array($rows)) WP_CLI::error('Invalid JSON format');
+            } else {
+                $rows = \HDK_Admin::parse_csv_public($content);
+            }
+
+            if (empty($rows)) WP_CLI::error('No rows found in file');
+
+            $results = \HDK_Admin::process_import_rows_public($rows, true);
+            WP_CLI::success(sprintf(
+                'Import done: %d created, %d skipped, %d errors.',
+                $results['created'], $results['skipped'], $results['errors']
+            ));
         }
 
         /**

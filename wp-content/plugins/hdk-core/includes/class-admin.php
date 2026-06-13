@@ -159,6 +159,28 @@ class HDK_Admin {
             wp_redirect(admin_url('admin.php?page=hdk-credits&message=adjusted'));
             exit;
         }
+
+        // --- Import CSV/JSON ---
+        if (isset($_POST['hdk_import_confirm']) && !empty($_FILES['import_file']['tmp_name'])) {
+            if (!current_user_can('manage_options')) return;
+            check_admin_referer('hdk_import');
+
+            $file = $_FILES['import_file'];
+            $ext = pathinfo($file['name'], PATHINFO_EXTENSION);
+            $content = file_get_contents($file['tmp_name']);
+            
+            if ($ext === 'json') {
+                $rows = json_decode($content, true);
+                if (!is_array($rows)) $rows = [];
+            } else {
+                $rows = self::parse_csv($content);
+            }
+
+            $results = self::process_import_rows($rows, isset($_POST['skip_errors']));
+            set_transient('hdk_import_results', $results, 300);
+            wp_redirect(admin_url('admin.php?page=hdk-import&imported=1'));
+            exit;
+        }
     }
 
     private static function save_story($data) {
@@ -1022,15 +1044,91 @@ Nội dung chương 2 viết ở đây..."
     }
 
     public static function import_page() {
+        $results = get_transient('hdk_import_results');
+        $preview = null;
+        $errors = [];
+
+        // Handle file upload for preview
+        if (isset($_FILES['import_file']['tmp_name']) && !empty($_FILES['import_file']['tmp_name']) && !isset($_POST['hdk_import_confirm'])) {
+            $file = $_FILES['import_file'];
+            $ext = pathinfo($file['name'], PATHINFO_EXTENSION);
+            $content = file_get_contents($file['tmp_name']);
+            
+            if ($ext === 'json') {
+                $rows = json_decode($content, true);
+                if (!is_array($rows)) $rows = [];
+            } else {
+                $rows = self::parse_csv($content);
+            }
+
+            $preview = array_slice($rows, 0, 20);
+            $errors = self::validate_import_rows($rows);
+        }
         ?>
         <div class="wrap">
-            <h1>Import nội dung</h1>
-            <p>Sử dụng WP-CLI: <code>wp hdk import --source=/path/to/export.csv</code></p>
-            <p>Hoặc upload file CSV/JSON:</p>
-            <form method="post" enctype="multipart/form-data">
-                <input type="file" name="import_file" accept=".csv,.json" />
-                <?php submit_button('Import'); ?>
-            </form>
+            <h1 class="wp-heading-inline">Import nội dung</h1>
+            <hr class="wp-header-end">
+
+            <?php if ($results): ?>
+                <div class="notice notice-success"><p>Import hoàn tất: <?php echo (int)$results['created']; ?> tạo mới, <?php echo (int)$results['skipped']; ?> bỏ qua, <?php echo (int)$results['errors']; ?> lỗi.</p></div>
+                <?php delete_transient('hdk_import_results'); ?>
+            <?php endif; ?>
+
+            <div class="card" style="max-width:700px;padding:20px;">
+                <h2>Tải file CSV/JSON</h2>
+                <p style="color:var(--color-text-muted);">Định dạng CSV: <code>type,title,slug,author,categories,summary,status,is_free,chapter_number,chapter_title,content</code></p>
+                <p style="color:var(--color-text-muted);">Các type: <code>story, chapter, author, category</code></p>
+                
+                <form method="post" enctype="multipart/form-data" style="margin-top:12px;">
+                    <?php wp_nonce_field('hdk_import'); ?>
+                    <input type="file" name="import_file" accept=".csv,.json" required style="margin-bottom:8px;">
+                    <p>
+                        <button type="submit" class="button button-primary">Xem trước</button>
+                    </p>
+                </form>
+            </div>
+
+            <?php if ($errors): ?>
+                <div class="card" style="max-width:700px;padding:20px;margin-top:16px;border-left:4px solid #dc3232;">
+                    <h3 style="color:#dc3232;">⚠ <?php echo count($errors); ?> lỗi phát hiện</h3>
+                    <ul style="max-height:200px;overflow-y:auto;">
+                        <?php foreach (array_slice($errors, 0, 30) as $err): ?>
+                            <li style="color:#dc3232;"><?php echo esc_html($err); ?></li>
+                        <?php endforeach; ?>
+                    </ul>
+                </div>
+            <?php endif; ?>
+
+            <?php if ($preview): ?>
+                <div class="card" style="max-width:100%;padding:20px;margin-top:16px;">
+                    <h3>Xem trước (<?php echo count($preview); ?>/<?php echo count($rows); ?> dòng)</h3>
+                    <div style="overflow-x:auto;">
+                        <table class="wp-list-table widefat fixed striped">
+                            <thead><tr>
+                                <th>Type</th><th>Title</th><th>Slug</th><th>Author</th><th>Status</th><th>Chương</th>
+                            </tr></thead>
+                            <tbody>
+                            <?php foreach ($preview as $row): ?>
+                                <tr>
+                                    <td><span class="badge badge-<?php echo ($row['type'] ?? '') === 'story' ? 'primary' : (($row['type'] ?? '') === 'chapter' ? 'success' : 'warning'); ?>"><?php echo esc_html($row['type'] ?? ''); ?></span></td>
+                                    <td><?php echo esc_html($row['title'] ?? ''); ?></td>
+                                    <td><?php echo esc_html($row['slug'] ?? ''); ?></td>
+                                    <td><?php echo esc_html($row['author'] ?? ''); ?></td>
+                                    <td><?php echo esc_html($row['status'] ?? ''); ?></td>
+                                    <td><?php echo esc_html($row['chapter_number'] ?? ''); ?></td>
+                                </tr>
+                            <?php endforeach; ?>
+                            </tbody>
+                        </table>
+                    </div>
+                    <form method="post" enctype="multipart/form-data" style="margin-top:16px;">
+                        <?php wp_nonce_field('hdk_import'); ?>
+                        <input type="hidden" name="import_file" value="<?php echo esc_attr($file['tmp_name']); ?>">
+                        <label><input type="checkbox" name="skip_errors" value="1" checked> Bỏ qua dòng lỗi</label>
+                        <p><button type="submit" name="hdk_import_confirm" class="button button-primary" onclick="return confirm('Xác nhận import?');">Xác nhận import</button></p>
+                    </form>
+                </div>
+            <?php endif; ?>
         </div>
         <?php
     }
@@ -1337,5 +1435,171 @@ Nội dung chương 2 viết ở đây..."
             <?php endif; ?>
         </div>
         <?php
+    }
+
+    private static function parse_csv($content) {
+        $lines = explode("\n", trim($content));
+        if (count($lines) < 2) return [];
+        
+        $header = str_getcsv(array_shift($lines));
+        $header = array_map('trim', $header);
+        
+        $rows = [];
+        foreach ($lines as $line) {
+            $line = trim($line);
+            if (empty($line)) continue;
+            $values = str_getcsv($line);
+            $row = [];
+            foreach ($header as $i => $key) {
+                $row[$key] = $values[$i] ?? '';
+            }
+            $rows[] = $row;
+        }
+        return $rows;
+    }
+
+    private static function validate_import_rows($rows) {
+        $errors = [];
+        foreach ($rows as $i => $row) {
+            $line = $i + 2;
+            $type = $row['type'] ?? '';
+            if (!in_array($type, ['story','chapter','author','category'])) {
+                $errors[] = "Dòng $line: type không hợp lệ '$type'";
+                continue;
+            }
+            if (empty($row['title'])) {
+                $errors[] = "Dòng $line: thiếu title";
+            }
+            if ($type === 'chapter' && empty($row['chapter_number'])) {
+                $errors[] = "Dòng $line: chapter thiếu chapter_number";
+            }
+        }
+        return $errors;
+    }
+
+    private static function process_import_rows($rows, $skip_errors = true) {
+        global $wpdb;
+        $created = $skipped = $errors = 0;
+        $story_map = []; // slug => id
+        $author_map = []; // slug => id
+        $category_map = []; // slug => id
+
+        foreach ($rows as $i => $row) {
+            $type = $row['type'] ?? '';
+            
+            try {
+                switch ($type) {
+                    case 'author':
+                        $slug = sanitize_title($row['slug'] ?: $row['title']);
+                        $exists = $wpdb->get_var($wpdb->prepare("SELECT id FROM " . HDK_DB::table('hdk_authors') . " WHERE slug = %s", $slug));
+                        if ($exists) { $skipped++; $author_map[$slug] = $exists; continue; }
+                        $wpdb->insert(HDK_DB::table('hdk_authors'), [
+                            'name' => $row['title'], 'slug' => $slug,
+                            'bio' => $row['summary'] ?? '',
+                            'created_at' => current_time('mysql'), 'updated_at' => current_time('mysql'),
+                        ]);
+                        $author_map[$slug] = $wpdb->insert_id;
+                        $created++;
+                        break;
+
+                    case 'category':
+                        $slug = sanitize_title($row['slug'] ?: $row['title']);
+                        $exists = $wpdb->get_var($wpdb->prepare("SELECT id FROM " . HDK_DB::table('hdk_categories') . " WHERE slug = %s", $slug));
+                        if ($exists) { $skipped++; $category_map[$slug] = $exists; continue; }
+                        $wpdb->insert(HDK_DB::table('hdk_categories'), [
+                            'name' => $row['title'], 'slug' => $slug,
+                            'description' => $row['summary'] ?? '',
+                            'created_at' => current_time('mysql'), 'updated_at' => current_time('mysql'),
+                        ]);
+                        $category_map[$slug] = $wpdb->insert_id;
+                        $created++;
+                        break;
+
+                    case 'story':
+                        $slug = sanitize_title($row['slug'] ?: $row['title']);
+                        $exists = $wpdb->get_var($wpdb->prepare("SELECT id FROM " . HDK_DB::table('hdk_stories') . " WHERE slug = %s", $slug));
+                        if ($exists) { $skipped++; $story_map[$slug] = $exists; continue; }
+
+                        // Handle author
+                        $author_name = $row['author'] ?? '';
+                        $author_id = 0;
+                        if ($author_name) {
+                            $author_slug = sanitize_title($author_name);
+                            if (isset($author_map[$author_slug])) {
+                                $author_id = $author_map[$author_slug];
+                            } else {
+                                $existing_author = $wpdb->get_var($wpdb->prepare("SELECT id FROM " . HDK_DB::table('hdk_authors') . " WHERE slug = %s", $author_slug));
+                                if ($existing_author) {
+                                    $author_id = $existing_author;
+                                    $author_map[$author_slug] = $author_id;
+                                } else {
+                                    $wpdb->insert(HDK_DB::table('hdk_authors'), [
+                                        'name' => $author_name, 'slug' => $author_slug,
+                                        'created_at' => current_time('mysql'), 'updated_at' => current_time('mysql'),
+                                    ]);
+                                    $author_id = $wpdb->insert_id;
+                                    $author_map[$author_slug] = $author_id;
+                                }
+                            }
+                        }
+
+                        $wpdb->insert(HDK_DB::table('hdk_stories'), [
+                            'title' => $row['title'], 'slug' => $slug,
+                            'author_id' => $author_id,
+                            'summary' => $row['summary'] ?? '',
+                            'status' => in_array($row['status'] ?? '', ['ongoing','completed','dropped']) ? $row['status'] : 'ongoing',
+                            'is_free' => ($row['is_free'] ?? '') === '1' ? 1 : 0,
+                            'published_at' => current_time('mysql'),
+                            'created_at' => current_time('mysql'), 'updated_at' => current_time('mysql'),
+                        ]);
+                        $story_map[$slug] = $wpdb->insert_id;
+                        $created++;
+                        break;
+
+                    case 'chapter':
+                        $story_title = $row['title'] ?? '';
+                        $story_slug = sanitize_title($row['slug'] ?: $story_title);
+                        $story_id = $story_map[$story_slug] ?? null;
+                        if (!$story_id) {
+                            $story_id = $wpdb->get_var($wpdb->prepare("SELECT id FROM " . HDK_DB::table('hdk_stories') . " WHERE slug = %s", $story_slug));
+                            if ($story_id) $story_map[$story_slug] = (int)$story_id;
+                        }
+                        if (!$story_id) { $errors++; continue; }
+
+                        $chap_num = (int)($row['chapter_number'] ?? 0);
+                        if (!$chap_num) { $errors++; continue; }
+
+                        $exists = $wpdb->get_var($wpdb->prepare(
+                            "SELECT id FROM " . HDK_DB::table('hdk_chapters') . " WHERE story_id = %d AND chapter_number = %d",
+                            $story_id, $chap_num
+                        ));
+                        if ($exists) { $skipped++; continue; }
+
+                        $wpdb->insert(HDK_DB::table('hdk_chapters'), [
+                            'story_id' => $story_id, 'chapter_number' => $chap_num,
+                            'title' => $row['chapter_title'] ?: ('Chương ' . $chap_num),
+                            'content' => $row['content'] ?? '',
+                            'word_count' => str_word_count(strip_tags($row['content'] ?? '')),
+                            'status' => 'published',
+                            'created_at' => current_time('mysql'), 'updated_at' => current_time('mysql'),
+                        ]);
+                        $created++;
+                        break;
+                }
+            } catch (\Exception $e) {
+                if ($skip_errors) { $errors++; continue; }
+                throw $e;
+            }
+        }
+
+        return ['created' => $created, 'skipped' => $skipped, 'errors' => $errors];
+    }
+
+    public static function parse_csv_public($content) {
+        return self::parse_csv($content);
+    }
+
+    public static function process_import_rows_public($rows, $skip_errors = true) {
+        return self::process_import_rows($rows, $skip_errors);
     }
 }
