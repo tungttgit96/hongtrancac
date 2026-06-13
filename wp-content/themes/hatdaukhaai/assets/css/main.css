@@ -460,3 +460,36 @@ article p:last-child {
         font-size: var(--font-size-sm);
     }
 }
+
+/* ===== Wallet Tab ===== */
+.wallet-summary .wallet-stat {
+    transition: transform 0.2s;
+}
+
+.wallet-stat:hover {
+    transform: translateY(-2px);
+}
+
+.package-card:hover {
+    border-color: var(--color-primary) !important;
+}
+
+.daily-claim-btn:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+}
+
+#purchase-modal > div {
+    animation: modalIn 0.2s ease;
+}
+
+@keyframes modalIn {
+    from { transform: scale(0.95); opacity: 0; }
+    to { transform: scale(1); opacity: 1; }
+}
+
+@media (max-width: 768px) {
+    .wallet-summary {
+        flex-direction: column;
+    }
+}

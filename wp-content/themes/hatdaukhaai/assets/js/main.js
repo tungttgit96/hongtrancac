@@ -242,4 +242,35 @@
             }
         });
     }
+
+    // ===== Daily Claim =====
+    window.claimDaily = function() {
+        var btn = document.getElementById('daily-claim-btn');
+        if (!btn) return;
+
+        btn.disabled = true;
+        btn.textContent = 'Đang xử lý…';
+
+        fetch('/wp-json/hdk/v1/daily-claim', { method: 'POST' })
+            .then(function(r) { return r.json().then(function(d) { return {status: r.status, data: d}; }); })
+            .then(function(result) {
+                if (result.status === 200 && result.data.success) {
+                    btn.textContent = 'Đã nhận +' + result.data.credits_earned + ' hạt!';
+                    btn.style.background = 'var(--color-success)';
+                    btn.style.color = '#fff';
+                    btn.style.borderColor = 'var(--color-success)';
+                    setTimeout(function() { location.reload(); }, 1500);
+                } else if (result.status === 409) {
+                    btn.textContent = 'Đã điểm danh hôm nay';
+                    btn.disabled = true;
+                    btn.style.opacity = '0.5';
+                } else {
+                    btn.textContent = 'Lỗi, thử lại';
+                    btn.disabled = false;
+                }
+            })
+            .catch(function() {
+                window.location.href = '/wp-login.php';
+            });
+    };
 })();
