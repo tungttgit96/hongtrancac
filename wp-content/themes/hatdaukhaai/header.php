@@ -35,6 +35,21 @@
                 🔍
             </button>
             <?php if (is_user_logged_in()): ?>
+                <span id="notif-bell" style="position:relative;cursor:pointer;min-height:var(--touch-target);min-width:var(--touch-target);display:inline-flex;align-items:center;justify-content:center;font-size:1.15rem;" onclick="toggleNotifDropdown()" aria-label="Thông báo">
+                    🔔
+                    <span id="notif-badge" style="display:none;position:absolute;top:2px;right:2px;background:var(--color-danger);color:#fff;border-radius:10px;padding:0 5px;font-size:10px;font-weight:700;min-width:16px;text-align:center;line-height:16px;"></span>
+                </span>
+                <!-- Notification Dropdown -->
+                <div id="notif-dropdown" style="display:none;position:absolute;top:100%;right:0;min-width:320px;max-width:90vw;background:var(--color-bg);border:1px solid var(--color-border);border-radius:var(--radius-md);box-shadow:0 4px 16px rgba(0,0,0,0.12);z-index:150;max-height:400px;overflow-y:auto;margin-top:4px;">
+                    <div style="padding:12px 16px;border-bottom:1px solid var(--color-border-light);display:flex;justify-content:space-between;align-items:center;">
+                        <strong>Thông báo</strong>
+                        <button type="button" class="btn btn-ghost btn-sm" onclick="markAllRead()" style="font-size:var(--font-size-sm);">Đánh dấu đã đọc</button>
+                    </div>
+                    <div id="notif-list" style="padding:8px 0;">
+                        <div style="padding:16px;text-align:center;color:var(--color-text-muted);">Đang tải…</div>
+                    </div>
+                    <a href="/tai-khoan?tab=notifications" style="display:block;padding:10px 16px;text-align:center;border-top:1px solid var(--color-border-light);text-decoration:none;color:var(--color-primary);font-size:var(--font-size-sm);">Xem tất cả</a>
+                </div>
                 <?php
                 $current_user = wp_get_current_user();
                 $credits_table = HDK_DB::table('hdk_user_credits');
