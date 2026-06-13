@@ -16,6 +16,9 @@ class HDK_Admin {
         add_submenu_page('hdk-stories', 'Import', 'Import', 'manage_options', 'hdk-import', [__CLASS__, 'import_page']);
         add_submenu_page('hdk-stories', 'Banner', 'Banner', 'edit_stories', 'hdk-banner', [__CLASS__, 'banner_page']);
         add_submenu_page('hdk-stories', 'Seed Demo', 'Seed Demo', 'manage_options', 'hdk-seed', [__CLASS__, 'seed_page']);
+        add_submenu_page('hdk-stories', 'Quản lý hạt', 'Quản lý hạt', 'manage_options', 'hdk-credits', [__CLASS__, 'credits_page']);
+        add_submenu_page('hdk-stories', 'Gói nạp', 'Gói nạp', 'manage_options', 'hdk-packages', [__CLASS__, 'packages_page']);
+        add_submenu_page('hdk-stories', 'Lịch sử giao dịch', 'Lịch sử GD', 'manage_options', 'hdk-transactions', [__CLASS__, 'transactions_page']);
 
         add_action('admin_init', function() {
             $admin = get_role('administrator');
@@ -79,6 +82,81 @@ class HDK_Admin {
         // Save Banner Settings
         if (isset($_POST['hdk_save_banner']) && wp_verify_nonce($_POST['_wpnonce'], 'hdk_save_banner')) {
             self::save_banner($_POST);
+        }
+
+        // --- Credit Packages form ---
+        if (isset($_POST['hdk_save_package'])) {
+            if (!current_user_can('manage_options')) return;
+            check_admin_referer('hdk_save_package');
+
+            $id = (int)($_POST['package_id'] ?? 0);
+            $data = [
+                'name' => sanitize_text_field($_POST['package_name']),
+                'credits' => (int)$_POST['package_credits'],
+                'price_vnd' => (int)$_POST['package_price'],
+                'bonus_credits' => (int)$_POST['package_bonus'],
+                'is_active' => isset($_POST['package_active']) ? 1 : 0,
+                'sort_order' => (int)$_POST['package_sort'],
+            ];
+
+            if ($id) {
+                HDK_DB::update_credit_package($id, $data);
+            } else {
+                HDK_DB::create_credit_package($data);
+            }
+            wp_redirect(admin_url('admin.php?page=hdk-packages&message=saved'));
+            exit;
+        }
+
+        if (isset($_GET['action']) && $_GET['action'] === 'delete_package' && !empty($_GET['id'])) {
+            if (!current_user_can('manage_options')) return;
+            check_admin_referer('hdk_delete_package_' . $_GET['id']);
+            HDK_DB::delete_credit_package((int)$_GET['id']);
+            wp_redirect(admin_url('admin.php?page=hdk-packages&message=deleted'));
+            exit;
+        }
+
+        if (isset($_GET['action']) && $_GET['action'] === 'toggle_package' && !empty($_GET['id'])) {
+            if (!current_user_can('manage_options')) return;
+            check_admin_referer('hdk_toggle_package_' . $_GET['id']);
+            $package = $wpdb->get_row($wpdb->prepare(
+                "SELECT * FROM " . HDK_DB::table('hdk_credit_packages') . " WHERE id = %d", (int)$_GET['id']
+            ));
+            if ($package) {
+                HDK_DB::update_credit_package($package->id, ['is_active' => $package->is_active ? 0 : 1]);
+            }
+            wp_redirect(admin_url('admin.php?page=hdk-packages&message=toggled'));
+            exit;
+        }
+
+        // --- Credit adjustment form ---
+        if (isset($_POST['hdk_adjust_credits'])) {
+            if (!current_user_can('manage_options')) return;
+            check_admin_referer('hdk_adjust_credits');
+
+            $uid = (int)$_POST['user_id'];
+            $amount = (int)$_POST['credit_amount'];
+            $note = sanitize_text_field($_POST['adjust_note']);
+            $type = $amount >= 0 ? 'admin_add' : 'admin_deduct';
+
+            $credit_table = HDK_DB::table('hdk_user_credits');
+            $current = (int)$wpdb->get_var($wpdb->prepare("SELECT credits FROM $credit_table WHERE user_id = %d", $uid));
+            if ($current === null && !$wpdb->last_error) {
+                $wpdb->insert($credit_table, ['user_id' => $uid, 'credits' => 0]);
+                $current = 0;
+            }
+            $new_balance = max(0, $current + $amount);
+
+            $wpdb->update($credit_table, [
+                'credits' => $new_balance,
+                'total_earned' => $amount > 0 ? $current + $amount : $current,
+                'total_spent' => $amount < 0 ? abs($amount) : 0,
+            ], ['user_id' => $uid]);
+
+            HDK_DB::log_credit_transaction($uid, $type, $amount, 'admin', 0, $note);
+
+            wp_redirect(admin_url('admin.php?page=hdk-credits&message=adjusted'));
+            exit;
         }
     }
 
@@ -1029,5 +1107,223 @@ Nội dung chương 2 viết ở đây..."
         } elseif (isset($messages[$msg])) {
             echo '<div class="notice notice-success is-dismissible"><p>' . $messages[$msg] . '</p></div>';
         }
+    }
+
+    public static function credits_page() {
+        global $wpdb;
+        $search = sanitize_text_field($_GET['s'] ?? '');
+        $page = max(1, (int)($_GET['paged'] ?? 1));
+        $data = HDK_DB::get_all_user_credits($search, $page);
+        ?>
+        <div class="wrap">
+            <h1 class="wp-heading-inline">Quản lý hạt</h1>
+            <hr class="wp-header-end">
+
+            <form method="get" style="margin-bottom:16px;">
+                <input type="hidden" name="page" value="hdk-credits">
+                <input type="search" name="s" value="<?php echo esc_attr($search); ?>" placeholder="Tìm username..." style="padding:6px 10px;min-width:240px;">
+                <button type="submit" class="button">Tìm</button>
+            </form>
+
+            <table class="wp-list-table widefat fixed striped">
+                <thead>
+                    <tr>
+                        <th>User</th>
+                        <th>Số dư</th>
+                        <th>Tổng nạp</th>
+                        <th>Tổng tiêu</th>
+                        <th>Điều chỉnh hạt</th>
+                    </tr>
+                </thead>
+                <tbody>
+                <?php foreach ($data['rows'] as $row): ?>
+                    <tr>
+                        <td><strong><?php echo esc_html($row->display_name); ?></strong> (<?php echo esc_html($row->user_login); ?>)</td>
+                        <td>💎 <?php echo number_format((int)$row->credits); ?></td>
+                        <td><?php echo number_format((int)$row->total_earned); ?></td>
+                        <td><?php echo number_format((int)$row->total_spent); ?></td>
+                        <td>
+                            <form method="post" style="display:inline-flex;gap:8px;align-items:center;">
+                                <?php wp_nonce_field('hdk_adjust_credits'); ?>
+                                <input type="hidden" name="user_id" value="<?php echo (int)$row->user_id; ?>">
+                                <input type="number" name="credit_amount" value="" placeholder="+/- hạt" style="width:80px;" required>
+                                <input type="text" name="adjust_note" value="" placeholder="Ghi chú" style="width:120px;" required>
+                                <button type="submit" name="hdk_adjust_credits" class="button button-small">Cập nhật</button>
+                            </form>
+                        </td>
+                    </tr>
+                <?php endforeach; ?>
+                <?php if (empty($data['rows'])): ?>
+                    <tr><td colspan="5">Không có dữ liệu</td></tr>
+                <?php endif; ?>
+                </tbody>
+            </table>
+            <?php if ($data['pages'] > 1): ?>
+                <div class="tablenav"><div class="tablenav-pages">
+                    <?php for ($i = 1; $i <= $data['pages']; $i++): ?>
+                        <a href="?page=hdk-credits&paged=<?php echo $i; ?>&s=<?php echo urlencode($search); ?>" class="button<?php echo $i === $page ? ' button-primary' : ''; ?>"><?php echo $i; ?></a>
+                    <?php endfor; ?>
+                </div></div>
+            <?php endif; ?>
+        </div>
+        <?php
+    }
+
+    public static function packages_page() {
+        global $wpdb;
+        $edit_id = (int)($_GET['edit'] ?? 0);
+        $edit_package = null;
+        if ($edit_id) {
+            $edit_package = $wpdb->get_row($wpdb->prepare("SELECT * FROM " . HDK_DB::table('hdk_credit_packages') . " WHERE id = %d", $edit_id));
+        }
+        $packages = HDK_DB::get_credit_packages(false);
+        ?>
+        <div class="wrap">
+            <h1 class="wp-heading-inline">Gói nạp hạt</h1>
+            <?php if (!$edit_id): ?>
+                <a href="?page=hdk-packages&edit=new" class="page-title-action">Thêm gói mới</a>
+            <?php endif; ?>
+            <hr class="wp-header-end">
+
+            <?php if ($edit_id || (isset($_GET['edit']) && $_GET['edit'] === 'new')): ?>
+                <div class="card" style="max-width:500px;padding:20px;margin-bottom:20px;">
+                    <h2><?php echo $edit_package ? 'Sửa gói: ' . esc_html($edit_package->name) : 'Thêm gói mới'; ?></h2>
+                    <form method="post">
+                        <?php wp_nonce_field('hdk_save_package'); ?>
+                        <input type="hidden" name="package_id" value="<?php echo $edit_package ? (int)$edit_package->id : ''; ?>">
+                        <table class="form-table">
+                            <tr>
+                                <th>Tên gói</th>
+                                <td><input type="text" name="package_name" value="<?php echo esc_attr($edit_package->name ?? ''); ?>" required class="regular-text"></td>
+                            </tr>
+                            <tr>
+                                <th>Số hạt</th>
+                                <td><input type="number" name="package_credits" value="<?php echo (int)($edit_package->credits ?? 0); ?>" required style="width:100px;"></td>
+                            </tr>
+                            <tr>
+                                <th>Hạt thưởng</th>
+                                <td><input type="number" name="package_bonus" value="<?php echo (int)($edit_package->bonus_credits ?? 0); ?>" style="width:100px;"></td>
+                            </tr>
+                            <tr>
+                                <th>Giá (VNĐ)</th>
+                                <td><input type="number" name="package_price" value="<?php echo (int)($edit_package->price_vnd ?? 0); ?>" required style="width:120px;"></td>
+                            </tr>
+                            <tr>
+                                <th>Thứ tự</th>
+                                <td><input type="number" name="package_sort" value="<?php echo (int)($edit_package->sort_order ?? 0); ?>" style="width:80px;"></td>
+                            </tr>
+                            <tr>
+                                <th>Kích hoạt</th>
+                                <td><label><input type="checkbox" name="package_active" <?php checked($edit_package->is_active ?? 1, 1); ?>> Hiển thị</label></td>
+                            </tr>
+                        </table>
+                        <p class="submit">
+                            <button type="submit" name="hdk_save_package" class="button button-primary">Lưu</button>
+                            <a href="?page=hdk-packages" class="button">Hủy</a>
+                        </p>
+                    </form>
+                </div>
+            <?php endif; ?>
+
+            <table class="wp-list-table widefat fixed striped">
+                <thead>
+                    <tr>
+                        <th>Tên gói</th>
+                        <th>Hạt</th>
+                        <th>Bonus</th>
+                        <th>Giá VNĐ</th>
+                        <th>TT</th>
+                        <th>Thao tác</th>
+                    </tr>
+                </thead>
+                <tbody>
+                <?php foreach ($packages as $pkg): ?>
+                    <tr>
+                        <td><strong><?php echo esc_html($pkg->name); ?></strong></td>
+                        <td><?php echo number_format((int)$pkg->credits); ?></td>
+                        <td><?php echo $pkg->bonus_credits > 0 ? '+' . number_format((int)$pkg->bonus_credits) : '—'; ?></td>
+                        <td><?php echo number_format((int)$pkg->price_vnd); ?> đ</td>
+                        <td><?php echo $pkg->is_active ? '<span style="color:green;">● Active</span>' : '<span style="color:#999;">● Inactive</span>'; ?></td>
+                        <td>
+                            <a href="?page=hdk-packages&edit=<?php echo (int)$pkg->id; ?>" class="button button-small">Sửa</a>
+                            <?php $toggle_url = wp_nonce_url("?page=hdk-packages&action=toggle_package&id=" . (int)$pkg->id, 'hdk_toggle_package_' . $pkg->id); ?>
+                            <a href="<?php echo esc_url($toggle_url); ?>" class="button button-small"><?php echo $pkg->is_active ? 'Tắt' : 'Bật'; ?></a>
+                            <?php $del_url = wp_nonce_url("?page=hdk-packages&action=delete_package&id=" . (int)$pkg->id, 'hdk_delete_package_' . $pkg->id); ?>
+                            <a href="<?php echo esc_url($del_url); ?>" class="button button-small" onclick="return confirm('Xóa gói này?');">Xóa</a>
+                        </td>
+                    </tr>
+                <?php endforeach; ?>
+                <?php if (empty($packages)): ?>
+                    <tr><td colspan="6">Chưa có gói nạp nào</td></tr>
+                <?php endif; ?>
+                </tbody>
+            </table>
+        </div>
+        <?php
+    }
+
+    public static function transactions_page() {
+        global $wpdb;
+        $type_filter = sanitize_text_field($_GET['filter_type'] ?? '');
+        $user_search = sanitize_text_field($_GET['filter_user'] ?? '');
+        $page = max(1, (int)($_GET['paged'] ?? 1));
+
+        $filters = [];
+        if ($type_filter) $filters['type'] = $type_filter;
+        if ($user_search) $filters['user'] = $user_search;
+
+        $data = HDK_DB::get_all_transactions($filters, $page);
+        $types = ['earn' => 'Nạp', 'spend' => 'Tiêu', 'daily' => 'Điểm danh', 'admin_add' => 'Admin +', 'admin_deduct' => 'Admin -', 'refund' => 'Hoàn'];
+        ?>
+        <div class="wrap">
+            <h1 class="wp-heading-inline">Lịch sử giao dịch</h1>
+            <hr class="wp-header-end">
+
+            <form method="get" style="margin-bottom:16px;display:flex;gap:8px;flex-wrap:wrap;align-items:center;">
+                <input type="hidden" name="page" value="hdk-transactions">
+                <select name="filter_type">
+                    <option value="">Tất cả loại</option>
+                    <?php foreach ($types as $k => $label): ?>
+                        <option value="<?php echo $k; ?>" <?php selected($type_filter, $k); ?>><?php echo $label; ?></option>
+                    <?php endforeach; ?>
+                </select>
+                <input type="search" name="filter_user" value="<?php echo esc_attr($user_search); ?>" placeholder="Tìm username..." style="padding:4px 8px;">
+                <button type="submit" class="button">Lọc</button>
+            </form>
+
+            <table class="wp-list-table widefat fixed striped">
+                <thead>
+                    <tr>
+                        <th>User</th>
+                        <th>Loại</th>
+                        <th>Số hạt</th>
+                        <th>Ghi chú</th>
+                        <th>Thời gian</th>
+                    </tr>
+                </thead>
+                <tbody>
+                <?php foreach ($data['rows'] as $tx): ?>
+                    <tr>
+                        <td><?php echo esc_html($tx->display_name); ?></td>
+                        <td><span class="badge badge-<?php echo $tx->credits >= 0 ? 'success' : 'danger'; ?>"><?php echo $types[$tx->type] ?? $tx->type; ?></span></td>
+                        <td style="color:<?php echo $tx->credits >= 0 ? 'green' : 'red'; ?>"><?php echo $tx->credits >= 0 ? '+' : ''; ?><?php echo number_format((int)$tx->credits); ?></td>
+                        <td><?php echo esc_html($tx->note); ?></td>
+                        <td><?php echo mysql2date('H:i d/m/Y', $tx->created_at); ?></td>
+                    </tr>
+                <?php endforeach; ?>
+                <?php if (empty($data['rows'])): ?>
+                    <tr><td colspan="5">Không có giao dịch nào</td></tr>
+                <?php endif; ?>
+                </tbody>
+            </table>
+            <?php if ($data['pages'] > 1): ?>
+                <div class="tablenav"><div class="tablenav-pages">
+                    <?php for ($i = 1; $i <= $data['pages']; $i++): ?>
+                        <a href="?page=hdk-transactions&paged=<?php echo $i; ?>&filter_type=<?php echo urlencode($type_filter); ?>&filter_user=<?php echo urlencode($user_search); ?>" class="button<?php echo $i === $page ? ' button-primary' : ''; ?>"><?php echo $i; ?></a>
+                    <?php endfor; ?>
+                </div></div>
+            <?php endif; ?>
+        </div>
+        <?php
     }
 }
