@@ -339,4 +339,125 @@ class HDK_DB {
         ];
         return $titles[array_rand($titles)];
     }
+
+    public static function get_favorites($user_id, $page = 1, $per_page = 12) {
+        global $wpdb;
+        $fav_table = self::table('hdk_favorites');
+        $story_table = self::table('hdk_stories');
+        $offset = ($page - 1) * $per_page;
+
+        $total = $wpdb->get_var($wpdb->prepare(
+            "SELECT COUNT(*) FROM $fav_table f JOIN $story_table s ON f.story_id = s.id WHERE f.user_id = %d",
+            $user_id
+        ));
+
+        $stories = $wpdb->get_results($wpdb->prepare(
+            "SELECT s.* FROM $fav_table f JOIN $story_table s ON f.story_id = s.id
+             WHERE f.user_id = %d ORDER BY f.created_at DESC LIMIT %d OFFSET %d",
+            $user_id, $per_page, $offset
+        ));
+
+        foreach ($stories as $story) {
+            $story->author_name = self::get_author_name($story->author_id);
+            $story->categories = self::get_story_categories($story->id);
+            $story->chapter_count = (int)$story->total_chapters;
+        }
+
+        return ['stories' => $stories, 'total' => (int)$total, 'pages' => (int)ceil($total / $per_page)];
+    }
+
+    public static function get_reading_stories($user_id) {
+        global $wpdb;
+        $progress_table = self::table('hdk_reading_progress');
+        $story_table = self::table('hdk_stories');
+
+        $stories = $wpdb->get_results($wpdb->prepare(
+            "SELECT s.*, p.chapter_number as current_chapter, p.scroll_percent
+             FROM $progress_table p JOIN $story_table s ON p.story_id = s.id
+             WHERE p.user_id = %d ORDER BY p.updated_at DESC",
+            $user_id
+        ));
+
+        foreach ($stories as $story) {
+            $story->author_name = self::get_author_name($story->author_id);
+            $story->categories = self::get_story_categories($story->id);
+            $story->chapter_count = (int)$story->total_chapters;
+        }
+
+        return $stories;
+    }
+
+    public static function get_purchased_stories($user_id, $page = 1, $per_page = 12) {
+        global $wpdb;
+        $purch_table = self::table('hdk_purchased_chapters');
+        $story_table = self::table('hdk_stories');
+        $offset = ($page - 1) * $per_page;
+
+        $total = $wpdb->get_var($wpdb->prepare(
+            "SELECT COUNT(DISTINCT p.story_id) FROM $purch_table p JOIN $story_table s ON p.story_id = s.id WHERE p.user_id = %d",
+            $user_id
+        ));
+
+        $stories = $wpdb->get_results($wpdb->prepare(
+            "SELECT s.*, MAX(p.created_at) as purchased_at
+             FROM $purch_table p JOIN $story_table s ON p.story_id = s.id
+             WHERE p.user_id = %d GROUP BY p.story_id ORDER BY purchased_at DESC LIMIT %d OFFSET %d",
+            $user_id, $per_page, $offset
+        ));
+
+        foreach ($stories as $story) {
+            $story->author_name = self::get_author_name($story->author_id);
+            $story->categories = self::get_story_categories($story->id);
+            $story->chapter_count = (int)$story->total_chapters;
+        }
+
+        return ['stories' => $stories, 'total' => (int)$total, 'pages' => (int)ceil($total / $per_page)];
+    }
+
+    public static function get_reading_history($user_id, $page = 1, $per_page = 20) {
+        global $wpdb;
+        $hist_table = self::table('hdk_reading_history');
+        $story_table = self::table('hdk_stories');
+        $offset = ($page - 1) * $per_page;
+
+        $total = $wpdb->get_var($wpdb->prepare(
+            "SELECT COUNT(*) FROM $hist_table WHERE user_id = %d", $user_id
+        ));
+
+        $rows = $wpdb->get_results($wpdb->prepare(
+            "SELECT h.*, s.title, s.slug FROM $hist_table h
+             JOIN $story_table s ON h.story_id = s.id
+             WHERE h.user_id = %d ORDER BY h.created_at DESC LIMIT %d OFFSET %d",
+            $user_id, $per_page, $offset
+        ));
+
+        return ['rows' => $rows, 'total' => (int)$total, 'pages' => (int)ceil($total / $per_page)];
+    }
+
+    public static function log_reading_history($user_id, $story_id, $chapter_number) {
+        global $wpdb;
+        $table = self::table('hdk_reading_history');
+
+        $exists = $wpdb->get_var($wpdb->prepare(
+            "SELECT id FROM $table WHERE user_id = %d AND story_id = %d AND chapter_number = %d LIMIT 1",
+            $user_id, $story_id, $chapter_number
+        ));
+
+        if (!$exists) {
+            $wpdb->insert($table, [
+                'user_id' => $user_id,
+                'story_id' => $story_id,
+                'chapter_number' => $chapter_number,
+                'created_at' => current_time('mysql'),
+            ]);
+        }
+    }
+
+    public static function get_user_purchased_count($user_id) {
+        global $wpdb;
+        return (int)$wpdb->get_var($wpdb->prepare(
+            "SELECT COUNT(DISTINCT story_id) FROM " . self::table('hdk_purchased_chapters') . " WHERE user_id = %d",
+            $user_id
+        ));
+    }
 }
