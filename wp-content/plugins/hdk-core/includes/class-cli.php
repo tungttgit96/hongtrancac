@@ -32,6 +32,30 @@ if (defined('WP_CLI') && WP_CLI) {
             }
             WP_CLI::success('Import not implemented yet. Source: ' . $source);
         }
+
+        /**
+         * Create account page if not exists
+         *
+         * @when after_wp_load
+         */
+        public function create_account_page() {
+            self::ensure_account_page();
+            WP_CLI::success('Account page (tai-khoan) created or already exists.');
+        }
+
+        public static function ensure_account_page() {
+            $existing = get_page_by_path('tai-khoan');
+            if (!$existing) {
+                wp_insert_post([
+                    'post_type' => 'page',
+                    'post_title' => 'Tài khoản',
+                    'post_name' => 'tai-khoan',
+                    'post_status' => 'publish',
+                    'post_content' => '',
+                    'comment_status' => 'closed',
+                ]);
+            }
+        }
     }
 
     WP_CLI::add_command('hdk', 'HDK_CLI');

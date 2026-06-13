@@ -24,6 +24,19 @@ class HDK_Activator {
             'delete_stories' => true,
             'moderate_comments' => true,
         ]);
+
+        // Create account page
+        $existing = get_page_by_path('tai-khoan');
+        if (!$existing) {
+            wp_insert_post([
+                'post_type' => 'page',
+                'post_title' => 'Tài khoản',
+                'post_name' => 'tai-khoan',
+                'post_status' => 'publish',
+                'post_content' => '',
+                'comment_status' => 'closed',
+            ]);
+        }
     }
 
     public static function deactivate() {
