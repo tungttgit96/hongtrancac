@@ -80,7 +80,7 @@ get_header();
 
     <!-- Chapter Content (JS-decoded to prevent scraping) -->
     <article style="background:var(--color-bg);border-radius:var(--radius-md);padding:24px;border:1px solid var(--color-border);line-height:2;font-size:var(--font-size-lg);min-height:60vh;" id="chapter-content">
-        <div id="content-loading" style="text-align:center;padding:40px;color:var(--color-text-muted);">Đang tải nội dung...</div>
+        <div id="content-loading" aria-live="polite" style="text-align:center;padding:40px;color:var(--color-text-muted);">Đang tải nội dung…</div>
     </article>
 
     <script id="chapter-data" type="text/plain" style="display:none;"><?php echo HDK_Protection::obfuscate($chapter->content); ?></script>

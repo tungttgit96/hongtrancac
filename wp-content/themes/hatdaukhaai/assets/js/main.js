@@ -6,6 +6,66 @@
 (function() {
     'use strict';
 
+    // ===== Theme Toggle =====
+    var STORAGE_KEY = 'hdk-theme';
+    var toggleBtn = document.getElementById('theme-toggle');
+
+    function safeGetStorage(key) {
+        try { return localStorage.getItem(key); } catch (e) { return null; }
+    }
+
+    function safeSetStorage(key, value) {
+        try { localStorage.setItem(key, value); } catch (e) {}
+    }
+
+    function getTheme() {
+        var saved = safeGetStorage(STORAGE_KEY);
+        if (saved === 'light' || saved === 'dark') return saved;
+        try {
+            return window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
+        } catch (e) {
+            return 'light';
+        }
+    }
+
+    function applyTheme(theme) {
+        try {
+            document.documentElement.setAttribute('data-theme', theme);
+        } catch (e) {}
+        if (toggleBtn) {
+            toggleBtn.textContent = theme === 'dark' ? '\u263E' : '\u2600';
+            toggleBtn.setAttribute('aria-pressed', theme === 'dark' ? 'true' : 'false');
+            toggleBtn.setAttribute('aria-label', theme === 'dark' ? 'Chuy\u1EC3n sang ch\u1EBF \u0111\u1ED9 s\u00E1ng' : 'Chuy\u1EC3n sang ch\u1EBF \u0111\u1ED9 t\u1ED1i');
+        }
+    }
+
+    function toggleTheme() {
+        var current = document.documentElement.getAttribute('data-theme');
+        var next = current === 'dark' ? 'light' : 'dark';
+        safeSetStorage(STORAGE_KEY, next);
+        applyTheme(next);
+    }
+
+    applyTheme(getTheme());
+
+    if (toggleBtn) {
+        toggleBtn.addEventListener('click', toggleTheme);
+    }
+
+    try {
+        var mq = window.matchMedia('(prefers-color-scheme: dark)');
+        var listener = function(e) {
+            if (!safeGetStorage(STORAGE_KEY)) {
+                applyTheme(e.matches ? 'dark' : 'light');
+            }
+        };
+        if (mq.addEventListener) {
+            mq.addEventListener('change', listener);
+        } else if (mq.addListener) {
+            mq.addListener(listener);
+        }
+    } catch (e) {}
+
     // ===== Hero Banner =====
     var bannerCards = document.querySelectorAll('.banner-card');
     var bannerCover = document.getElementById('banner-cover-img');
@@ -136,7 +196,7 @@
         var submitBtn = form.querySelector('button[type="submit"]');
         if (submitBtn) {
             submitBtn.disabled = true;
-            submitBtn.textContent = 'Đang gửi...';
+            submitBtn.textContent = 'Đang gửi…';
         }
 
         fetch('/wp-json/hdk/v1/comments', {

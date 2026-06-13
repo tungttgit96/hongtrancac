@@ -4,6 +4,15 @@
 .site-header {
     backdrop-filter: blur(8px);
     -webkit-backdrop-filter: blur(8px);
+    transition: background 0.3s, border-color 0.3s;
+}
+
+/* ===== Theme Toggle ===== */
+.theme-toggle {
+    transition: transform 0.3s ease;
+}
+.theme-toggle:active {
+    transform: scale(0.9);
 }
 
 /* ===== Story Card ===== */
@@ -22,27 +31,29 @@
 
 /* ===== Hero Banner ===== */
 .hero-banner {
-    background: #070b12;
-    color: #fff;
+    background: var(--color-banner-bg);
+    color: var(--color-banner-text);
     padding: 28px 0 32px;
+    transition: background 0.3s, color 0.3s;
 }
 .hero-banner .banner-shell {
     background:
-        radial-gradient(circle at 50% 18%, rgba(255,255,255,0.16), transparent 32%),
-        linear-gradient(100deg, rgba(8,12,23,0.96), rgba(34,54,70,0.92) 48%, rgba(12,19,31,0.98));
-    border: 1px solid rgba(255,255,255,0.08);
+        var(--color-banner-shell-ambient),
+        var(--color-banner-shell-gradient);
+    border: 1px solid var(--color-banner-shell-border);
     border-radius: 28px;
-    box-shadow: 0 24px 60px rgba(0,0,0,0.35);
+    box-shadow: var(--shadow-banner);
     min-height: 520px;
     overflow: hidden;
     padding: 34px 40px;
     position: relative;
+    transition: background 0.3s, border-color 0.3s, box-shadow 0.3s;
 }
 .hero-banner .banner-shell::before {
     content: "";
     position: absolute;
     inset: 0;
-    background: linear-gradient(90deg, rgba(0,0,0,0.38), transparent 36%, rgba(0,0,0,0.26));
+    background: var(--color-banner-veil);
     pointer-events: none;
 }
 .hero-banner .banner-grid {
@@ -61,14 +72,14 @@
     min-width: 0;
 }
 .hero-banner .banner-title {
-    color: #fff;
+    color: var(--color-banner-text);
     font-size: var(--font-size-3xl);
     font-weight: 700;
     line-height: 1.2;
     margin-bottom: 16px;
 }
 .hero-banner .banner-summary {
-    color: rgba(255,255,255,0.78);
+    color: var(--color-banner-text-muted);
     display: -webkit-box;
     font-size: var(--font-size-sm);
     line-height: 1.65;
@@ -85,16 +96,13 @@
     gap: 14px;
 }
 .hero-banner .banner-read-link {
-    background: linear-gradient(135deg, #ef476f, #f78c4f);
-    box-shadow: 0 14px 28px rgba(239,71,111,0.3);
     color: #fff;
 }
 .hero-banner .banner-read-link:hover {
-    background: linear-gradient(135deg, #f25b7f, #f89d65);
     color: #fff;
 }
 .hero-banner .banner-views {
-    color: rgba(255,255,255,0.72);
+    color: var(--color-banner-text-muted);
     font-size: var(--font-size-xs);
 }
 .hero-banner .banner-cover {
@@ -105,9 +113,9 @@
 }
 .hero-banner .banner-cover-img {
     aspect-ratio: 3 / 4;
-    border: 1px solid rgba(255,255,255,0.16);
+    border: 1px solid var(--color-banner-cover-border);
     border-radius: 12px;
-    box-shadow: 0 20px 50px rgba(0,0,0,0.42);
+    box-shadow: var(--color-banner-cover-shadow);
     display: block;
     max-height: 450px;
     max-width: 330px;
@@ -125,10 +133,10 @@
 .hero-banner .banner-card {
     appearance: none;
     aspect-ratio: 3 / 4;
-    background: #10151f;
+    background: var(--color-banner-card-bg);
     border: 2px solid transparent;
     border-radius: 12px;
-    color: #fff;
+    color: var(--color-banner-text);
     cursor: pointer;
     display: block;
     min-width: 0;
@@ -139,12 +147,12 @@
     transition: box-shadow 0.25s, border-color 0.25s, transform 0.25s;
 }
 .hero-banner .banner-card.active {
-    border-color: #ef476f;
-    box-shadow: 0 0 18px rgba(239, 71, 111, 0.5);
+    border-color: var(--color-banner-card-active-border);
+    box-shadow: var(--color-banner-card-active-shadow);
 }
 .hero-banner .banner-card:hover {
-    border-color: rgba(239, 71, 111, 0.75);
-    box-shadow: 0 0 12px rgba(239, 71, 111, 0.34);
+    border-color: var(--color-banner-card-hover-border);
+    box-shadow: var(--color-banner-card-hover-shadow);
     transform: translateY(-2px);
 }
 .hero-banner .banner-card img {
@@ -154,8 +162,9 @@
     width: 100%;
 }
 .hero-banner .banner-card-rank {
-    background: rgba(0,0,0,0.72);
+    background: var(--color-banner-card-rank-bg);
     border-radius: 10px;
+    color: var(--color-banner-overlay-text);
     font-size: var(--font-size-xs);
     font-weight: 700;
     left: 10px;
@@ -165,10 +174,11 @@
     top: 10px;
 }
 .hero-banner .banner-card.active .banner-card-rank {
-    background: #ef476f;
+    background: var(--color-banner-card-rank-active-bg);
+    color: var(--color-on-primary);
 }
 .hero-banner .banner-card-overlay {
-    background: linear-gradient(transparent, rgba(0,0,0,0.88));
+    background: var(--color-banner-card-overlay);
     bottom: 0;
     display: flex;
     flex-direction: column;
@@ -181,7 +191,7 @@
     right: 0;
 }
 .hero-banner .banner-card-title {
-    color: #fff;
+    color: var(--color-banner-overlay-text);
     display: -webkit-box;
     font-size: var(--font-size-sm);
     font-weight: 700;
@@ -191,7 +201,7 @@
     -webkit-line-clamp: 2;
 }
 .hero-banner .banner-card-views {
-    color: rgba(255,255,255,0.72);
+    color: var(--color-banner-overlay-text-muted);
     font-size: var(--font-size-xs);
 }
 
@@ -261,11 +271,19 @@
 }
 
 /* ===== Search Modal ===== */
+.search-modal {
+    overscroll-behavior: contain;
+    transition: background 0.3s;
+}
 .search-modal.active {
     display: block !important;
 }
 
 /* ===== Mobile Drawer ===== */
+.mobile-drawer {
+    overscroll-behavior: contain;
+    transition: background 0.3s;
+}
 .mobile-drawer.open {
     display: block !important;
 }

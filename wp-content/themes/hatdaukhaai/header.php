@@ -7,6 +7,9 @@
 <head>
     <meta charset="<?php bloginfo('charset'); ?>">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+    <script>
+        (function(){var t='light';try{var s=localStorage.getItem('hdk-theme');t=s||(window.matchMedia('(prefers-color-scheme:dark)').matches?'dark':'light')}catch(e){}try{document.documentElement.setAttribute('data-theme',t)}catch(e){}})();
+    </script>
     <?php wp_head(); ?>
 </head>
 <body <?php body_class(); ?>>
@@ -27,7 +30,8 @@
         </nav>
 
         <div style="display:flex;align-items:center;gap:8px;">
-            <button class="btn btn-ghost btn-sm search-toggle" onclick="document.getElementById('search-modal').classList.toggle('active')" aria-label="Tìm kiếm" style="min-height:var(--touch-target);min-width:var(--touch-target);">
+            <button type="button" class="btn btn-ghost btn-sm theme-toggle" id="theme-toggle" aria-label="Chuyển chế độ sáng/tối" aria-pressed="false" style="min-height:var(--touch-target);min-width:var(--touch-target);font-size:1.15rem;">☀</button>
+            <button type="button" class="btn btn-ghost btn-sm search-toggle" onclick="document.getElementById('search-modal').classList.toggle('active')" aria-label="Tìm kiếm" style="min-height:var(--touch-target);min-width:var(--touch-target);">
                 🔍
             </button>
             <?php if (is_user_logged_in()): ?>
@@ -35,7 +39,7 @@
             <?php else: ?>
                 <a href="<?php echo wp_login_url(); ?>" class="btn btn-primary btn-sm">Đăng nhập</a>
             <?php endif; ?>
-            <button class="btn btn-ghost btn-sm mobile-menu-toggle" onclick="document.getElementById('mobile-drawer').classList.toggle('open')" style="display:none;min-height:var(--touch-target);">
+            <button type="button" class="btn btn-ghost btn-sm mobile-menu-toggle" onclick="document.getElementById('mobile-drawer').classList.toggle('open')" style="display:none;min-height:var(--touch-target);">
                 ☰
             </button>
         </div>
@@ -43,14 +47,14 @@
 </header>
 
 <!-- Search Modal -->
-<div id="search-modal" class="search-modal" style="display:none;position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,0.5);z-index:200;" x-data="{q:'',results:{},loading:false}">
+<div id="search-modal" class="search-modal" style="display:none;position:fixed;top:0;left:0;right:0;bottom:0;background:var(--color-overlay);z-index:200;" x-data="{q:'',results:{},loading:false}">
     <div style="max-width:600px;margin:80px auto 0;background:var(--color-bg);border-radius:var(--radius-lg);padding:24px;">
         <div style="display:flex;gap:8px;margin-bottom:16px;">
-            <input type="text" x-model="q" placeholder="Tìm truyện, tác giả, thể loại..." style="flex:1;padding:10px 16px;border:2px solid var(--color-border);border-radius:var(--radius-pill);font-family:var(--font-family);font-size:var(--font-size-base);min-height:var(--touch-target);"
+            <input type="text" x-model="q" name="search" aria-label="Tìm truyện" autocomplete="off" placeholder="Tìm truyện, tác giả, thể loại…" style="flex:1;padding:10px 16px;border:2px solid var(--color-input-border);background:var(--color-input-bg);color:var(--color-text-primary);border-radius:var(--radius-pill);font-family:var(--font-family);font-size:var(--font-size-base);min-height:var(--touch-target);"
                 @input.debounce.300ms="if(q.length>=2){loading=true;fetch('/wp-json/hdk/v1/search?q='+encodeURIComponent(q)).then(r=>r.json()).then(d=>{results=d;loading=false})}">
-            <button class="btn btn-ghost btn-sm search-toggle" onclick="document.getElementById('search-modal').classList.remove('active')" style="min-height:var(--touch-target);">✕</button>
+            <button type="button" class="btn btn-ghost btn-sm search-toggle" onclick="document.getElementById('search-modal').classList.remove('active')" aria-label="Đóng tìm kiếm" style="min-height:var(--touch-target);">✕</button>
         </div>
-        <div x-show="loading" style="text-align:center;padding:20px;">Đang tìm...</div>
+        <div x-show="loading" aria-live="polite" style="text-align:center;padding:20px;">Đang tìm…</div>
         <div x-show="!loading && results.stories && results.stories.length">
             <div style="font-weight:600;margin-bottom:8px;">Truyện</div>
             <template x-for="s in results.stories">
@@ -67,11 +71,11 @@
 </div>
 
 <!-- Mobile Drawer -->
-<div id="mobile-drawer" class="mobile-drawer" style="position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,0.5);z-index:150;display:none;">
+<div id="mobile-drawer" class="mobile-drawer" style="position:fixed;top:0;left:0;right:0;bottom:0;background:var(--color-overlay);z-index:150;display:none;">
     <div style="background:var(--color-bg);width:280px;height:100%;padding:20px;overflow-y:auto;">
         <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:20px;">
             <span style="font-weight:700;">Menu</span>
-            <button class="btn btn-ghost btn-sm" onclick="document.getElementById('mobile-drawer').classList.remove('open')">✕</button>
+            <button type="button" class="btn btn-ghost btn-sm" onclick="document.getElementById('mobile-drawer').classList.remove('open')" aria-label="Đóng menu">✕</button>
         </div>
         <nav style="display:flex;flex-direction:column;gap:4px;">
             <a href="<?php echo home_url('/'); ?>" class="btn btn-ghost">Trang chủ</a>

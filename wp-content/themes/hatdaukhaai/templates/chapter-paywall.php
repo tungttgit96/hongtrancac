@@ -47,24 +47,24 @@ get_header();
             <!-- Preview: first 200 chars -->
             <div style="background:var(--color-bg);border-radius:var(--radius-md);padding:20px;border:1px solid var(--color-border);text-align:left;margin-bottom:24px;max-height:200px;overflow:hidden;position:relative;">
                 <div style="line-height:2;font-size:var(--font-size-base);opacity:0.6;">
-                    <?php echo wp_trim_words(strip_tags($chapter->content ?? ''), 50, '...'); ?>
+                    <?php echo wp_trim_words(strip_tags($chapter->content ?? ''), 50, '…'); ?>
                 </div>
                 <div style="position:absolute;bottom:0;left:0;right:0;height:80px;background:linear-gradient(transparent, var(--color-bg));"></div>
             </div>
 
             <div style="display:flex;gap:12px;justify-content:center;flex-wrap:wrap;align-items:center;" id="purchase-buttons">
-                <button class="btn btn-primary" onclick="purchaseChapter(<?php echo $story->id; ?>, <?php echo $chapter_number; ?>)">
+                <button type="button" class="btn btn-primary" onclick="purchaseChapter(<?php echo $story->id; ?>, <?php echo $chapter_number; ?>)">
                     🔑 Mua chương này (<?php echo $chapter_price; ?> hạt)
                 </button>
                 <?php if ($full_price > 0): ?>
-                <button class="btn btn-outline" onclick="purchaseFull(<?php echo $story->id; ?>)">
+                <button type="button" class="btn btn-outline" onclick="purchaseFull(<?php echo $story->id; ?>)">
                     📚 Mở toàn bộ (<?php echo $full_price; ?> hạt)
                 </button>
                 <?php endif; ?>
             </div>
 
             <div style="margin-top:12px;font-size:var(--font-size-sm);color:var(--color-text-muted);" id="credits-display">
-                Đang kiểm tra số dư...
+                Đang kiểm tra số dư…
             </div>
             <div id="purchase-message" style="margin-top:8px;font-weight:600;"></div>
         </div>
@@ -88,7 +88,7 @@ fetch('/wp-json/hdk/v1/credits')
 function purchaseChapter(sid, cnum) {
     var btn = event.target;
     btn.disabled = true;
-    btn.textContent = 'Đang xử lý...';
+    btn.textContent = 'Đang xử lý…';
     document.getElementById('purchase-message').textContent = '';
 
     fetch('/wp-json/hdk/v1/purchase/chapter', {
@@ -99,7 +99,7 @@ function purchaseChapter(sid, cnum) {
     .then(r => r.json())
     .then(d => {
         if (d.success) {
-            document.getElementById('purchase-message').innerHTML = '<span style="color:#10B981;">Mua thành công! Đang chuyển trang...</span>';
+            document.getElementById('purchase-message').innerHTML = '<span style="color:#10B981;">Mua thành công! Đang chuyển trang…</span>';
             setTimeout(function(){ location.reload(); }, 800);
         } else if (d.code === 'insufficient_credits') {
             document.getElementById('purchase-message').innerHTML = '<span style="color:#EF4444;">' + d.message + '</span>';
@@ -117,7 +117,7 @@ function purchaseChapter(sid, cnum) {
 function purchaseFull(sid) {
     var btn = event.target;
     btn.disabled = true;
-    btn.textContent = 'Đang xử lý...';
+    btn.textContent = 'Đang xử lý…';
 
     fetch('/wp-json/hdk/v1/purchase/full', {
         method: 'POST',
@@ -127,7 +127,7 @@ function purchaseFull(sid) {
     .then(r => r.json())
     .then(d => {
         if (d.success) {
-            document.getElementById('purchase-message').innerHTML = '<span style="color:#10B981;">Mua full thành công! Đang chuyển trang...</span>';
+            document.getElementById('purchase-message').innerHTML = '<span style="color:#10B981;">Mua full thành công! Đang chuyển trang…</span>';
             setTimeout(function(){ location.reload(); }, 800);
         } else if (d.code === 'insufficient_credits') {
             document.getElementById('purchase-message').innerHTML = '<span style="color:#EF4444;">' + d.message + '</span>';

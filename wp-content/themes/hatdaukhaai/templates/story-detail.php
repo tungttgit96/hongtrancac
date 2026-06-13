@@ -79,7 +79,7 @@ get_header();
                 <?php if ($chapters): ?>
                     <a href="/<?php echo $story->slug; ?>?chuong=<?php echo $chapters[count($chapters)-1]->chapter_number; ?>" class="btn btn-outline">📄 Chương mới nhất</a>
                 <?php endif; ?>
-                <button class="btn btn-outline favorite-btn" data-story-id="<?php echo $story->id; ?>" data-favorited="<?php echo $is_favorited ? '1' : '0'; ?>">
+                <button type="button" class="btn btn-outline favorite-btn" data-story-id="<?php echo $story->id; ?>" data-favorited="<?php echo $is_favorited ? '1' : '0'; ?>">
                     <?php echo $is_favorited ? '❤️ Bỏ yêu thích' : '🤍 Yêu thích'; ?>
                 </button>
             </div>
@@ -108,7 +108,7 @@ get_header();
             <?php if ($chapter_def_price > 0): ?> · 💎 <?php echo $chapter_def_price; ?> hạt / chương<?php endif; ?>
             <?php if ($full_price > 0): ?> · 📚 Mở full: <?php echo $full_price; ?> hạt
                 <?php if ($user_id): ?>
-                <button onclick="purchaseFullStory(<?php echo $story->id; ?>)" style="margin-left:8px;font-size:12px;padding:2px 10px;border-radius:12px;border:1px solid var(--color-primary);background:var(--color-primary);color:#fff;cursor:pointer;">Mua full</button>
+                <button type="button" onclick="purchaseFullStory(<?php echo $story->id; ?>)" style="margin-left:8px;font-size:12px;padding:2px 10px;border-radius:12px;border:1px solid var(--color-primary);background:var(--color-primary);color:#fff;cursor:pointer;">Mua full</button>
                 <?php endif; ?>
             <?php endif; ?>
             <span id="purchase-msg" style="margin-left:8px;font-weight:600;"></span>
@@ -130,7 +130,7 @@ get_header();
                         <?php echo esc_html($chap->title); ?>
                     </a>
                     <?php if ($locked && !$purchased && $user_id): ?>
-                        <button onclick="event.preventDefault();purchaseChapterInline(<?php echo $story->id; ?>, <?php echo $chap->chapter_number; ?>, this)"
+                        <button type="button" onclick="event.preventDefault();purchaseChapterInline(<?php echo $story->id; ?>, <?php echo $chap->chapter_number; ?>, this)"
                             style="margin-left:8px;font-size:11px;padding:3px 10px;border-radius:12px;border:1px solid var(--color-primary);background:transparent;color:var(--color-primary);cursor:pointer;white-space:nowrap;">
                             <?php echo $chap_price; ?> 💎
                         </button>
@@ -149,7 +149,7 @@ get_header();
         <h2 style="font-size:var(--font-size-lg);font-weight:600;margin-bottom:16px;">Bình luận</h2>
         <?php if (is_user_logged_in()): ?>
             <form class="comment-form" style="margin-bottom:16px;" data-story-id="<?php echo $story->id; ?>">
-                <textarea placeholder="Viết bình luận..." style="width:100%;padding:12px;border:2px solid var(--color-border);border-radius:var(--radius-md);font-family:var(--font-family);min-height:80px;resize:vertical;"></textarea>
+                <textarea name="comment" aria-label="Viết bình luận" autocomplete="off" placeholder="Viết bình luận…" style="width:100%;padding:12px;border:2px solid var(--color-input-border);background:var(--color-input-bg);color:var(--color-text-primary);border-radius:var(--radius-md);font-family:var(--font-family);min-height:80px;resize:vertical;"></textarea>
                 <button type="submit" class="btn btn-primary btn-sm" style="margin-top:8px;">Gửi bình luận</button>
             </form>
         <?php else: ?>
@@ -179,7 +179,7 @@ get_header();
 <script>
 function purchaseChapterInline(storyId, chapterNum, btn) {
     btn.disabled = true;
-    btn.textContent = '...';
+    btn.textContent = '…';
     var msg = document.getElementById('purchase-msg');
     fetch('/wp-json/hdk/v1/purchase/chapter', {
         method: 'POST',
@@ -198,19 +198,19 @@ function purchaseChapterInline(storyId, chapterNum, btn) {
         } else if (d.code === 'insufficient_credits') {
             if (msg) msg.innerHTML = '<span style="color:#EF4444;">' + d.message + '</span>';
             btn.disabled = false;
-            btn.textContent = btn.textContent.replace('...', '💎');
+            btn.textContent = btn.textContent.replace('…', '💎');
         }
     })
     .catch(function() {
         btn.disabled = false;
-        btn.textContent = btn.textContent.replace('...', '💎');
+        btn.textContent = btn.textContent.replace('…', '💎');
     });
 }
 
 function purchaseFullStory(storyId) {
     if (!confirm('Mở toàn bộ truyện với giá <?php echo $full_price; ?> hạt?')) return;
     var msg = document.getElementById('purchase-msg');
-    if (msg) msg.innerHTML = 'Đang xử lý...';
+    if (msg) msg.innerHTML = 'Đang xử lý…';
     fetch('/wp-json/hdk/v1/purchase/full', {
         method: 'POST',
         headers: {'Content-Type': 'application/json'},

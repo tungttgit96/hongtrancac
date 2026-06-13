@@ -103,12 +103,12 @@ function hdk_get_hero_section() {
             $story->cover_url = $placeholder;
         }
         $story->url = home_url('/' . ltrim($story->slug ?? '', '/'));
-        $story->summary_trimmed = wp_trim_words($story->summary ?? '', 30, '...');
+        $story->summary_trimmed = wp_trim_words($story->summary ?? '', 30, '…');
     }
 
     if (empty($stories)) {
         ?>
-        <section class="hero" style="background:linear-gradient(135deg, var(--color-hero-bg), #5B1500); color:#FFF; padding:48px 0;">
+        <section class="hero" style="background:linear-gradient(135deg, var(--color-hero-bg), #5B1500); color:var(--color-banner-text); padding:48px 0;">
             <div class="container">
                 <div class="hero-content" style="display:flex;align-items:center;gap:32px;flex-wrap:wrap;">
                     <div class="hero-text" style="flex:1;min-width:280px;">
@@ -117,8 +117,8 @@ function hdk_get_hero_section() {
                             Nền tảng đọc truyện chữ online. Hàng ngàn truyện hay, cập nhật liên tục mỗi ngày.
                         </p>
                         <div style="display:flex;gap:12px;flex-wrap:wrap;">
-                            <a href="/danh-sach-truyen" class="btn btn-primary" style="background:#54CFD6;color:#FFF">Khám phá truyện</a>
-                            <a href="/bang-xep-hang" class="btn btn-outline" style="border-color:#FFF;color:#FFF">Bảng xếp hạng</a>
+                            <a href="/danh-sach-truyen" class="btn btn-primary">Khám phá truyện</a>
+                            <a href="/bang-xep-hang" class="btn btn-outline" style="border-color:var(--color-banner-text);color:var(--color-banner-text)">Bảng xếp hạng</a>
                         </div>
                     </div>
                     <div class="hero-visual" style="flex:0 0 240px;text-align:center;">
