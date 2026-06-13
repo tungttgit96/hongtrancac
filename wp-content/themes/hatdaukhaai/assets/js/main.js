@@ -432,4 +432,86 @@
         }
     }
 
+    // ===== Notifications =====
+    var notifBell = document.getElementById('notif-bell');
+    if (notifBell) {
+        function updateUnreadCount() {
+            fetch('/wp-json/hdk/v1/notifications/unread-count')
+                .then(function(r) { return r.json(); })
+                .then(function(d) {
+                    var badge = document.getElementById('notif-badge');
+                    if (!badge) return;
+                    if (d.count > 0) {
+                        badge.style.display = 'inline-block';
+                        badge.textContent = d.count > 99 ? '99+' : d.count;
+                    } else {
+                        badge.style.display = 'none';
+                    }
+                })
+                .catch(function(){});
+        }
+
+        updateUnreadCount();
+        setInterval(updateUnreadCount, 30000); // Poll every 30s
+
+        // Dropdown toggle
+        window.toggleNotifDropdown = function() {
+            var dd = document.getElementById('notif-dropdown');
+            var isOpen = dd.style.display === 'block';
+            dd.style.display = isOpen ? 'none' : 'block';
+            if (!isOpen && !dd.dataset.loaded) loadNotifDropdown();
+        };
+
+        document.addEventListener('click', function(e) {
+            var dd = document.getElementById('notif-dropdown');
+            var bell = document.getElementById('notif-bell');
+            if (dd && bell && !bell.contains(e.target) && !dd.contains(e.target)) {
+                dd.style.display = 'none';
+            }
+        });
+
+        function loadNotifDropdown() {
+            var dd = document.getElementById('notif-dropdown');
+            var list = document.getElementById('notif-list');
+            fetch('/wp-json/hdk/v1/notifications?page=1')
+                .then(function(r) { return r.json(); })
+                .then(function(d) {
+                    var notifs = d.rows || [];
+                    if (!notifs.length) {
+                        list.innerHTML = '<div style="padding:16px;text-align:center;color:var(--color-text-muted);">Không có thông báo</div>';
+                    } else {
+                        var html = '';
+                        notifs.forEach(function(n) {
+                            var bg = n.is_read == 1 ? 'var(--color-bg)' : 'var(--color-primary-light)';
+                            html += '<a href="' + (n.link || '#') + '" class="notif-item" style="display:flex;gap:12px;padding:10px 16px;background:' + bg + ';text-decoration:none;color:var(--color-text-primary);border-bottom:1px solid var(--color-border-light);">' +
+                                '<div style="flex:1;">' +
+                                '<div style="font-weight:' + (n.is_read == 1 ? '400' : '600') + ';margin-bottom:2px;">' + escapeHtml(n.title) + '</div>' +
+                                '<div style="color:var(--color-text-muted);font-size:12px;">' + escapeHtml(n.message) + '</div>' +
+                                '<div style="color:var(--color-text-muted);font-size:11px;margin-top:2px;">' + n.created_at.substr(11,5) + ' ' + n.created_at.substr(0,10) + '</div>' +
+                                '</div>' +
+                                (n.is_read == 1 ? '' : '<span style="width:8px;height:8px;border-radius:50%;background:var(--color-primary);flex-shrink:0;margin-top:4px;"></span>') +
+                                '</a>';
+                        });
+                        list.innerHTML = html;
+                    }
+                    dd.dataset.loaded = '1';
+                })
+                .catch(function() {
+                    list.innerHTML = '<div style="padding:16px;text-align:center;color:var(--color-text-muted);">Lỗi tải thông báo</div>';
+                });
+        }
+
+        window.markAllRead = function() {
+            fetch('/wp-json/hdk/v1/notifications/read', { method: 'POST', body: '{}' })
+                .then(function() {
+                    updateUnreadCount();
+                    var dd = document.getElementById('notif-dropdown');
+                    if (dd) dd.dataset.loaded = '';
+                    var list = document.getElementById('notif-list');
+                    if (list) list.innerHTML = '<div style="padding:16px;text-align:center;color:var(--color-text-muted);">Đã đọc tất cả</div>';
+                    location.reload();
+                });
+        };
+    }
+
 })();

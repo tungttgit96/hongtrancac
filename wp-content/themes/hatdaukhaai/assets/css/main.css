@@ -597,3 +597,27 @@ article p:last-child {
         display: none !important;
     }
 }
+
+/* ===== Notification Bell ===== */
+#notif-bell {
+    position: relative;
+}
+
+#notif-badge {
+    pointer-events: none;
+}
+
+.notif-item:hover {
+    background: var(--color-bg-secondary) !important;
+}
+
+@media (max-width: 768px) {
+    #notif-dropdown {
+        position: fixed;
+        top: var(--header-height);
+        right: 4px;
+        left: 4px;
+        min-width: auto;
+        max-width: none;
+    }
+}
