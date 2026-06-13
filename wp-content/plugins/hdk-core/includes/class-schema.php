@@ -214,6 +214,17 @@ class HDK_Schema {
             INDEX idx_user_story (user_id, story_id)
         ) $charset;";
 
+        // Reading History (append-only log of completed chapter reads)
+        $sql[] = "CREATE TABLE IF NOT EXISTS {$wpdb->prefix}hdk_reading_history (
+            id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+            user_id BIGINT UNSIGNED NOT NULL,
+            story_id BIGINT UNSIGNED NOT NULL,
+            chapter_number INT UNSIGNED NOT NULL,
+            created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+            INDEX idx_user_history (user_id, created_at),
+            INDEX idx_user_story (user_id, story_id)
+        ) $charset;";
+
         foreach ($sql as $query) {
             dbDelta($query);
         }
