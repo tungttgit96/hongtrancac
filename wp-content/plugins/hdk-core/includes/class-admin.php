@@ -21,6 +21,7 @@ class HDK_Admin {
         add_submenu_page('hdk-stories', 'Lịch sử giao dịch', 'Lịch sử GD', 'manage_options', 'hdk-transactions', [__CLASS__, 'transactions_page']);
         add_submenu_page('hdk-stories', 'Bình luận', 'Bình luận', 'moderate_comments', 'hdk-comments', [__CLASS__, 'comments_page']);
         add_submenu_page('hdk-stories', 'Báo lỗi', 'Báo lỗi', 'edit_stories', 'hdk-reports', [__CLASS__, 'reports_page']);
+        add_submenu_page('hdk-stories', 'Thống kê', 'Thống kê', 'manage_options', 'hdk-stats', [__CLASS__, 'stats_page']);
 
         add_action('admin_init', function() {
             $admin = get_role('administrator');
@@ -1717,6 +1718,137 @@ Nội dung chương 2 viết ở đây..."
                     <?php endfor; ?>
                 </div></div>
             <?php endif; ?>
+        </div>
+        <?php
+    }
+
+    public static function stats_page() {
+        global $wpdb;
+        $stories_table = HDK_DB::table('hdk_stories');
+        $chapters_table = HDK_DB::table('hdk_chapters');
+        $stats_table = HDK_DB::table('hdk_daily_story_stats');
+        $users_table = $wpdb->users;
+        $purch_table = HDK_DB::table('hdk_purchased_chapters');
+
+        // Totals
+        $total_stories = $wpdb->get_var("SELECT COUNT(*) FROM $stories_table");
+        $total_chapters = $wpdb->get_var("SELECT COUNT(*) FROM $chapters_table WHERE status = 'published'");
+        $total_views = $wpdb->get_var("SELECT SUM(total_views) FROM $stories_table");
+        $total_users = $wpdb->get_var("SELECT COUNT(*) FROM $users_table");
+        $total_credits = $wpdb->get_var("SELECT SUM(credits_spent) FROM $purch_table");
+        $total_favorites = $wpdb->get_var("SELECT SUM(total_favorites) FROM $stories_table");
+
+        // Today views
+        $today = current_time('Y-m-d');
+        $today_views = $wpdb->get_var($wpdb->prepare("SELECT SUM(daily_views) FROM $stats_table WHERE stat_date = %s", $today));
+
+        // Top 10 stories today
+        $top_today = $wpdb->get_results($wpdb->prepare(
+            "SELECT s.title, s.slug, ds.daily_views
+             FROM $stats_table ds JOIN $stories_table s ON ds.story_id = s.id
+             WHERE ds.stat_date = %s ORDER BY ds.daily_views DESC LIMIT 10", $today
+        ));
+
+        // Top 5 purchased stories
+        $top_purchased = $wpdb->get_results(
+            "SELECT s.title, s.slug, COUNT(*) as cnt FROM $purch_table p
+             JOIN $stories_table s ON p.story_id = s.id
+             GROUP BY p.story_id ORDER BY cnt DESC LIMIT 5"
+        );
+
+        // Recent 7 days view trend
+        $trend = $wpdb->get_results(
+            "SELECT stat_date, SUM(daily_views) as views FROM $stats_table
+             WHERE stat_date >= DATE_SUB(CURDATE(), INTERVAL 7 DAY)
+             GROUP BY stat_date ORDER BY stat_date ASC"
+        );
+        ?>
+        <div class="wrap">
+            <h1>Thống kê vận hành</h1>
+            <hr class="wp-header-end">
+
+            <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(160px,1fr));gap:16px;margin-bottom:24px;">
+                <div class="card" style="padding:20px;text-align:center;">
+                    <div style="font-size:32px;font-weight:700;color:var(--color-primary);"><?php echo number_format((int)$total_stories); ?></div>
+                    <div style="color:var(--color-text-muted);">Truyện</div>
+                </div>
+                <div class="card" style="padding:20px;text-align:center;">
+                    <div style="font-size:32px;font-weight:700;color:var(--color-primary);"><?php echo number_format((int)$total_chapters); ?></div>
+                    <div style="color:var(--color-text-muted);">Chương</div>
+                </div>
+                <div class="card" style="padding:20px;text-align:center;">
+                    <div style="font-size:32px;font-weight:700;color:var(--color-primary);"><?php echo number_format((int)$total_views); ?></div>
+                    <div style="color:var(--color-text-muted);">Tổng lượt xem</div>
+                </div>
+                <div class="card" style="padding:20px;text-align:center;">
+                    <div style="font-size:32px;font-weight:700;color:var(--color-primary);"><?php echo number_format((int)$total_users); ?></div>
+                    <div style="color:var(--color-text-muted);">Người dùng</div>
+                </div>
+                <div class="card" style="padding:20px;text-align:center;">
+                    <div style="font-size:32px;font-weight:700;color:var(--color-primary);"><?php echo number_format((int)$today_views); ?></div>
+                    <div style="color:var(--color-text-muted);">Lượt xem hôm nay</div>
+                </div>
+                <div class="card" style="padding:20px;text-align:center;">
+                    <div style="font-size:32px;font-weight:700;color:var(--color-primary);">💎 <?php echo number_format((int)$total_credits); ?></div>
+                    <div style="color:var(--color-text-muted);">Hạt đã tiêu</div>
+                </div>
+            </div>
+
+            <!-- 7-day trend -->
+            <?php if ($trend): ?>
+            <div class="card" style="padding:20px;margin-bottom:24px;">
+                <h3>Lượt xem 7 ngày qua</h3>
+                <div style="display:flex;gap:4px;align-items:flex-end;height:150px;">
+                    <?php 
+                    $max_val = max(array_column($trend, 'views')) ?: 1;
+                    foreach ($trend as $day): 
+                        $h = max(4, (int)($day->views / $max_val * 140));
+                    ?>
+                        <div style="flex:1;display:flex;flex-direction:column;align-items:center;justify-content:flex-end;">
+                            <div style="font-size:10px;margin-bottom:2px;"><?php echo number_format((int)$day->views); ?></div>
+                            <div style="width:100%;max-width:40px;height:<?php echo $h; ?>px;background:var(--color-primary);border-radius:4px 4px 0 0;"></div>
+                            <div style="font-size:10px;color:var(--color-text-muted);margin-top:4px;"><?php echo date('d/m', strtotime($day->stat_date)); ?></div>
+                        </div>
+                    <?php endforeach; ?>
+                </div>
+            </div>
+            <?php endif; ?>
+
+            <div style="display:flex;gap:24px;flex-wrap:wrap;">
+                <!-- Top stories today -->
+                <div class="card" style="flex:1;min-width:300px;padding:20px;">
+                    <h3>Top truyện hôm nay</h3>
+                    <table class="wp-list-table widefat fixed striped">
+                        <thead><tr><th>#</th><th>Truyện</th><th>Views</th></tr></thead>
+                        <tbody>
+                        <?php foreach ($top_today as $i => $s): ?>
+                            <tr>
+                                <td><?php echo $i+1; ?></td>
+                                <td><a href="<?php echo home_url('/'.$s->slug); ?>" target="_blank"><?php echo esc_html($s->title); ?></a></td>
+                                <td><?php echo number_format((int)$s->daily_views); ?></td>
+                            </tr>
+                        <?php endforeach; ?>
+                        </tbody>
+                    </table>
+                </div>
+
+                <!-- Top purchased -->
+                <div class="card" style="flex:1;min-width:300px;padding:20px;">
+                    <h3>Top truyện bán chạy</h3>
+                    <table class="wp-list-table widefat fixed striped">
+                        <thead><tr><th>#</th><th>Truyện</th><th>Lượt mua</th></tr></thead>
+                        <tbody>
+                        <?php foreach ($top_purchased as $i => $p): ?>
+                            <tr>
+                                <td><?php echo $i+1; ?></td>
+                                <td><a href="<?php echo home_url('/'.$p->slug); ?>" target="_blank"><?php echo esc_html($p->title); ?></a></td>
+                                <td><?php echo number_format((int)$p->cnt); ?></td>
+                            </tr>
+                        <?php endforeach; ?>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
         </div>
         <?php
     }
