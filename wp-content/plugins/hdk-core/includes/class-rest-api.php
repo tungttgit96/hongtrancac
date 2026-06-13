@@ -82,6 +82,24 @@ class HDK_REST_API {
             'callback' => [__CLASS__, 'get_packages'],
             'permission_callback' => '__return_true',
         ]);
+
+        register_rest_route('hdk/v1', '/chapters/(?P<story_id>\d+)', [
+            'methods' => 'GET',
+            'callback' => [__CLASS__, 'get_chapters'],
+            'permission_callback' => '__return_true',
+        ]);
+
+        register_rest_route('hdk/v1', '/reader-prefs', [
+            'methods' => 'PATCH',
+            'callback' => [__CLASS__, 'save_reader_prefs'],
+            'permission_callback' => function() { return is_user_logged_in(); },
+        ]);
+
+        register_rest_route('hdk/v1', '/reader-prefs', [
+            'methods' => 'GET',
+            'callback' => [__CLASS__, 'get_reader_prefs'],
+            'permission_callback' => function() { return is_user_logged_in(); },
+        ]);
     }
 
     public static function search($request) {
@@ -380,5 +398,48 @@ class HDK_REST_API {
     public static function get_packages($request) {
         $result = HDK_DB::get_credit_packages(true);
         return rest_ensure_response(['packages' => $result]);
+    }
+
+    public static function get_chapters($request) {
+        $story_id = (int)$request->get_param('story_id');
+        $chapters = HDK_DB::get_chapters_toc($story_id);
+        $user_id = get_current_user_id();
+        
+        if ($user_id) {
+            global $wpdb;
+            $purchased = $wpdb->get_results($wpdb->prepare(
+                "SELECT chapter_number, is_full FROM " . HDK_DB::table('hdk_purchased_chapters') . " WHERE user_id = %d AND story_id = %d",
+                $user_id, $story_id
+            ));
+            $purchased_map = [];
+            $has_full = false;
+            foreach ($purchased as $p) {
+                if ($p->is_full) $has_full = true;
+                else $purchased_map[$p->chapter_number] = true;
+            }
+            foreach ($chapters as $ch) {
+                $ch->is_purchased = $has_full || isset($purchased_map[$ch->chapter_number]);
+            }
+        }
+        
+        return rest_ensure_response(['chapters' => $chapters]);
+    }
+
+    public static function get_reader_prefs($request) {
+        $prefs = HDK_DB::get_reader_prefs(get_current_user_id());
+        return rest_ensure_response(['prefs' => $prefs]);
+    }
+
+    public static function save_reader_prefs($request) {
+        $body = json_decode($request->get_body(), true) ?? [];
+        $data = [];
+        if (isset($body['font_size'])) $data['font_size'] = max(16, min(28, (int)$body['font_size']));
+        if (isset($body['font_family'])) $data['font_family'] = sanitize_text_field($body['font_family']);
+        if (isset($body['line_height'])) $data['line_height'] = (float)$body['line_height'];
+        if (isset($body['theme'])) $data['theme'] = sanitize_text_field($body['theme']);
+        if (isset($body['reading_width'])) $data['reading_width'] = sanitize_text_field($body['reading_width']);
+        
+        HDK_DB::save_reader_prefs(get_current_user_id(), $data);
+        return rest_ensure_response(['saved' => true]);
     }
 }
