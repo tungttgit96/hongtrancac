@@ -225,6 +225,35 @@ class HDK_Schema {
             INDEX idx_user_story (user_id, story_id)
         ) $charset;";
 
+        // Credit Transactions (audit log for all credit movements)
+        $sql[] = "CREATE TABLE IF NOT EXISTS {$wpdb->prefix}hdk_credit_transactions (
+            id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+            user_id BIGINT UNSIGNED NOT NULL,
+            type ENUM('earn','spend','daily','admin_add','admin_deduct','refund') NOT NULL,
+            credits INT NOT NULL,
+            balance_after INT UNSIGNED NOT NULL,
+            source_type VARCHAR(50),
+            source_id BIGINT UNSIGNED NULL,
+            note VARCHAR(500),
+            status ENUM('completed','pending','failed') DEFAULT 'completed',
+            created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+            INDEX idx_user_created (user_id, created_at),
+            INDEX idx_type (type)
+        ) $charset;";
+
+        // Credit Packages (configurable bundles for purchase)
+        $sql[] = "CREATE TABLE IF NOT EXISTS {$wpdb->prefix}hdk_credit_packages (
+            id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+            name VARCHAR(255) NOT NULL,
+            credits INT UNSIGNED NOT NULL,
+            price_vnd INT UNSIGNED NOT NULL,
+            bonus_credits INT UNSIGNED DEFAULT 0,
+            is_active TINYINT(1) DEFAULT 1,
+            sort_order INT DEFAULT 0,
+            created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+            updated_at DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
+        ) $charset;";
+
         foreach ($sql as $query) {
             dbDelta($query);
         }
@@ -235,6 +264,7 @@ class HDK_Schema {
         self::add_column_if_not_exists("{$wpdb->prefix}hdk_stories", 'full_price', "INT UNSIGNED DEFAULT 0 AFTER chapter_price");
         self::add_column_if_not_exists("{$wpdb->prefix}hdk_chapters", 'price', "INT UNSIGNED DEFAULT 0 AFTER word_count");
         self::add_column_if_not_exists("{$wpdb->prefix}hdk_chapters", 'scheduled_at', "DATETIME NULL AFTER price");
+        self::add_column_if_not_exists("{$wpdb->prefix}hdk_user_credits", 'last_daily_at', "DATETIME NULL AFTER total_spent");
 
         // Add 'scheduled' to chapters status ENUM for existing installs
         $wpdb->query("ALTER TABLE {$wpdb->prefix}hdk_chapters MODIFY COLUMN status ENUM('draft','published','scheduled') DEFAULT 'draft'");
