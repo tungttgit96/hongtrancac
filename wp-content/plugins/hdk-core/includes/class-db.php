@@ -460,4 +460,196 @@ class HDK_DB {
             $user_id
         ));
     }
+
+    public static function log_credit_transaction($user_id, $type, $credits, $source_type, $source_id, $note, $status = 'completed') {
+        global $wpdb;
+        $credit_table = self::table('hdk_user_credits');
+        $trans_table = self::table('hdk_credit_transactions');
+
+        $current = (int)$wpdb->get_var($wpdb->prepare("SELECT credits FROM $credit_table WHERE user_id = %d", $user_id));
+        if ($current === null && !$wpdb->last_error) {
+            $wpdb->insert($credit_table, ['user_id' => $user_id, 'credits' => 0]);
+            $current = 0;
+        }
+        $balance_after = $current + $credits;
+
+        $wpdb->insert($trans_table, [
+            'user_id' => $user_id,
+            'type' => $type,
+            'credits' => $credits,
+            'balance_after' => $balance_after,
+            'source_type' => $source_type,
+            'source_id' => $source_id,
+            'note' => $note,
+            'status' => $status,
+            'created_at' => current_time('mysql'),
+        ]);
+    }
+
+    public static function get_credit_transactions($user_id, $page = 1, $per_page = 20) {
+        global $wpdb;
+        $table = self::table('hdk_credit_transactions');
+        $offset = ($page - 1) * $per_page;
+
+        $total = $wpdb->get_var($wpdb->prepare("SELECT COUNT(*) FROM $table WHERE user_id = %d", $user_id));
+        $rows = $wpdb->get_results($wpdb->prepare(
+            "SELECT * FROM $table WHERE user_id = %d ORDER BY created_at DESC LIMIT %d OFFSET %d",
+            $user_id, $per_page, $offset
+        ));
+
+        return ['rows' => $rows, 'total' => (int)$total, 'pages' => (int)ceil($total / $per_page)];
+    }
+
+    public static function get_credit_packages($active_only = false) {
+        global $wpdb;
+        $table = self::table('hdk_credit_packages');
+        $where = $active_only ? "WHERE is_active = 1" : "";
+        return $wpdb->get_results("SELECT * FROM $table $where ORDER BY sort_order ASC");
+    }
+
+    public static function create_credit_package($data) {
+        global $wpdb;
+        $wpdb->insert(self::table('hdk_credit_packages'), array_merge($data, [
+            'created_at' => current_time('mysql'),
+            'updated_at' => current_time('mysql'),
+        ]));
+        return $wpdb->insert_id;
+    }
+
+    public static function update_credit_package($id, $data) {
+        global $wpdb;
+        $data['updated_at'] = current_time('mysql');
+        $wpdb->update(self::table('hdk_credit_packages'), $data, ['id' => $id]);
+    }
+
+    public static function delete_credit_package($id) {
+        global $wpdb;
+        $wpdb->delete(self::table('hdk_credit_packages'), ['id' => $id]);
+    }
+
+    public static function get_user_credit_stats($user_id) {
+        global $wpdb;
+        $table = self::table('hdk_user_credits');
+        $row = $wpdb->get_row($wpdb->prepare("SELECT credits, total_earned, total_spent FROM $table WHERE user_id = %d", $user_id));
+        if (!$row) {
+            $wpdb->insert($table, ['user_id' => $user_id, 'credits' => 0]);
+            return ['credits' => 0, 'total_earned' => 0, 'total_spent' => 0];
+        }
+        return ['credits' => (int)$row->credits, 'total_earned' => (int)$row->total_earned, 'total_spent' => (int)$row->total_spent];
+    }
+
+    public static function claim_daily_credits($user_id) {
+        global $wpdb;
+        $credit_table = self::table('hdk_user_credits');
+        $daily_amount = (int)get_option('hdk_daily_credits', 10);
+
+        $row = $wpdb->get_row($wpdb->prepare("SELECT credits, last_daily_at FROM $credit_table WHERE user_id = %d", $user_id));
+
+        $today = current_time('Y-m-d');
+        if ($row && $row->last_daily_at) {
+            $last_date = date('Y-m-d', strtotime($row->last_daily_at));
+            if ($last_date === $today) {
+                return ['success' => false, 'message' => 'Bạn đã điểm danh hôm nay rồi!'];
+            }
+        }
+
+        $current = $row ? (int)$row->credits : 0;
+        $new_balance = $current + $daily_amount;
+
+        if ($row) {
+            $wpdb->update($credit_table, [
+                'credits' => $new_balance,
+                'total_earned' => $current + $daily_amount,
+                'last_daily_at' => current_time('mysql'),
+            ], ['user_id' => $user_id]);
+        } else {
+            $wpdb->insert($credit_table, [
+                'user_id' => $user_id,
+                'credits' => $daily_amount,
+                'total_earned' => $daily_amount,
+                'last_daily_at' => current_time('mysql'),
+            ]);
+        }
+
+        self::log_credit_transaction($user_id, 'daily', $daily_amount, 'daily_login', 0, 'Điểm danh hàng ngày +' . $daily_amount . ' hạt');
+
+        return ['success' => true, 'credits_earned' => $daily_amount, 'balance' => $new_balance];
+    }
+
+    public static function get_all_user_credits($search = '', $page = 1, $per_page = 20) {
+        global $wpdb;
+        $credit_table = self::table('hdk_user_credits');
+        $user_table = $wpdb->users;
+        $offset = ($page - 1) * $per_page;
+
+        $where = "1=1";
+        if ($search) {
+            $s = '%' . $wpdb->esc_like($search) . '%';
+            $where .= $wpdb->prepare(" AND u.user_login LIKE %s", $s);
+        }
+
+        $total = $wpdb->get_var("SELECT COUNT(*) FROM $credit_table c JOIN $user_table u ON c.user_id = u.ID WHERE $where");
+        $rows = $wpdb->get_results($wpdb->prepare(
+            "SELECT c.*, u.user_login, u.display_name FROM $credit_table c
+             JOIN $user_table u ON c.user_id = u.ID WHERE $where ORDER BY c.credits DESC LIMIT %d OFFSET %d",
+            $per_page, $offset
+        ));
+
+        return ['rows' => $rows, 'total' => (int)$total, 'pages' => (int)ceil($total / $per_page)];
+    }
+
+    public static function get_all_transactions($filters = [], $page = 1, $per_page = 50) {
+        global $wpdb;
+        $trans_table = self::table('hdk_credit_transactions');
+        $user_table = $wpdb->users;
+        $offset = ($page - 1) * $per_page;
+
+        $where = ["1=1"];
+        if (!empty($filters['type'])) {
+            $where[] = $wpdb->prepare("t.type = %s", $filters['type']);
+        }
+        if (!empty($filters['user'])) {
+            $s = '%' . $wpdb->esc_like($filters['user']) . '%';
+            $where[] = $wpdb->prepare("u.user_login LIKE %s", $s);
+        }
+
+        $where_sql = implode(' AND ', $where);
+        $total = $wpdb->get_var("SELECT COUNT(*) FROM $trans_table t JOIN $user_table u ON t.user_id = u.ID WHERE $where_sql");
+        $rows = $wpdb->get_results($wpdb->prepare(
+            "SELECT t.*, u.user_login, u.display_name FROM $trans_table t
+             JOIN $user_table u ON t.user_id = u.ID WHERE $where_sql ORDER BY t.created_at DESC LIMIT %d OFFSET %d",
+            $per_page, $offset
+        ));
+
+        return ['rows' => $rows, 'total' => (int)$total, 'pages' => (int)ceil($total / $per_page)];
+    }
+
+    public static function get_chapters_toc($story_id) {
+        global $wpdb;
+        $table = self::table('hdk_chapters');
+        return $wpdb->get_results($wpdb->prepare(
+            "SELECT id, chapter_number, title, status, word_count FROM $table
+             WHERE story_id = %d AND status IN ('published','scheduled') ORDER BY chapter_number ASC",
+            $story_id
+        ));
+    }
+
+    public static function get_reader_prefs($user_id) {
+        global $wpdb;
+        $table = self::table('hdk_user_reader_prefs');
+        return $wpdb->get_row($wpdb->prepare("SELECT * FROM $table WHERE user_id = %d", $user_id));
+    }
+
+    public static function save_reader_prefs($user_id, $data) {
+        global $wpdb;
+        $table = self::table('hdk_user_reader_prefs');
+        $existing = $wpdb->get_var($wpdb->prepare("SELECT user_id FROM $table WHERE user_id = %d", $user_id));
+        $data['updated_at'] = current_time('mysql');
+        if ($existing) {
+            $wpdb->update($table, $data, ['user_id' => $user_id]);
+        } else {
+            $data['user_id'] = $user_id;
+            $wpdb->insert($table, $data);
+        }
+    }
 }

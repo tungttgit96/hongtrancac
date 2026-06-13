@@ -254,6 +254,17 @@ class HDK_Schema {
             updated_at DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
         ) $charset;";
 
+        // User Reader Preferences
+        $sql[] = "CREATE TABLE IF NOT EXISTS {$wpdb->prefix}hdk_user_reader_prefs (
+            user_id BIGINT UNSIGNED PRIMARY KEY,
+            font_size INT DEFAULT 20,
+            font_family VARCHAR(100) DEFAULT 'Be Vietnam Pro',
+            line_height DECIMAL(3,1) DEFAULT 2.0,
+            theme ENUM('light','dark','sepia') DEFAULT 'light',
+            reading_width ENUM('narrow','wide') DEFAULT 'wide',
+            updated_at DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
+        ) $charset;";
+
         foreach ($sql as $query) {
             dbDelta($query);
         }
