@@ -42,5 +42,27 @@ class HDK_Cache {
             "UPDATE $table SET status = 'published', scheduled_at = NULL, updated_at = %s WHERE status = 'scheduled' AND scheduled_at <= %s",
             $now, $now
         ));
+
+        $published = $wpdb->get_results($wpdb->prepare(
+            "SELECT DISTINCT c.story_id, s.title, s.slug FROM {$wpdb->prefix}hdk_chapters c
+             JOIN {$wpdb->prefix}hdk_stories s ON c.story_id = s.id
+             WHERE c.status = 'published' AND c.scheduled_at IS NOT NULL AND c.scheduled_at <= %s",
+            current_time('mysql')
+        ));
+        foreach ($published as $p) {
+            $chapter = $wpdb->get_row($wpdb->prepare(
+                "SELECT chapter_number, title FROM {$wpdb->prefix}hdk_chapters
+                 WHERE story_id = %d AND status = 'published' AND scheduled_at IS NOT NULL
+                 ORDER BY chapter_number DESC LIMIT 1",
+                $p->story_id
+            ));
+            if ($chapter) {
+                HDK_DB::notify_favoriting_users(
+                    $p->story_id, $chapter->chapter_number,
+                    $chapter->title ?: 'Chương ' . $chapter->chapter_number,
+                    $p->title, $p->slug
+                );
+            }
+        }
     }
 }

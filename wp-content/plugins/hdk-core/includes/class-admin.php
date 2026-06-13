@@ -335,6 +335,17 @@ class HDK_Admin {
         $wpdb->update(HDK_DB::table('hdk_stories'), ['total_chapters' => $chap_count, 'updated_at' => $now], ['id' => $story_id]);
         do_action('hdk_chapter_updated', $story_id);
 
+        if (($chap_data['status'] ?? '') === 'published') {
+            $story = HDK_DB::get_story($story_id);
+            HDK_DB::notify_favoriting_users(
+                $story_id,
+                (int)$chap_data['chapter_number'],
+                $chap_data['title'] ?? 'Chương ' . $chap_data['chapter_number'],
+                $story->title ?? '',
+                $story->slug ?? ''
+            );
+        }
+
         wp_redirect(admin_url('admin.php?page=hdk-chapters&story_id=' . $story_id . '&message=saved'));
         exit;
     }
