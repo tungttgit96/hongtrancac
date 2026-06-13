@@ -309,7 +309,12 @@ class HDK_REST_API {
         $story = HDK_DB::get_story($story_id);
         if (!$story) return new WP_Error('not_found', 'Story not found', ['status' => 404]);
 
-        $price = (int)($story->chapter_price ?? 0);
+        // Check per-chapter price first, fall back to story default
+        $chap_row = $wpdb->get_row($wpdb->prepare(
+            "SELECT price FROM " . HDK_DB::table('hdk_chapters') . " WHERE story_id = %d AND chapter_number = %d",
+            $story_id, $chapter_number
+        ));
+        $price = ($chap_row && (int)$chap_row->price > 0) ? (int)$chap_row->price : (int)($story->chapter_price ?? 0);
         if ($price <= 0) return new WP_Error('free', 'This chapter is free', ['status' => 400]);
 
         if ($chapter_number <= (int)($story->free_chapters ?? 0)) {

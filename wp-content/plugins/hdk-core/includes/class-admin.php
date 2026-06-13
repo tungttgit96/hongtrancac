@@ -502,7 +502,7 @@ class HDK_Admin {
             <table class="wp-list-table widefat fixed striped">
                 <thead>
                     <tr>
-                        <th>ID</th><th>Ảnh</th><th>Tiêu đề</th><th>Tác giả</th><th>Thể loại</th><th>Trạng thái</th><th>Chương</th><th>Lượt xem</th><th>Đánh giá</th><th>Ngày cập nhật</th><th></th>
+                        <th>ID</th><th>Ảnh</th><th>Tiêu đề</th><th>Tác giả</th><th>Thể loại</th><th>Trạng thái</th><th>Giá</th><th>Chương</th><th>Lượt xem</th><th>Đánh giá</th><th>Ngày cập nhật</th><th></th>
                     </tr>
                 </thead>
                 <tbody>
@@ -524,6 +524,20 @@ class HDK_Admin {
                         <td><?php echo esc_html($author); ?></td>
                         <td style="font-size:12px;"><?php echo esc_html($cat_names); ?></td>
                         <td><?php echo $s->status === 'completed' ? '✅ HT' : ($s->status === 'ongoing' ? '🔄 Đang ra' : '⛔ Ngừng'); ?></td>
+                        <td style="font-size:12px;">
+                            <?php 
+                            $cp = (int)($s->chapter_price ?? 0);
+                            $fc = (int)($s->free_chapters ?? 0);
+                            $fp = (int)($s->full_price ?? 0);
+                            if ((int)($s->is_free ?? 0)): echo '🆓 Free';
+                            elseif ($cp > 0 || $fp > 0):
+                                if ($fc > 0) echo "F:$fc "; 
+                                if ($cp > 0) echo "💎$cp"; 
+                                if ($fp > 0) echo " Full:$fp";
+                            else: echo '-';
+                            endif;
+                            ?>
+                        </td>
                         <td><?php echo $s->total_chapters; ?></td>
                         <td><?php echo number_format($s->total_views); ?></td>
                         <td><?php echo $s->average_rating; ?> ⭐</td>
