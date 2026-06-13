@@ -22,7 +22,7 @@ if ($credits === null && $wpdb->last_error === '') {
 $purchased_count = HDK_DB::get_user_purchased_count($user_id);
 
 $tab = isset($_GET['tab']) ? sanitize_text_field($_GET['tab']) : 'favorites';
-$valid_tabs = ['favorites', 'reading', 'purchased', 'history'];
+$valid_tabs = ['favorites', 'reading', 'purchased', 'history', 'wallet'];
 if (!in_array($tab, $valid_tabs)) $tab = 'favorites';
 
 $page = max(1, (int)($_GET['paged'] ?? 1));
@@ -55,6 +55,7 @@ get_header();
             'reading'   => '📌 Đang đọc',
             'purchased' => '💎 Đã mua',
             'history'   => '🕐 Lịch sử đọc',
+            'wallet'    => '💎 Ví hạt',
         ];
         foreach ($tabs as $key => $label) {
             $is_active = $tab === $key;
@@ -175,6 +176,107 @@ get_header();
                     <?php endforeach; ?>
                 </div>
                 <?php hdk_get_pagination($data['pages'], $page); ?>
+            <?php endif; ?>
+            <?php break;
+
+        case 'wallet':
+            $stats = HDK_DB::get_user_credit_stats($user_id);
+            $tx_data = HDK_DB::get_credit_transactions($user_id, $page, 20);
+            $transactions = $tx_data['rows'];
+            $packages = HDK_DB::get_credit_packages(true);
+            ?>
+            <div class="wallet-summary" style="display:flex;gap:16px;margin-bottom:24px;flex-wrap:wrap;">
+                <div class="wallet-stat" style="flex:1;min-width:140px;padding:20px;background:var(--color-bg-secondary);border-radius:var(--radius-md);text-align:center;">
+                    <div style="font-size:var(--font-size-sm);color:var(--color-text-muted);margin-bottom:4px;">Số dư</div>
+                    <div style="font-size:var(--font-size-2xl);font-weight:700;color:var(--color-primary);">💎 <?php echo number_format($stats['credits']); ?></div>
+                </div>
+                <div class="wallet-stat" style="flex:1;min-width:140px;padding:20px;background:var(--color-bg-secondary);border-radius:var(--radius-md);text-align:center;">
+                    <div style="font-size:var(--font-size-sm);color:var(--color-text-muted);margin-bottom:4px;">Đã nạp</div>
+                    <div style="font-size:var(--font-size-xl);font-weight:600;color:var(--color-success);">📥 <?php echo number_format($stats['total_earned']); ?></div>
+                </div>
+                <div class="wallet-stat" style="flex:1;min-width:140px;padding:20px;background:var(--color-bg-secondary);border-radius:var(--radius-md);text-align:center;">
+                    <div style="font-size:var(--font-size-sm);color:var(--color-text-muted);margin-bottom:4px;">Đã tiêu</div>
+                    <div style="font-size:var(--font-size-xl);font-weight:600;color:var(--color-danger);">📤 <?php echo number_format($stats['total_spent']); ?></div>
+                </div>
+            </div>
+
+            <div style="display:flex;gap:12px;margin-bottom:24px;flex-wrap:wrap;">
+                <button type="button" class="btn btn-primary" onclick="document.getElementById('purchase-modal').style.display='flex'">
+                    💳 Nạp hạt
+                </button>
+                <button type="button" class="btn btn-outline daily-claim-btn" id="daily-claim-btn" onclick="claimDaily()">
+                    📅 Điểm danh +<?php echo (int)get_option('hdk_daily_credits', 10); ?> hạt
+                </button>
+            </div>
+
+            <!-- Purchase Modal -->
+            <div id="purchase-modal" style="display:none;position:fixed;top:0;left:0;right:0;bottom:0;background:var(--color-overlay);z-index:999;align-items:center;justify-content:center;" onclick="if(event.target===this)this.style.display='none'">
+                <div style="background:var(--color-bg);border-radius:var(--radius-lg);padding:32px;max-width:500px;width:90%;max-height:80vh;overflow-y:auto;">
+                    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:20px;">
+                        <h2 style="margin:0;">Nạp hạt</h2>
+                        <button type="button" class="btn btn-ghost btn-sm" onclick="document.getElementById('purchase-modal').style.display='none'">✕</button>
+                    </div>
+                    <?php if (empty($packages)): ?>
+                        <p style="color:var(--color-text-muted);">Chưa có gói nạp nào.</p>
+                    <?php else: ?>
+                        <div style="display:flex;flex-direction:column;gap:12px;">
+                            <?php foreach ($packages as $pkg): ?>
+                                <div style="padding:16px;border:2px solid var(--color-border);border-radius:var(--radius-md);cursor:pointer;transition:border-color 0.2s;" class="package-card"
+                                     onmouseover="this.style.borderColor='var(--color-primary)'" onmouseout="this.style.borderColor='var(--color-border)'">
+                                    <div style="display:flex;justify-content:space-between;align-items:center;">
+                                        <div>
+                                            <strong style="font-size:var(--font-size-lg);"><?php echo esc_html($pkg->name); ?></strong>
+                                            <?php if ($pkg->bonus_credits > 0): ?>
+                                                <span style="color:var(--color-primary);font-size:var(--font-size-sm);margin-left:8px;">+<?php echo (int)$pkg->bonus_credits; ?> bonus</span>
+                                            <?php endif; ?>
+                                        </div>
+                                        <div style="text-align:right;">
+                                            <div style="font-weight:700;font-size:var(--font-size-lg);">💎 <?php echo number_format((int)$pkg->credits); ?></div>
+                                            <div style="color:var(--color-text-muted);font-size:var(--font-size-sm);"><?php echo number_format((int)$pkg->price_vnd); ?> đ</div>
+                                        </div>
+                                    </div>
+                                </div>
+                            <?php endforeach; ?>
+                            <p style="color:var(--color-text-muted);font-size:var(--font-size-sm);text-align:center;margin-top:8px;">
+                                Liên hệ admin để thanh toán và nhận hạt.
+                            </p>
+                        </div>
+                    <?php endif; ?>
+                </div>
+            </div>
+
+            <h3 style="margin-bottom:12px;">Lịch sử giao dịch</h3>
+            <?php if (empty($transactions)): ?>
+                <div class="empty-state" style="text-align:center;padding:48px 0;">
+                    <div style="font-size:48px;margin-bottom:16px;">💎</div>
+                    <p style="color:var(--color-text-muted);">Chưa có giao dịch nào</p>
+                </div>
+            <?php else: ?>
+                <div class="history-list" style="display:flex;flex-direction:column;gap:1px;background:var(--color-border);border-radius:var(--radius-md);overflow:hidden;">
+                    <?php foreach ($transactions as $tx): ?>
+                        <?php
+                        $is_positive = $tx->credits >= 0;
+                        $type_labels = ['earn' => 'Nạp', 'spend' => 'Tiêu', 'daily' => 'Điểm danh', 'admin_add' => 'Admin +', 'admin_deduct' => 'Admin -', 'refund' => 'Hoàn'];
+                        ?>
+                        <div style="display:flex;justify-content:space-between;align-items:center;padding:12px 16px;background:var(--color-bg);gap:12px;flex-wrap:wrap;">
+                            <div>
+                                <span style="color:var(--color-text-muted);font-size:var(--font-size-sm);"><?php echo $type_labels[$tx->type] ?? $tx->type; ?></span>
+                                <?php if ($tx->note): ?>
+                                    <span style="margin-left:8px;"><?php echo esc_html($tx->note); ?></span>
+                                <?php endif; ?>
+                            </div>
+                            <div style="display:flex;align-items:center;gap:12px;">
+                                <span style="font-weight:600;color:<?php echo $is_positive ? 'var(--color-success)' : 'var(--color-danger)'; ?>;white-space:nowrap;">
+                                    <?php echo $is_positive ? '+' : ''; ?><?php echo number_format((int)$tx->credits); ?>
+                                </span>
+                                <span style="color:var(--color-text-muted);font-size:var(--font-size-sm);white-space:nowrap;">
+                                    <?php echo mysql2date('H:i d/m/Y', $tx->created_at); ?>
+                                </span>
+                            </div>
+                        </div>
+                    <?php endforeach; ?>
+                </div>
+                <?php hdk_get_pagination($tx_data['pages'], $page); ?>
             <?php endif; ?>
             <?php break;
     }
