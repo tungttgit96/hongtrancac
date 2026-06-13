@@ -24,7 +24,7 @@ function hdk_get_story_card($story, $index = 0) {
     $chapter_price = (int)($story->chapter_price ?? 0);
     $full_price = (int)($story->full_price ?? 0);
     $free_chapters = (int)($story->free_chapters ?? 0);
-    $has_pricing = ($chapter_price > 0 || $full_price > 0);
+    $has_pricing = ($chapter_price > 0 || $full_price > 0 || $free_chapters > 0);
     $lazy = $index >= 8 ? ' loading="lazy"' : '';
     ?>
     <a href="<?php echo esc_url($url); ?>" class="card story-card" title="<?php echo $title; ?>">

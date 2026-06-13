@@ -107,6 +107,23 @@ class HDK_DB {
             $story->chapter_count = (int)$story->total_chapters;
         }
 
+        // Bulk fetch max chapter prices for all stories in one query
+        if (!empty($stories)) {
+            $story_ids = array_map(function($s) { return $s->id; }, $stories);
+            $ids_list = implode(',', array_map('intval', $story_ids));
+            $chap_table = self::table('hdk_chapters');
+            $prices = $wpdb->get_results(
+                "SELECT story_id, MAX(price) as max_price FROM $chap_table WHERE story_id IN ($ids_list) GROUP BY story_id"
+            );
+            $price_map = [];
+            foreach ($prices as $p) $price_map[$p->story_id] = (int)$p->max_price;
+            foreach ($stories as $story) {
+                if (empty($story->chapter_price) && isset($price_map[$story->id]) && $price_map[$story->id] > 0) {
+                    $story->chapter_price = $price_map[$story->id];
+                }
+            }
+        }
+
         return ['stories' => $stories, 'total' => (int)$total, 'pages' => (int)ceil($total / $args['per_page'])];
     }
 
@@ -151,6 +168,23 @@ class HDK_DB {
         foreach ($stories as $story) {
             $story->author_name = self::get_author_name($story->author_id);
             $story->chapter_count = (int)$story->total_chapters;
+        }
+
+        // Bulk fetch max chapter prices
+        if (!empty($stories)) {
+            $story_ids = array_map(function($s) { return $s->id; }, $stories);
+            $ids_list = implode(',', array_map('intval', $story_ids));
+            $chap_table = self::table('hdk_chapters');
+            $prices = $wpdb->get_results(
+                "SELECT story_id, MAX(price) as max_price FROM $chap_table WHERE story_id IN ($ids_list) GROUP BY story_id"
+            );
+            $price_map = [];
+            foreach ($prices as $p) $price_map[$p->story_id] = (int)$p->max_price;
+            foreach ($stories as $story) {
+                if (empty($story->chapter_price) && isset($price_map[$story->id]) && $price_map[$story->id] > 0) {
+                    $story->chapter_price = $price_map[$story->id];
+                }
+            }
         }
 
         return ['stories' => $stories, 'total' => (int)$total, 'pages' => (int)ceil($total / $per_page)];
