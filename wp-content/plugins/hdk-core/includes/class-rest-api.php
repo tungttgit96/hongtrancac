@@ -64,6 +64,24 @@ class HDK_REST_API {
             'callback' => [__CLASS__, 'get_purchases'],
             'permission_callback' => function() { return is_user_logged_in(); },
         ]);
+
+        register_rest_route('hdk/v1', '/daily-claim', [
+            'methods' => 'POST',
+            'callback' => [__CLASS__, 'daily_claim'],
+            'permission_callback' => function() { return is_user_logged_in(); },
+        ]);
+
+        register_rest_route('hdk/v1', '/me/transactions', [
+            'methods' => 'GET',
+            'callback' => [__CLASS__, 'get_transactions'],
+            'permission_callback' => function() { return is_user_logged_in(); },
+        ]);
+
+        register_rest_route('hdk/v1', '/packages', [
+            'methods' => 'GET',
+            'callback' => [__CLASS__, 'get_packages'],
+            'permission_callback' => '__return_true',
+        ]);
     }
 
     public static function search($request) {
@@ -256,10 +274,10 @@ class HDK_REST_API {
         ));
         if ($credits < $price) return new WP_Error('insufficient_credits', 'Không đủ hạt. Cần ' . $price . ' hạt, bạn có ' . $credits . ' hạt.', ['status' => 402]);
 
-        // Deduct credits
+        // Deduct credits and update stats
         $wpdb->query($wpdb->prepare(
-            "UPDATE " . HDK_DB::table('hdk_user_credits') . " SET credits = credits - %d, total_spent = total_spent + %d WHERE user_id = %d",
-            $price, $price, $user_id
+            "UPDATE " . HDK_DB::table('hdk_user_credits') . " SET credits = credits - %d, total_spent = total_spent + %d WHERE user_id = %d AND credits >= %d",
+            $price, $price, $user_id, $price
         ));
 
         // Record purchase
@@ -271,6 +289,10 @@ class HDK_REST_API {
             'credits_spent' => $price,
             'created_at' => current_time('mysql'),
         ]);
+
+        // Log transaction
+        HDK_DB::log_credit_transaction($user_id, 'spend', -$price, 'chapter_purchase', $story_id,
+            'Mua chương ' . $chapter_number . ' - ' . $story->title);
 
         $remaining = $credits - $price;
         return rest_ensure_response(['success' => true, 'credits_spent' => $price, 'credits_remaining' => $remaining]);
@@ -300,10 +322,10 @@ class HDK_REST_API {
         ));
         if ($credits < $price) return new WP_Error('insufficient_credits', 'Không đủ hạt. Cần ' . $price . ' hạt, bạn có ' . $credits . ' hạt.', ['status' => 402]);
 
-        // Deduct credits
+        // Deduct credits and update stats
         $wpdb->query($wpdb->prepare(
-            "UPDATE " . HDK_DB::table('hdk_user_credits') . " SET credits = credits - %d, total_spent = total_spent + %d WHERE user_id = %d",
-            $price, $price, $user_id
+            "UPDATE " . HDK_DB::table('hdk_user_credits') . " SET credits = credits - %d, total_spent = total_spent + %d WHERE user_id = %d AND credits >= %d",
+            $price, $price, $user_id, $price
         ));
 
         // Record full purchase (delete existing single chapter purchases for this story)
@@ -316,6 +338,10 @@ class HDK_REST_API {
             'credits_spent' => $price,
             'created_at' => current_time('mysql'),
         ]);
+
+        // Log transaction
+        HDK_DB::log_credit_transaction($user_id, 'spend', -$price, 'full_purchase', $story_id,
+            'Mua full truyện - ' . $story->title);
 
         $remaining = $credits - $price;
         return rest_ensure_response(['success' => true, 'credits_spent' => $price, 'credits_remaining' => $remaining]);
@@ -333,5 +359,26 @@ class HDK_REST_API {
         $page = (int)($request->get_param('page') ?? 1);
         $result = HDK_DB::get_purchased_stories($user_id, max(1, $page));
         return rest_ensure_response($result);
+    }
+
+    public static function daily_claim($request) {
+        $user_id = get_current_user_id();
+        $result = HDK_DB::claim_daily_credits($user_id);
+        if (!$result['success']) {
+            return new WP_Error('already_claimed', $result['message'], ['status' => 409]);
+        }
+        return rest_ensure_response($result);
+    }
+
+    public static function get_transactions($request) {
+        $user_id = get_current_user_id();
+        $page = (int)($request->get_param('page') ?? 1);
+        $result = HDK_DB::get_credit_transactions($user_id, max(1, $page));
+        return rest_ensure_response($result);
+    }
+
+    public static function get_packages($request) {
+        $result = HDK_DB::get_credit_packages(true);
+        return rest_ensure_response(['packages' => $result]);
     }
 }
