@@ -35,7 +35,37 @@
                 🔍
             </button>
             <?php if (is_user_logged_in()): ?>
-                <a href="<?php echo admin_url(); ?>" class="btn btn-outline btn-sm">Admin</a>
+                <?php
+                $current_user = wp_get_current_user();
+                $credits_table = HDK_DB::table('hdk_user_credits');
+                $credits = (int)$GLOBALS['wpdb']->get_var($GLOBALS['wpdb']->prepare("SELECT credits FROM $credits_table WHERE user_id = %d", get_current_user_id()));
+                ?>
+                <div class="user-dropdown" id="user-dropdown">
+                    <button type="button" class="btn btn-ghost btn-sm user-dropdown-toggle" id="user-dropdown-toggle"
+                            aria-haspopup="true" aria-expanded="false"
+                            style="min-height:var(--touch-target);display:flex;align-items:center;gap:6px;">
+                        <span style="font-size:1rem;">👤</span>
+                        <span class="user-name"><?php echo esc_html($current_user->display_name); ?></span>
+                        <span class="dropdown-arrow">▾</span>
+                    </button>
+                    <div class="user-dropdown-menu" id="user-dropdown-menu"
+                         style="display:none;position:absolute;top:100%;right:0;min-width:200px;background:var(--color-bg);border:1px solid var(--color-border);border-radius:var(--radius-md);box-shadow:0 4px 16px rgba(0,0,0,0.12);z-index:150;padding:8px 0;margin-top:4px;">
+                        <div class="dropdown-item" style="padding:8px 16px;color:var(--color-text-muted);font-size:var(--font-size-sm);border-bottom:1px solid var(--color-border-light);">
+                            💎 <strong style="color:var(--color-primary);"><?php echo number_format($credits); ?></strong> hạt
+                        </div>
+                        <a href="<?php echo home_url('/tai-khoan'); ?>" class="dropdown-item" style="display:block;padding:10px 16px;text-decoration:none;color:var(--color-text-primary);">
+                            📖 Tài khoản
+                        </a>
+                        <?php if (current_user_can('manage_options')): ?>
+                            <a href="<?php echo admin_url(); ?>" class="dropdown-item" style="display:block;padding:10px 16px;text-decoration:none;color:var(--color-text-primary);">
+                                ⚙ Admin
+                            </a>
+                        <?php endif; ?>
+                        <a href="<?php echo wp_logout_url(home_url()); ?>" class="dropdown-item" style="display:block;padding:10px 16px;text-decoration:none;color:var(--color-text-primary);border-top:1px solid var(--color-border-light);">
+                            🚪 Đăng xuất
+                        </a>
+                    </div>
+                </div>
             <?php else: ?>
                 <a href="<?php echo wp_login_url(); ?>" class="btn btn-primary btn-sm">Đăng nhập</a>
             <?php endif; ?>
