@@ -14,6 +14,7 @@ class HDK_Admin {
         add_submenu_page('hdk-stories', 'Tác giả', 'Tác giả', 'edit_stories', 'hdk-authors', [__CLASS__, 'authors_page']);
         add_submenu_page('hdk-stories', 'Nhân vật', 'Nhân vật', 'edit_stories', 'hdk-characters', [__CLASS__, 'characters_page']);
         add_submenu_page('hdk-stories', 'Import', 'Import', 'manage_options', 'hdk-import', [__CLASS__, 'import_page']);
+        add_submenu_page('hdk-stories', 'Banner', 'Banner', 'edit_stories', 'hdk-banner', [__CLASS__, 'banner_page']);
         add_submenu_page('hdk-stories', 'Seed Demo', 'Seed Demo', 'manage_options', 'hdk-seed', [__CLASS__, 'seed_page']);
 
         add_action('admin_init', function() {
@@ -73,6 +74,11 @@ class HDK_Admin {
         // Save Bulk Chapters
         if (isset($_POST['hdk_save_bulk_chapters']) && wp_verify_nonce($_POST['_wpnonce'], 'hdk_save_bulk_chapters')) {
             self::save_bulk_chapters($_POST);
+        }
+
+        // Save Banner Settings
+        if (isset($_POST['hdk_save_banner']) && wp_verify_nonce($_POST['_wpnonce'], 'hdk_save_banner')) {
+            self::save_banner($_POST);
         }
     }
 
@@ -934,6 +940,58 @@ Nội dung chương 2 viết ở đây..."
             <form method="post" enctype="multipart/form-data">
                 <input type="file" name="import_file" accept=".csv,.json" />
                 <?php submit_button('Import'); ?>
+            </form>
+        </div>
+        <?php
+    }
+
+    private static function save_banner($data) {
+        $ids = [];
+        for ($i = 1; $i <= 6; $i++) {
+            $val = (int)($data['banner_story_' . sprintf('%02d', $i)] ?? 0);
+            $ids[] = $val > 0 ? $val : 0;
+        }
+        update_option('hdk_home_banner_story_ids', $ids);
+        wp_redirect(admin_url('admin.php?page=hdk-banner&message=saved'));
+        exit;
+    }
+
+    public static function banner_page() {
+        global $wpdb;
+        $table = HDK_DB::table('hdk_stories');
+        $stories = $wpdb->get_results("SELECT id, title FROM $table ORDER BY title ASC");
+        $saved_ids = get_option('hdk_home_banner_story_ids', []);
+
+        if (isset($_GET['message']) && $_GET['message'] === 'saved') {
+            echo '<div class="notice notice-success is-dismissible"><p>Đã lưu cấu hình banner.</p></div>';
+        }
+        ?>
+        <div class="wrap">
+            <h1>Cấu hình Banner Trang Chủ</h1>
+            <p>Chọn đúng 6 truyện hiển thị ở banner trang chủ. Thứ tự chọn tương ứng vị trí 01 đến 06.</p>
+            <form method="post" style="max-width:700px;">
+                <?php wp_nonce_field('hdk_save_banner'); ?>
+                <table class="form-table">
+                    <?php for ($i = 1; $i <= 6; $i++):
+                        $name = 'banner_story_' . sprintf('%02d', $i);
+                        $current = $saved_ids[$i - 1] ?? 0;
+                    ?>
+                    <tr>
+                        <th><label for="<?php echo $name; ?>">Vị trí <?php echo sprintf('%02d', $i); ?></label></th>
+                        <td>
+                            <select name="<?php echo $name; ?>" id="<?php echo $name; ?>" style="width:100%;max-width:500px;">
+                                <option value="0">-- Chọn truyện --</option>
+                                <?php foreach ($stories as $s): ?>
+                                    <option value="<?php echo $s->id; ?>" <?php selected($current, $s->id); ?>>
+                                        #<?php echo $s->id; ?> - <?php echo esc_html($s->title); ?>
+                                    </option>
+                                <?php endforeach; ?>
+                            </select>
+                        </td>
+                    </tr>
+                    <?php endfor; ?>
+                </table>
+                <?php submit_button('Lưu cấu hình', 'primary', 'hdk_save_banner'); ?>
             </form>
         </div>
         <?php

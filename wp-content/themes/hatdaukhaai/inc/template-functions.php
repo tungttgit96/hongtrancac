@@ -1,14 +1,14 @@
 <?php
 /**
- * Template helper functions for Hạt Đậu Khả Ái
+ * Template helper functions for Hồng Trần Các
  */
 
 function hdk_get_story_status_badge($story) {
     $status = $story->status ?? 'ongoing';
     $labels = [
-        'ongoing'  => ['text' => 'Đang ra', 'class' => 'badge-primary'],
+        'ongoing' => ['text' => 'Đang ra', 'class' => 'badge-primary'],
         'completed' => ['text' => 'Hoàn thành', 'class' => 'badge-success'],
-        'dropped'  => ['text' => 'Ngừng', 'class' => 'badge-danger'],
+        'dropped' => ['text' => 'Ngừng', 'class' => 'badge-danger'],
     ];
     $label = $labels[$status] ?? $labels['ongoing'];
     return sprintf('<span class="badge %s">%s</span>', $label['class'], $label['text']);
@@ -17,7 +17,7 @@ function hdk_get_story_status_badge($story) {
 function hdk_get_story_card($story, $index = 0) {
     $url = home_url('/' . ($story->slug ?? ''));
     $title = esc_html($story->title ?? '');
-    $cover = $story->cover_url ?? get_template_directory_uri() . '/assets/img/placeholder.png';
+    $cover = $story->cover_url ?? get_template_directory_uri() . '/assets/img/placeholder.svg';
     $author = esc_html($story->author_name ?? '');
     $chapters = (int)($story->chapter_count ?? 0);
     $views = number_format((int)($story->total_views ?? 0));
@@ -50,24 +50,129 @@ function hdk_get_story_card($story, $index = 0) {
 }
 
 function hdk_get_hero_section() {
-    ?>
-    <section class="hero" style="background:linear-gradient(135deg, var(--color-hero-bg), #5B1500); color:#FFF; padding:48px 0;">
-        <div class="container">
-            <div class="hero-content" style="display:flex;align-items:center;gap:32px;flex-wrap:wrap;">
-                <div class="hero-text" style="flex:1;min-width:280px;">
-                    <h1 style="font-size:var(--font-size-3xl);font-weight:700;margin-bottom:12px;">
-                        Hồng Trần Các
-                    </h1>
-                    <p style="font-size:var(--font-size-lg);opacity:0.9;margin-bottom:20px;max-width:560px;">
-                        Nền tảng đọc truyện chữ online. Hàng ngàn truyện hay, cập nhật liên tục mỗi ngày.
-                    </p>
-                    <div style="display:flex;gap:12px;flex-wrap:wrap;">
-                        <a href="/danh-sach-truyen" class="btn btn-primary" style="background:#54CFD6;color:#FFF">Khám phá truyện</a>
-                        <a href="/bang-xep-hang" class="btn btn-outline" style="border-color:#FFF;color:#FFF">Bảng xếp hạng</a>
+    global $wpdb;
+
+    $saved_ids = get_option('hdk_home_banner_story_ids', []);
+    $stories_table = HDK_DB::table('hdk_stories');
+    $stories = [];
+    $placeholder = get_template_directory_uri() . '/assets/img/placeholder.svg';
+
+    if (!empty($saved_ids) && is_array($saved_ids)) {
+        $ids = array_values(array_filter(array_map('intval', $saved_ids), function($id) {
+            return $id > 0;
+        }));
+
+        if (!empty($ids)) {
+            $placeholders = implode(',', array_fill(0, count($ids), '%d'));
+            $results = $wpdb->get_results($wpdb->prepare(
+                "SELECT id, title, slug, cover_url, summary, total_views FROM $stories_table WHERE id IN ($placeholders)",
+                $ids
+            ));
+
+            foreach ($ids as $id) {
+                foreach ($results as $result) {
+                    if ((int)$result->id === $id) {
+                        $stories[] = $result;
+                        break;
+                    }
+                }
+            }
+        }
+    }
+
+    if (count($stories) < 6) {
+        $existing_ids = array_map(function($story) {
+            return (int)$story->id;
+        }, $stories);
+        $limit = 6 - count($stories);
+        $where = '';
+
+        if (!empty($existing_ids)) {
+            $where = 'WHERE id NOT IN (' . implode(',', array_map('intval', $existing_ids)) . ')';
+        }
+
+        $fallback = $wpdb->get_results($wpdb->prepare(
+            "SELECT id, title, slug, cover_url, summary, total_views FROM $stories_table $where ORDER BY total_views DESC LIMIT %d",
+            $limit
+        ));
+        $stories = array_merge($stories, $fallback);
+    }
+
+    foreach ($stories as $story) {
+        if (empty($story->cover_url)) {
+            $story->cover_url = $placeholder;
+        }
+        $story->url = home_url('/' . ltrim($story->slug ?? '', '/'));
+        $story->summary_trimmed = wp_trim_words($story->summary ?? '', 30, '...');
+    }
+
+    if (empty($stories)) {
+        ?>
+        <section class="hero" style="background:linear-gradient(135deg, var(--color-hero-bg), #5B1500); color:#FFF; padding:48px 0;">
+            <div class="container">
+                <div class="hero-content" style="display:flex;align-items:center;gap:32px;flex-wrap:wrap;">
+                    <div class="hero-text" style="flex:1;min-width:280px;">
+                        <h1 style="font-size:var(--font-size-3xl);font-weight:700;margin-bottom:12px;">Hồng Trần Các</h1>
+                        <p style="font-size:var(--font-size-lg);opacity:0.9;margin-bottom:20px;max-width:560px;">
+                            Nền tảng đọc truyện chữ online. Hàng ngàn truyện hay, cập nhật liên tục mỗi ngày.
+                        </p>
+                        <div style="display:flex;gap:12px;flex-wrap:wrap;">
+                            <a href="/danh-sach-truyen" class="btn btn-primary" style="background:#54CFD6;color:#FFF">Khám phá truyện</a>
+                            <a href="/bang-xep-hang" class="btn btn-outline" style="border-color:#FFF;color:#FFF">Bảng xếp hạng</a>
+                        </div>
+                    </div>
+                    <div class="hero-visual" style="flex:0 0 240px;text-align:center;">
+                        <div style="font-size:120px;line-height:1;">📚</div>
                     </div>
                 </div>
-                <div class="hero-visual" style="flex:0 0 240px;text-align:center;">
-                    <div style="font-size:120px;line-height:1;">📚</div>
+            </div>
+        </section>
+        <?php
+        return;
+    }
+
+    $active = $stories[0];
+    ?>
+    <section class="hero-banner">
+        <div class="container">
+            <div class="banner-shell">
+                <div class="banner-grid">
+                    <div class="banner-info">
+                        <h1 class="banner-title"><?php echo esc_html($active->title); ?></h1>
+                        <p class="banner-summary"><?php echo esc_html($active->summary_trimmed); ?></p>
+                        <div class="banner-actions">
+                            <a href="<?php echo esc_url($active->url); ?>" class="btn btn-primary banner-read-link">Đọc truyện</a>
+                            <span class="banner-views"><?php echo number_format((int)($active->total_views ?? 0)); ?> lượt xem</span>
+                        </div>
+                    </div>
+
+                    <div class="banner-cover" id="banner-cover-wrapper">
+                        <img src="<?php echo esc_url($active->cover_url); ?>"
+                             alt="<?php echo esc_attr($active->title); ?>"
+                             class="banner-cover-img"
+                             id="banner-cover-img">
+                    </div>
+
+                    <div class="banner-cards" id="banner-cards">
+                        <?php foreach ($stories as $index => $story): ?>
+                            <button class="banner-card <?php echo $index === 0 ? 'active' : ''; ?>"
+                                    type="button"
+                                    data-index="<?php echo (int)$index; ?>"
+                                    data-title="<?php echo esc_attr($story->title); ?>"
+                                    data-summary="<?php echo esc_attr($story->summary_trimmed); ?>"
+                                    data-url="<?php echo esc_url($story->url); ?>"
+                                    data-cover="<?php echo esc_url($story->cover_url); ?>"
+                                    data-views="<?php echo (int)($story->total_views ?? 0); ?>"
+                                    aria-label="<?php echo esc_attr('Hiển thị truyện ' . $story->title); ?>">
+                                <img src="<?php echo esc_url($story->cover_url); ?>" alt="<?php echo esc_attr($story->title); ?>">
+                                <span class="banner-card-rank"><?php echo sprintf('%02d', $index + 1); ?></span>
+                                <span class="banner-card-overlay">
+                                    <span class="banner-card-title"><?php echo esc_html($story->title); ?></span>
+                                    <span class="banner-card-views"><?php echo number_format((int)($story->total_views ?? 0)); ?> lượt đọc</span>
+                                </span>
+                            </button>
+                        <?php endforeach; ?>
+                    </div>
                 </div>
             </div>
         </div>
