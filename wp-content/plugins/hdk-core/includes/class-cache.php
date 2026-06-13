@@ -43,24 +43,26 @@ class HDK_Cache {
             $now, $now
         ));
 
-        $published = $wpdb->get_results($wpdb->prepare(
-            "SELECT DISTINCT c.story_id, s.title, s.slug FROM {$wpdb->prefix}hdk_chapters c
-             JOIN {$wpdb->prefix}hdk_stories s ON c.story_id = s.id
-             WHERE c.status = 'published' AND c.scheduled_at IS NOT NULL AND c.scheduled_at <= %s",
-            current_time('mysql')
+        // Get affected story IDs before UPDATE (scheduled_at will be NULL after update)
+        $affected = $wpdb->get_col($wpdb->prepare(
+            "SELECT DISTINCT story_id FROM $table WHERE status = 'scheduled' AND scheduled_at <= %s",
+            $now
         ));
-        foreach ($published as $p) {
+        
+        foreach ($affected as $story_id) {
+            $story = HDK_DB::get_story($story_id);
+            if (!$story) continue;
             $chapter = $wpdb->get_row($wpdb->prepare(
-                "SELECT chapter_number, title FROM {$wpdb->prefix}hdk_chapters
-                 WHERE story_id = %d AND status = 'published' AND scheduled_at IS NOT NULL
+                "SELECT chapter_number, title FROM $table
+                 WHERE story_id = %d AND status = 'published'
                  ORDER BY chapter_number DESC LIMIT 1",
-                $p->story_id
+                $story_id
             ));
             if ($chapter) {
                 HDK_DB::notify_favoriting_users(
-                    $p->story_id, $chapter->chapter_number,
+                    $story_id, $chapter->chapter_number,
                     $chapter->title ?: 'Chương ' . $chapter->chapter_number,
-                    $p->title, $p->slug
+                    $story->title, $story->slug
                 );
             }
         }
