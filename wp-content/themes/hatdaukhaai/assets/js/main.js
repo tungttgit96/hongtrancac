@@ -221,4 +221,25 @@
                 window.location.href = '/wp-login.php';
             });
     });
+
+    // ===== User Dropdown Toggle =====
+    var dropdown = document.getElementById('user-dropdown');
+    if (dropdown) {
+        var dropdownToggle = document.getElementById('user-dropdown-toggle');
+        var dropdownMenu = document.getElementById('user-dropdown-menu');
+
+        dropdownToggle.addEventListener('click', function(e) {
+            e.stopPropagation();
+            var isOpen = dropdownMenu.style.display === 'block';
+            dropdownMenu.style.display = isOpen ? 'none' : 'block';
+            dropdownToggle.setAttribute('aria-expanded', !isOpen);
+        });
+
+        document.addEventListener('click', function(e) {
+            if (!dropdown.contains(e.target)) {
+                dropdownMenu.style.display = 'none';
+                dropdownToggle.setAttribute('aria-expanded', 'false');
+            }
+        });
+    }
 })();
