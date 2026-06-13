@@ -106,19 +106,21 @@ function hdk_design_tokens_css() {
         .card-meta { font-size: var(--font-size-xs); color: var(--color-text-muted); margin-top: 4px; }
 
         .grid { display: grid; gap: var(--grid-gap); }
+        .grid-6 { grid-template-columns: repeat(6, 1fr); }
         .grid-4 { grid-template-columns: repeat(4, 1fr); }
         .grid-3 { grid-template-columns: repeat(3, 1fr); }
         .grid-2 { grid-template-columns: repeat(2, 1fr); }
         .grid-1 { grid-template-columns: 1fr; }
 
         @media (max-width: 1024px) {
+            .grid-6 { grid-template-columns: repeat(4, 1fr); }
             .grid-4 { grid-template-columns: repeat(3, 1fr); }
         }
         @media (max-width: 768px) {
-            .grid-4, .grid-3 { grid-template-columns: repeat(2, 1fr); }
+            .grid-6, .grid-4, .grid-3 { grid-template-columns: repeat(2, 1fr); }
         }
         @media (max-width: 375px) {
-            .grid-4, .grid-3, .grid-2 { grid-template-columns: 1fr; }
+            .grid-6, .grid-4, .grid-3, .grid-2 { grid-template-columns: 1fr; }
         }
 
         .badge {
