@@ -118,6 +118,12 @@ class HDK_REST_API {
             'callback' => [__CLASS__, 'unread_count'],
             'permission_callback' => function() { return is_user_logged_in(); },
         ]);
+
+        register_rest_route('hdk/v1', '/reports', [
+            'methods' => 'POST',
+            'callback' => [__CLASS__, 'create_report'],
+            'permission_callback' => function() { return is_user_logged_in(); },
+        ]);
     }
 
     public static function search($request) {
@@ -512,5 +518,18 @@ class HDK_REST_API {
     public static function unread_count($request) {
         $count = HDK_DB::get_unread_notification_count(get_current_user_id());
         return rest_ensure_response(['count' => $count]);
+    }
+
+    public static function create_report($request) {
+        $story_id = (int)$request->get_param('story_id');
+        $chapter_number = (int)$request->get_param('chapter_number');
+        $type = sanitize_text_field($request->get_param('report_type') ?? 'other');
+        $note = sanitize_textarea_field($request->get_param('note') ?? '');
+
+        $valid_types = ['typo','wrong_content','display_error','other'];
+        if (!in_array($type, $valid_types)) $type = 'other';
+
+        $id = HDK_DB::create_report(get_current_user_id(), $story_id, $chapter_number, $type, $note);
+        return rest_ensure_response(['report_id' => $id, 'success' => true]);
     }
 }

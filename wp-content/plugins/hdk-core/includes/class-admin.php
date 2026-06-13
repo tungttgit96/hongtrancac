@@ -19,6 +19,8 @@ class HDK_Admin {
         add_submenu_page('hdk-stories', 'Quản lý hạt', 'Quản lý hạt', 'manage_options', 'hdk-credits', [__CLASS__, 'credits_page']);
         add_submenu_page('hdk-stories', 'Gói nạp', 'Gói nạp', 'manage_options', 'hdk-packages', [__CLASS__, 'packages_page']);
         add_submenu_page('hdk-stories', 'Lịch sử giao dịch', 'Lịch sử GD', 'manage_options', 'hdk-transactions', [__CLASS__, 'transactions_page']);
+        add_submenu_page('hdk-stories', 'Bình luận', 'Bình luận', 'moderate_comments', 'hdk-comments', [__CLASS__, 'comments_page']);
+        add_submenu_page('hdk-stories', 'Báo lỗi', 'Báo lỗi', 'edit_stories', 'hdk-reports', [__CLASS__, 'reports_page']);
 
         add_action('admin_init', function() {
             $admin = get_role('administrator');
@@ -179,6 +181,30 @@ class HDK_Admin {
             $results = self::process_import_rows($rows, isset($_POST['skip_errors']));
             set_transient('hdk_import_results', $results, 300);
             wp_redirect(admin_url('admin.php?page=hdk-import&imported=1'));
+            exit;
+        }
+
+        // --- Comment moderation ---
+        if (isset($_GET['hdk_comment_action']) && isset($_GET['comment_id'])) {
+            if (!current_user_can('moderate_comments')) return;
+            $cid = (int)$_GET['comment_id'];
+            $action = $_GET['hdk_comment_action'];
+            if ($action === 'approve') wp_set_comment_status($cid, 'approve');
+            elseif ($action === 'unapprove') wp_set_comment_status($cid, 'hold');
+            elseif ($action === 'trash') wp_trash_comment($cid);
+            elseif ($action === 'spam') wp_spam_comment($cid);
+            wp_redirect(admin_url('admin.php?page=hdk-comments'));
+            exit;
+        }
+
+        // --- Report resolution ---
+        if (isset($_GET['hdk_report_action']) && isset($_GET['report_id'])) {
+            if (!current_user_can('edit_stories')) return;
+            $rid = (int)$_GET['report_id'];
+            if ($_GET['hdk_report_action'] === 'resolve') {
+                HDK_DB::update_report_status($rid, 'resolved');
+            }
+            wp_redirect(admin_url('admin.php?page=hdk-reports'));
             exit;
         }
     }
@@ -1601,5 +1627,97 @@ Nội dung chương 2 viết ở đây..."
 
     public static function process_import_rows_public($rows, $skip_errors = true) {
         return self::process_import_rows($rows, $skip_errors);
+    }
+
+    public static function comments_page() {
+        global $wpdb;
+        $status = sanitize_text_field($_GET['filter_status'] ?? 'all');
+        $page = max(1, (int)($_GET['paged'] ?? 1));
+        $data = HDK_DB::get_all_comments(['status' => $status], $page);
+        ?>
+        <div class="wrap">
+            <h1 class="wp-heading-inline">Quản lý bình luận</h1>
+            <hr class="wp-header-end">
+            <div style="margin-bottom:12px;">
+                <a href="?page=hdk-comments&filter_status=all" class="button<?php echo $status==='all'?' button-primary':''; ?>">Tất cả</a>
+                <a href="?page=hdk-comments&filter_status=approved" class="button<?php echo $status==='approved'?' button-primary':''; ?>">Đã duyệt</a>
+                <a href="?page=hdk-comments&filter_status=pending" class="button<?php echo $status==='pending'?' button-primary':''; ?>">Chờ duyệt</a>
+            </div>
+            <table class="wp-list-table widefat fixed striped">
+                <thead><tr><th>Truyện</th><th>User</th><th>Nội dung</th><th>Trạng thái</th><th>Thời gian</th><th>Thao tác</th></tr></thead>
+                <tbody>
+                <?php foreach ($data['rows'] as $c): ?>
+                    <tr>
+                        <td><a href="<?php echo home_url('/' . ($c->story_slug ?? '')); ?>" target="_blank"><?php echo esc_html($c->story_title); ?></a><?php if ($c->chapter_number): ?><br><small>Chương <?php echo (int)$c->chapter_number; ?></small><?php endif; ?></td>
+                        <td><?php echo esc_html($c->user_name); ?></td>
+                        <td><?php echo esc_html(wp_trim_words($c->comment_content, 20)); ?></td>
+                        <td><?php echo $c->comment_approved == '1' ? '<span style="color:green;">Đã duyệt</span>' : '<span style="color:orange;">Chờ duyệt</span>'; ?></td>
+                        <td><?php echo mysql2date('d/m/Y H:i', $c->comment_date); ?></td>
+                        <td style="white-space:nowrap;">
+                            <?php if ($c->comment_approved != '1'): ?><a href="<?php echo wp_nonce_url("?page=hdk-comments&hdk_comment_action=approve&comment_id=".(int)$c->comment_ID, 'hdk_comment_'.(int)$c->comment_ID); ?>" class="button button-small">Duyệt</a><?php endif; ?>
+                            <?php if ($c->comment_approved == '1'): ?><a href="<?php echo wp_nonce_url("?page=hdk-comments&hdk_comment_action=unapprove&comment_id=".(int)$c->comment_ID, 'hdk_comment_'.(int)$c->comment_ID); ?>" class="button button-small">Bỏ duyệt</a><?php endif; ?>
+                            <a href="<?php echo wp_nonce_url("?page=hdk-comments&hdk_comment_action=trash&comment_id=".(int)$c->comment_ID, 'hdk_comment_'.(int)$c->comment_ID); ?>" class="button button-small" onclick="return confirm('Xóa?');">Xóa</a>
+                        </td>
+                    </tr>
+                <?php endforeach; ?>
+                </tbody>
+            </table>
+            <?php if ($data['pages'] > 1): ?>
+                <div class="tablenav"><div class="tablenav-pages">
+                    <?php for ($i = 1; $i <= $data['pages']; $i++): ?>
+                        <a href="?page=hdk-comments&paged=<?php echo $i; ?>&filter_status=<?php echo $status; ?>" class="button<?php echo $i===$page?' button-primary':''; ?>"><?php echo $i; ?></a>
+                    <?php endfor; ?>
+                </div></div>
+            <?php endif; ?>
+        </div>
+        <?php
+    }
+
+    public static function reports_page() {
+        $status = sanitize_text_field($_GET['filter_status'] ?? '');
+        $page = max(1, (int)($_GET['paged'] ?? 1));
+        $filters = [];
+        if ($status) $filters['status'] = $status;
+        $data = HDK_DB::get_reports($filters, $page);
+        $types = ['typo'=>'Lỗi chính tả','wrong_content'=>'Sai nội dung','display_error'=>'Lỗi hiển thị','other'=>'Khác'];
+        ?>
+        <div class="wrap">
+            <h1 class="wp-heading-inline">Báo lỗi chương</h1>
+            <hr class="wp-header-end">
+            <div style="margin-bottom:12px;">
+                <a href="?page=hdk-reports" class="button<?php echo !$status?' button-primary':''; ?>">Tất cả</a>
+                <a href="?page=hdk-reports&filter_status=pending" class="button<?php echo $status==='pending'?' button-primary':''; ?>">Chờ xử lý</a>
+                <a href="?page=hdk-reports&filter_status=resolved" class="button<?php echo $status==='resolved'?' button-primary':''; ?>">Đã xử lý</a>
+            </div>
+            <table class="wp-list-table widefat fixed striped">
+                <thead><tr><th>Truyện</th><th>Chương</th><th>User</th><th>Loại</th><th>Ghi chú</th><th>Thời gian</th><th>Trạng thái</th><th>Thao tác</th></tr></thead>
+                <tbody>
+                <?php foreach ($data['rows'] as $r): ?>
+                    <tr>
+                        <td><a href="<?php echo home_url('/' . $r->story_slug . '?chuong=' . (int)$r->chapter_number); ?>" target="_blank"><?php echo esc_html($r->story_title); ?></a></td>
+                        <td><?php echo (int)$r->chapter_number; ?></td>
+                        <td><?php echo esc_html($r->display_name); ?></td>
+                        <td><?php echo $types[$r->report_type] ?? $r->report_type; ?></td>
+                        <td><?php echo esc_html($r->note); ?></td>
+                        <td><?php echo mysql2date('d/m/Y H:i', $r->created_at); ?></td>
+                        <td><?php echo $r->status === 'pending' ? '<span style="color:orange;">Chờ XL</span>' : '<span style="color:green;">Đã XL</span>'; ?></td>
+                        <td>
+                            <?php if ($r->status === 'pending'): ?>
+                                <a href="<?php echo wp_nonce_url("?page=hdk-reports&hdk_report_action=resolve&report_id=".(int)$r->id, 'hdk_report_'.(int)$r->id); ?>" class="button button-small">Đã xử lý</a>
+                            <?php endif; ?>
+                        </td>
+                    </tr>
+                <?php endforeach; ?>
+                </tbody>
+            </table>
+            <?php if ($data['pages'] > 1): ?>
+                <div class="tablenav"><div class="tablenav-pages">
+                    <?php for ($i = 1; $i <= $data['pages']; $i++): ?>
+                        <a href="?page=hdk-reports&paged=<?php echo $i; ?>&filter_status=<?php echo $status; ?>" class="button<?php echo $i===$page?' button-primary':''; ?>"><?php echo $i; ?></a>
+                    <?php endfor; ?>
+                </div></div>
+            <?php endif; ?>
+        </div>
+        <?php
     }
 }
