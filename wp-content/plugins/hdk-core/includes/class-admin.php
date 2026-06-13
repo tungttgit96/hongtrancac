@@ -1587,7 +1587,7 @@ Nội dung chương 2 viết ở đây..."
                         break;
                 }
             } catch (\Exception $e) {
-                if ($skip_errors) { $errors++; continue 2; }
+                if ($skip_errors) { $errors++; continue; }
                 throw $e;
             }
         }
