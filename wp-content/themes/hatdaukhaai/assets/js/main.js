@@ -273,4 +273,163 @@
                 window.location.href = '/wp-login.php';
             });
     };
+
+    // ===== Reader Settings =====
+    var readerContent = document.getElementById('chapter-content');
+    if (readerContent) {
+        var PREFS_KEY = 'hdk-reader-prefs';
+        var STORY_ID = readerContent.dataset.storyId;
+        var defaults = {font_size: 20, font_family: 'Be Vietnam Pro', line_height: '2.0', theme: 'light', reading_width: 'wide'};
+        
+        function loadPrefs() {
+            var prefs = {};
+            try { var local = JSON.parse(safeGetStorage(PREFS_KEY)); if (local) prefs = local; } catch(e) {}
+            return Object.assign({}, defaults, prefs);
+        }
+
+        function savePrefs(prefs) {
+            safeSetStorage(PREFS_KEY, JSON.stringify(prefs));
+            fetch('/wp-json/hdk/v1/reader-prefs', {
+                method: 'PATCH',
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify(prefs)
+            }).catch(function(){});
+        }
+
+        function applyPrefs(prefs) {
+            readerContent.style.fontSize = prefs.font_size + 'px';
+            readerContent.style.fontFamily = prefs.font_family;
+            readerContent.style.lineHeight = prefs.line_height;
+            var fsv = document.getElementById('font-size-val');
+            if (fsv) fsv.textContent = prefs.font_size;
+            var ffs = document.getElementById('font-family-select');
+            if (ffs) ffs.value = prefs.font_family;
+            var lhs = document.getElementById('line-height-select');
+            if (lhs) lhs.value = prefs.line_height;
+            
+            var themeBtns = document.querySelectorAll('.reader-theme-btn');
+            themeBtns.forEach(function(b) { b.classList.remove('active'); });
+            var activeBtn = document.getElementById('theme-btn-' + prefs.theme);
+            if (activeBtn) activeBtn.classList.add('active');
+            document.body.classList.remove('reader-theme-dark', 'reader-theme-sepia');
+            if (prefs.theme !== 'light') document.body.classList.add('reader-theme-' + prefs.theme);
+            
+            if (prefs.reading_width === 'narrow') {
+                readerContent.style.maxWidth = '700px';
+                readerContent.style.margin = '0 auto';
+            } else {
+                readerContent.style.maxWidth = '';
+                readerContent.style.margin = '';
+            }
+        }
+
+        var currentPrefs = loadPrefs();
+        applyPrefs(currentPrefs);
+
+        window.adjustFontSize = function(delta) {
+            currentPrefs.font_size = Math.max(16, Math.min(28, currentPrefs.font_size + delta));
+            applyPrefs(currentPrefs);
+            savePrefs(currentPrefs);
+        };
+
+        window.setFontFamily = function(family) {
+            currentPrefs.font_family = family;
+            applyPrefs(currentPrefs);
+            savePrefs(currentPrefs);
+        };
+
+        window.setLineHeight = function(lh) {
+            currentPrefs.line_height = lh;
+            applyPrefs(currentPrefs);
+            savePrefs(currentPrefs);
+        };
+
+        window.setReaderTheme = function(theme) {
+            currentPrefs.theme = theme;
+            applyPrefs(currentPrefs);
+            savePrefs(currentPrefs);
+        };
+
+        window.toggleReadingWidth = function() {
+            currentPrefs.reading_width = currentPrefs.reading_width === 'narrow' ? 'wide' : 'narrow';
+            applyPrefs(currentPrefs);
+            savePrefs(currentPrefs);
+        };
+
+        // Fetch server prefs for logged-in users
+        fetch('/wp-json/hdk/v1/reader-prefs')
+            .then(function(r) { return r.json(); })
+            .then(function(data) {
+                if (data.prefs && data.prefs.user_id) {
+                    currentPrefs.font_size = parseInt(data.prefs.font_size) || defaults.font_size;
+                    currentPrefs.font_family = data.prefs.font_family || defaults.font_family;
+                    currentPrefs.line_height = data.prefs.line_height || defaults.line_height;
+                    currentPrefs.theme = data.prefs.theme || defaults.theme;
+                    currentPrefs.reading_width = data.prefs.reading_width || defaults.reading_width;
+                    applyPrefs(currentPrefs);
+                }
+            }).catch(function(){});
+
+        // ===== TOC =====
+        window.toggleTOC = function() {
+            var drawer = document.getElementById('toc-drawer');
+            var overlay = document.getElementById('toc-overlay');
+            var isOpen = drawer.classList.contains('open');
+            if (isOpen) { closeTOC(); }
+            else {
+                overlay.style.display = 'block';
+                drawer.classList.add('open');
+                if (!drawer.dataset.loaded) loadTOC();
+            }
+        };
+
+        window.closeTOC = function() {
+            var drawer = document.getElementById('toc-drawer');
+            var overlay = document.getElementById('toc-overlay');
+            if (drawer) drawer.classList.remove('open');
+            if (overlay) overlay.style.display = 'none';
+        };
+
+        function loadTOC() {
+            var drawer = document.getElementById('toc-drawer');
+            var list = document.getElementById('toc-list');
+            var storySlug = window.location.pathname.replace(/\/$/, '').split('/').pop();
+            if (storySlug.includes('?')) storySlug = storySlug.split('?')[0];
+            
+            fetch('/wp-json/hdk/v1/chapters/' + STORY_ID)
+                .then(function(r) { return r.json(); })
+                .then(function(data) {
+                    var chapters = data.chapters || [];
+                    var currentChapter = parseInt(readerContent.dataset.chapterNumber);
+                    var html = '';
+                    chapters.forEach(function(ch) {
+                        var cls = 'toc-chapter';
+                        if (ch.chapter_number === currentChapter) cls += ' current';
+                        var lockIcon = '🔓';
+                        if (ch.is_purchased) lockIcon = '✅';
+                        var url = '/' + storySlug + '?chuong=' + ch.chapter_number;
+                        html += '<a href="' + url + '" class="' + cls + '">' +
+                            '<span class="toc-chapter-num">' + ch.chapter_number + '</span>' +
+                            '<span class="toc-chapter-title">' + escapeHtml(ch.title) + '</span>' +
+                            '<span class="toc-chapter-lock">' + lockIcon + '</span>' +
+                            '</a>';
+                    });
+                    list.innerHTML = html || '<p style="color:var(--color-text-muted);text-align:center;padding:20px;">Không có chương nào</p>';
+                    drawer.dataset.loaded = '1';
+                    
+                    var current = list.querySelector('.toc-chapter.current');
+                    if (current) current.scrollIntoView({block: 'center'});
+                })
+                .catch(function() {
+                    list.innerHTML = '<p style="color:var(--color-text-muted);text-align:center;padding:20px;">Không thể tải danh sách chương</p>';
+                });
+        }
+
+        function escapeHtml(text) {
+            var div = document.createElement('div');
+            div.textContent = text;
+            return div.innerHTML;
+        }
+    }
+
 })();
