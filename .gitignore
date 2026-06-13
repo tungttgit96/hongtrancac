@@ -4,8 +4,11 @@ wp-includes/
 wp-config.php
 wp-config-sample.php
 /index.php
+/license.txt
+/readme.html
 /xmlrpc.php
 /wp-*.php
+/local-xdebuginfo.php
 wp-content/index.php
 wp-content/languages/
 wp-content/upgrade/
