@@ -1,5 +1,8 @@
 /* Hạt Đậu Khả Ái - Main Stylesheet */
 
+/* Hide darkify floating switch (theme has its own toggle) */
+.darkify_switch { display: none !important; }
+
 /* ===== Site Header ===== */
 .site-header {
     backdrop-filter: blur(8px);
