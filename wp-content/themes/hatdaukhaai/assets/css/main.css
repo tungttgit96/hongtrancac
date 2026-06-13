@@ -1,0 +1,133 @@
+/* Hạt Đậu Khả Ái - Main Stylesheet */
+
+/* ===== Site Header ===== */
+.site-header {
+    backdrop-filter: blur(8px);
+    -webkit-backdrop-filter: blur(8px);
+}
+
+/* ===== Story Card ===== */
+.story-card {
+    display: block;
+    text-decoration: none;
+    color: inherit;
+    position: relative;
+}
+.story-card .card-img {
+    transition: transform 0.3s;
+}
+.story-card:hover .card-img {
+    transform: scale(1.05);
+}
+
+/* ===== Search Modal ===== */
+.search-modal.active {
+    display: block !important;
+}
+
+/* ===== Mobile Drawer ===== */
+.mobile-drawer.open {
+    display: block !important;
+}
+
+/* ===== Star Rating ===== */
+.star:hover, .star:hover ~ .star {
+    color: var(--color-rating);
+}
+.stars:hover .star {
+    color: var(--color-rating);
+}
+.stars .star:hover ~ .star {
+    color: #D1D5DB;
+}
+
+/* ===== Chapter Reader ===== */
+article p {
+    margin-bottom: 1em;
+}
+article p:last-child {
+    margin-bottom: 0;
+}
+
+/* ===== Pagination ===== */
+.pagination .btn-primary {
+    pointer-events: none;
+}
+
+/* ===== Responsive ===== */
+@media (max-width: 1024px) {
+    :root {
+        --container-max: 960px;
+    }
+}
+
+@media (max-width: 768px) {
+    :root {
+        --header-height: 56px;
+    }
+    .site-logo {
+        font-size: var(--font-size-base) !important;
+    }
+    .main-nav {
+        display: none !important;
+    }
+    .hero {
+        padding: 32px 0 !important;
+    }
+    .hero h1 {
+        font-size: var(--font-size-2xl) !important;
+    }
+    .hero .hero-visual {
+        flex: 0 0 120px !important;
+    }
+    .hero .hero-visual div {
+        font-size: 60px !important;
+    }
+    .story-header {
+        flex-direction: column;
+        align-items: center;
+        text-align: center;
+    }
+    .story-header > div:first-child {
+        flex: 0 0 160px !important;
+    }
+    .section {
+        padding: 24px 0;
+    }
+    .section-title {
+        font-size: var(--font-size-lg) !important;
+    }
+    .ranking-row {
+        flex-wrap: wrap;
+    }
+}
+
+@media (max-width: 375px) {
+    .container {
+        padding: 0 12px;
+    }
+    .card-body {
+        padding: 8px;
+    }
+    .story-header > div:first-child {
+        flex: 0 0 140px !important;
+    }
+}
+
+/* ===== Touch-friendly ===== */
+@media (hover: none) and (pointer: coarse) {
+    .btn, a.btn, button.btn {
+        min-height: var(--touch-target);
+        min-width: var(--touch-target);
+    }
+    select, input[type="text"], input[type="search"] {
+        min-height: var(--touch-target);
+    }
+}
+
+/* ===== Print ===== */
+@media print {
+    .site-header, .site-footer, .pagination, .comment-form {
+        display: none !important;
+    }
+}

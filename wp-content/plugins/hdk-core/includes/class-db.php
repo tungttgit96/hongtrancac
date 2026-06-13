@@ -1,0 +1,308 @@
+<?php
+/**
+ * HDK DB - database query helpers
+ */
+
+class HDK_DB {
+    public static function table($name) {
+        global $wpdb;
+        return $wpdb->prefix . $name;
+    }
+
+    public static function get_story($slug_or_id) {
+        global $wpdb;
+        $table = self::table('hdk_stories');
+        if (is_numeric($slug_or_id)) {
+            $story = $wpdb->get_row($wpdb->prepare("SELECT * FROM $table WHERE id = %d", $slug_or_id));
+        } else {
+            $story = $wpdb->get_row($wpdb->prepare("SELECT * FROM $table WHERE slug = %s", $slug_or_id));
+        }
+        if ($story) {
+            $story->author_name = self::get_author_name($story->author_id);
+            $story->categories = self::get_story_categories($story->id);
+            $story->chapter_count = self::get_chapter_count($story->id);
+        }
+        return $story;
+    }
+
+    public static function get_author_name($author_id) {
+        global $wpdb;
+        return $wpdb->get_var($wpdb->prepare(
+            "SELECT name FROM " . self::table('hdk_authors') . " WHERE id = %d",
+            $author_id
+        ));
+    }
+
+    public static function get_story_categories($story_id) {
+        global $wpdb;
+        return $wpdb->get_results($wpdb->prepare(
+            "SELECT c.* FROM " . self::table('hdk_categories') . " c
+             JOIN " . self::table('hdk_story_categories') . " sc ON c.id = sc.category_id
+             WHERE sc.story_id = %d ORDER BY c.sort_order",
+            $story_id
+        ));
+    }
+
+    public static function get_chapter_count($story_id) {
+        global $wpdb;
+        return (int) $wpdb->get_var($wpdb->prepare(
+            "SELECT COUNT(*) FROM " . self::table('hdk_chapters') . " WHERE story_id = %d AND status = 'published'",
+            $story_id
+        ));
+    }
+
+    public static function get_chapter($story_id, $chapter_number) {
+        global $wpdb;
+        return $wpdb->get_row($wpdb->prepare(
+            "SELECT * FROM " . self::table('hdk_chapters') . "
+             WHERE story_id = %d AND chapter_number = %d AND status = 'published'",
+            $story_id, $chapter_number
+        ));
+    }
+
+    public static function get_stories($args = []) {
+        global $wpdb;
+        $table = self::table('hdk_stories');
+        $defaults = [
+            'per_page' => 20,
+            'page' => 1,
+            'status' => '',
+            'category_id' => 0,
+            'author_id' => 0,
+            'is_free' => null,
+            'search' => '',
+            'orderby' => 'updated_at',
+            'order' => 'DESC',
+        ];
+        $args = wp_parse_args($args, $defaults);
+
+        $where = ["1=1"];
+        if ($args['status']) $where[] = $wpdb->prepare("s.status = %s", $args['status']);
+        if ($args['category_id']) {
+            $where[] = $wpdb->prepare("s.id IN (SELECT story_id FROM " . self::table('hdk_story_categories') . " WHERE category_id = %d)", $args['category_id']);
+        }
+        if ($args['author_id']) $where[] = $wpdb->prepare("s.author_id = %d", $args['author_id']);
+        if ($args['is_free'] !== null) $where[] = $wpdb->prepare("s.is_free = %d", (int)$args['is_free']);
+        if ($args['search']) {
+            $search = '%' . $wpdb->esc_like($args['search']) . '%';
+            $where[] = $wpdb->prepare("(s.title LIKE %s OR s.summary LIKE %s)", $search, $search);
+        }
+
+        $orderby = in_array($args['orderby'], ['updated_at','total_views','average_rating','total_favorites','published_at','title'])
+            ? "s.{$args['orderby']}" : 's.updated_at';
+        $order = $args['order'] === 'ASC' ? 'ASC' : 'DESC';
+        $offset = ($args['page'] - 1) * $args['per_page'];
+
+        $where_sql = implode(' AND ', $where);
+        $total = $wpdb->get_var("SELECT COUNT(*) FROM $table s WHERE $where_sql");
+
+        $stories = $wpdb->get_results($wpdb->prepare(
+            "SELECT s.* FROM $table s WHERE $where_sql ORDER BY $orderby $order LIMIT %d OFFSET %d",
+            $args['per_page'], $offset
+        ));
+
+        foreach ($stories as $story) {
+            $story->author_name = self::get_author_name($story->author_id);
+            $story->categories = self::get_story_categories($story->id);
+            $story->chapter_count = (int)$story->total_chapters;
+        }
+
+        return ['stories' => $stories, 'total' => (int)$total, 'pages' => (int)ceil($total / $args['per_page'])];
+    }
+
+    public static function get_ranking($metric = 'views', $period = 'all', $category_id = 0, $page = 1, $per_page = 20) {
+        global $wpdb;
+        $stories_table = self::table('hdk_stories');
+        $stats_table = self::table('hdk_daily_story_stats');
+
+        if ($period === 'all') {
+            $order = $metric === 'favorites' ? 's.total_favorites' : ($metric === 'ratings' ? 's.average_rating' : 's.total_views');
+            $where = '1=1';
+            if ($category_id) {
+                $where = $wpdb->prepare("s.id IN (SELECT story_id FROM " . self::table('hdk_story_categories') . " WHERE category_id = %d)", $category_id);
+            }
+            $offset = ($page - 1) * $per_page;
+            $total = $wpdb->get_var("SELECT COUNT(*) FROM $stories_table s WHERE $where");
+            $stories = $wpdb->get_results($wpdb->prepare(
+                "SELECT s.* FROM $stories_table s WHERE $where ORDER BY $order DESC LIMIT %d OFFSET %d",
+                $per_page, $offset
+            ));
+        } else {
+            // Period-based ranking from daily stats
+            $days = ['day' => 1, 'week' => 7, 'month' => 30, 'year' => 365];
+            $days_ago = $days[$period] ?? 7;
+            $stat_col = $metric === 'favorites' ? 'daily_favorites' : ($metric === 'ratings' ? 'daily_ratings' : 'daily_views');
+
+            $where = $wpdb->prepare("ds.stat_date >= DATE_SUB(CURDATE(), INTERVAL %d DAY)", $days_ago);
+            if ($category_id) {
+                $where .= $wpdb->prepare(" AND s.id IN (SELECT story_id FROM " . self::table('hdk_story_categories') . " WHERE category_id = %d)", $category_id);
+            }
+
+            $offset = ($page - 1) * $per_page;
+            $total = $wpdb->get_var("SELECT COUNT(DISTINCT ds.story_id) FROM $stats_table ds JOIN $stories_table s ON ds.story_id = s.id WHERE $where");
+            $stories = $wpdb->get_results($wpdb->prepare(
+                "SELECT s.*, SUM(ds.$stat_col) as period_total
+                 FROM $stats_table ds JOIN $stories_table s ON ds.story_id = s.id
+                 WHERE $where GROUP BY ds.story_id ORDER BY period_total DESC LIMIT %d OFFSET %d",
+                $per_page, $offset
+            ));
+        }
+
+        foreach ($stories as $story) {
+            $story->author_name = self::get_author_name($story->author_id);
+            $story->chapter_count = (int)$story->total_chapters;
+        }
+
+        return ['stories' => $stories, 'total' => (int)$total, 'pages' => (int)ceil($total / $per_page)];
+    }
+
+    public static function log_view($story_id, $chapter_number = 0) {
+        global $wpdb;
+        $stories_table = self::table('hdk_stories');
+        $chapters_table = self::table('hdk_chapters');
+        $stats_table = self::table('hdk_daily_story_stats');
+
+        $wpdb->query($wpdb->prepare("UPDATE $stories_table SET total_views = total_views + 1 WHERE id = %d", $story_id));
+        if ($chapter_number) {
+            $wpdb->query($wpdb->prepare("UPDATE $chapters_table SET views = views + 1 WHERE story_id = %d AND chapter_number = %d", $story_id, $chapter_number));
+        }
+        $today = current_time('Y-m-d');
+        $wpdb->query($wpdb->prepare(
+            "INSERT INTO $stats_table (story_id, stat_date, daily_views) VALUES (%d, %s, 1)
+             ON DUPLICATE KEY UPDATE daily_views = daily_views + 1",
+            $story_id, $today
+        ));
+    }
+
+    public static function seed_demo_data() {
+        global $wpdb;
+        $now = current_time('mysql');
+
+        // Seed authors
+        $authors = [
+            ['name' => 'Nguyễn Nhật Ánh', 'slug' => 'nguyen-nhat-anh', 'bio' => 'Nhà văn nổi tiếng Việt Nam'],
+            ['name' => 'Tô Hoài', 'slug' => 'to-hoai', 'bio' => 'Nhà văn Việt Nam với nhiều tác phẩm kinh điển'],
+            ['name' => 'Nam Cao', 'slug' => 'nam-cao', 'bio' => 'Cây bút hiện thực xuất sắc'],
+            ['name' => 'Vũ Trọng Phụng', 'slug' => 'vu-trong-phung', 'bio' => 'Ông vua phóng sự đất Bắc'],
+            ['name' => 'Ngô Tất Tố', 'slug' => 'ngo-tat-to', 'bio' => 'Nhà văn, nhà báo nổi tiếng'],
+        ];
+        foreach ($authors as $a) {
+            $wpdb->insert(self::table('hdk_authors'), array_merge($a, ['created_at' => $now, 'updated_at' => $now]));
+        }
+
+        // Seed categories
+        $categories = [
+            ['name' => 'Tiểu Thuyết', 'slug' => 'tieu-thuyet', 'sort_order' => 1],
+            ['name' => 'Truyện Ngắn', 'slug' => 'truyen-ngan', 'sort_order' => 2],
+            ['name' => 'Ngôn Tình', 'slug' => 'ngon-tinh', 'sort_order' => 3],
+            ['name' => 'Kiếm Hiệp', 'slug' => 'kiem-hiep', 'sort_order' => 4],
+            ['name' => 'Trinh Thám', 'slug' => 'trinh-tham', 'sort_order' => 5],
+            ['name' => 'Kinh Dị', 'slug' => 'kinh-di', 'sort_order' => 6],
+            ['name' => 'Hài Hước', 'slug' => 'hai-huoc', 'sort_order' => 7],
+            ['name' => 'Xuyên Không', 'slug' => 'xuyen-khong', 'sort_order' => 8],
+            ['name' => 'Đam Mỹ', 'slug' => 'dam-my', 'sort_order' => 9],
+            ['name' => 'Light Novel', 'slug' => 'light-novel', 'sort_order' => 10],
+        ];
+        foreach ($categories as $c) {
+            $wpdb->insert(self::table('hdk_categories'), array_merge($c, ['created_at' => $now, 'updated_at' => $now]));
+        }
+
+        // Seed 30 stories
+        $story_titles = [
+            'Cánh Đồng Bất Tận', 'Mắt Biếc', 'Tôi Thấy Hoa Vàng Trên Cỏ Xanh',
+            'Dế Mèn Phiêu Lưu Ký', 'Số Đỏ', 'Tắt Đèn', 'Chí Phèo',
+            'Lão Hạc', 'Vợ Nhặt', 'Chiếc Lược Ngà', 'Những Ngày Thơ Ấu',
+            'Bỉ Vỏ', 'Đất Rừng Phương Nam', 'Tuổi Thơ Dữ Dội',
+            'Bến Không Chồng', 'Mùa Hè Năm Ấy', 'Cô Gái Đến Từ Hôm Qua',
+            'Đi Qua Hoa Cúc', 'Chuyện Tình Nàng Hề', 'Hồn Ma Đêm Giáng Sinh',
+            'Bí Mật Của Gió', 'Ánh Trăng Không Màu', 'Mưa Trên Cánh Bướm',
+            'Ngày Xưa Có Một Chuyện Tình', 'Đảo Mộng Mơ', 'Thiên Thần Nhỏ Của Tôi',
+            'Kẻ Săn Đuổi Ánh Sáng', 'Lời Nguyền Hoa Hồng', 'Bản Tình Ca Mùa Đông',
+            'Dấu Chân Trên Cát',
+        ];
+
+        foreach ($story_titles as $i => $title) {
+            $author_id = ($i % 5) + 1;
+            $status = $i % 3 === 0 ? 'completed' : ($i % 3 === 1 ? 'ongoing' : 'ongoing');
+            $views = rand(1000, 1000000);
+            $chaps = $status === 'completed' ? rand(20, 200) : rand(5, 50);
+            $slug = sanitize_title($title);
+
+            $wpdb->insert(self::table('hdk_stories'), [
+                'title' => $title,
+                'slug' => $slug,
+                'author_id' => $author_id,
+                'cover_url' => 'https://picsum.photos/seed/' . $slug . '/300/400',
+                'summary' => "Đây là phần tóm tắt của truyện \"$title\". Một câu chuyện hấp dẫn với nhiều tình tiết ly kỳ và cảm động.",
+                'status' => $status,
+                'is_free' => $i % 4 === 0 ? 1 : 0,
+                'total_chapters' => $chaps,
+                'total_views' => $views,
+                'average_rating' => round(rand(30, 50) / 10, 1),
+                'total_ratings' => rand(10, 5000),
+                'total_favorites' => rand(0, 10000),
+                'published_at' => $now,
+                'created_at' => $now,
+                'updated_at' => $now,
+            ]);
+            $story_id = $wpdb->insert_id;
+
+            // Assign random 2-3 categories
+            $cat_ids = array_rand(array_flip(range(1, 10)), rand(2, 3));
+            $cat_ids = (array) $cat_ids;
+            foreach ($cat_ids as $cid) {
+                $wpdb->insert(self::table('hdk_story_categories'), ['story_id' => $story_id, 'category_id' => (int)$cid]);
+            }
+
+            // Seed chapters
+            for ($chap = 1; $chap <= min($chaps, 5); $chap++) {
+                $content = "<p>Chương $chap của truyện \"$title\".</p>";
+                $content .= "<p>" . self::generate_lorem(rand(500, 2000)) . "</p>";
+                $wpdb->insert(self::table('hdk_chapters'), [
+                    'story_id' => $story_id,
+                    'chapter_number' => $chap,
+                    'title' => "Chương $chap: " . self::random_chapter_title(),
+                    'content' => $content,
+                    'word_count' => str_word_count(strip_tags($content)),
+                    'views' => rand(100, 5000),
+                    'status' => 'published',
+                    'created_at' => $now,
+                    'updated_at' => $now,
+                ]);
+            }
+        }
+
+        // Update category counts
+        foreach (range(1, 10) as $cid) {
+            $count = $wpdb->get_var($wpdb->prepare(
+                "SELECT COUNT(*) FROM " . self::table('hdk_story_categories') . " WHERE category_id = %d", $cid
+            ));
+            $wpdb->update(self::table('hdk_categories'), ['story_count' => $count], ['id' => $cid]);
+        }
+
+        // Update author counts
+        foreach (range(1, 5) as $aid) {
+            $count = $wpdb->get_var($wpdb->prepare(
+                "SELECT COUNT(*) FROM " . self::table('hdk_stories') . " WHERE author_id = %d", $aid
+            ));
+            $wpdb->update(self::table('hdk_authors'), ['story_count' => $count], ['id' => $aid]);
+        }
+    }
+
+    private static function generate_lorem($words = 100) {
+        $lorem = "Lorem ipsum dolor sit amet consectetur adipiscing elit sed do eiusmod tempor incididunt ut labore et dolore magna aliqua ut enim ad minim veniam quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur excepteur sint occaecat cupidatat non proident sunt in culpa qui officia deserunt mollit anim id est laborum sed ut perspiciatis unde omnis iste natus error sit voluptatem accusantium doloremque laudantium totam rem aperiam eaque ipsa quae ab illo inventore veritatis et quasi architecto beatae vitae dicta sunt explicabo nemo enim ipsam voluptatem quia voluptas sit aspernatur aut odit aut fugit sed quia consequuntur magni dolores eos qui ratione voluptatem sequi nesciunt neque porro quisquam est qui dolorem ipsum quia dolor sit amet consectetur adipisci velit sed quia non numquam eius modi tempora incidunt ut labore et dolore magnam aliquam quaerat voluptatem";
+        $words_arr = explode(' ', $lorem);
+        shuffle($words_arr);
+        return implode(' ', array_slice($words_arr, 0, $words));
+    }
+
+    private static function random_chapter_title() {
+        $titles = [
+            'Khởi Đầu', 'Bí Mật Được Tiết Lộ', 'Cuộc Gặp Gỡ Định Mệnh',
+            'Âm Mưu Trong Bóng Tối', 'Ánh Sáng Cuối Đường Hầm',
+            'Người Lạ Bí Ẩn', 'Thử Thách Mới', 'Đối Mặt Với Quá Khứ',
+            'Cuộc Chiến Sinh Tử', 'Khoảnh Khắc Quyết Định',
+        ];
+        return $titles[array_rand($titles)];
+    }
+}
