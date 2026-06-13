@@ -3,9 +3,9 @@ wp-admin/
 wp-includes/
 wp-config.php
 wp-config-sample.php
-index.php
-xmlrpc.php
-wp-*.php
+/index.php
+/xmlrpc.php
+/wp-*.php
 wp-content/index.php
 wp-content/languages/
 wp-content/upgrade/
