@@ -105,4 +105,41 @@ $categories = $wpdb->get_results("SELECT * FROM " . HDK_DB::table('hdk_categorie
     </div>
 </section>
 
+<!-- Editor Picks -->
+<?php
+$editor_picks = HDK_DB::get_stories(['orderby' => 'average_rating', 'order' => 'DESC', 'per_page' => 6]);
+if (!empty($editor_picks['stories'])): ?>
+<section class="section">
+    <div class="container">
+        <div class="section-header">
+            <h2 class="section-title">⭐ Đề cử biên tập</h2>
+        </div>
+        <div class="grid grid-6">
+            <?php foreach ($editor_picks['stories'] as $i => $story): ?>
+                <?php hdk_get_story_card($story, $i); ?>
+            <?php endforeach; ?>
+        </div>
+    </div>
+</section>
+<?php endif; ?>
+
+<!-- Weekly Hot -->
+<?php
+$weekly_hot = HDK_DB::get_ranking('views', 'week', 0, 1, 6);
+if (!empty($weekly_hot['stories'])): ?>
+<section class="section" style="background:var(--color-bg);">
+    <div class="container">
+        <div class="section-header">
+            <h2 class="section-title">🔥 Hot tuần này</h2>
+            <a href="/bang-xep-hang" class="btn btn-outline btn-sm">Xem thêm →</a>
+        </div>
+        <div class="grid grid-6">
+            <?php foreach ($weekly_hot['stories'] as $i => $story): ?>
+                <?php hdk_get_story_card($story, $i); ?>
+            <?php endforeach; ?>
+        </div>
+    </div>
+</section>
+<?php endif; ?>
+
 <?php get_footer(); ?>
