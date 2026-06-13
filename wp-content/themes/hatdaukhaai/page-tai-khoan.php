@@ -22,7 +22,7 @@ if ($credits === null && $wpdb->last_error === '') {
 $purchased_count = HDK_DB::get_user_purchased_count($user_id);
 
 $tab = isset($_GET['tab']) ? sanitize_text_field($_GET['tab']) : 'favorites';
-$valid_tabs = ['favorites', 'reading', 'purchased', 'history', 'wallet'];
+$valid_tabs = ['favorites', 'reading', 'purchased', 'history', 'wallet', 'notifications'];
 if (!in_array($tab, $valid_tabs)) $tab = 'favorites';
 
 $page = max(1, (int)($_GET['paged'] ?? 1));
@@ -56,6 +56,7 @@ get_header();
             'purchased' => '💎 Đã mua',
             'history'   => '🕐 Lịch sử đọc',
             'wallet'    => '💎 Ví hạt',
+            'notifications' => '🔔 Thông báo',
         ];
         foreach ($tabs as $key => $label) {
             $is_active = $tab === $key;
@@ -277,6 +278,45 @@ get_header();
                     <?php endforeach; ?>
                 </div>
                 <?php hdk_get_pagination($tx_data['pages'], $page); ?>
+            <?php endif; ?>
+            <?php break;
+
+        case 'notifications':
+            $notif_data = HDK_DB::get_notifications($user_id, $page, 20);
+            $notifications = $notif_data['rows'];
+            ?>
+            <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px;">
+                <h3 style="margin:0;">Thông báo</h3>
+                <?php if (!empty($notifications)): ?>
+                    <button type="button" class="btn btn-outline btn-sm" onclick="markAllRead()" style="font-size:var(--font-size-sm);">Đánh dấu tất cả đã đọc</button>
+                <?php endif; ?>
+            </div>
+            <?php if (empty($notifications)): ?>
+                <div class="empty-state" style="text-align:center;padding:48px 0;">
+                    <div style="font-size:48px;margin-bottom:16px;">🔔</div>
+                    <p style="color:var(--color-text-muted);">Chưa có thông báo nào</p>
+                </div>
+            <?php else: ?>
+                <div style="display:flex;flex-direction:column;gap:1px;background:var(--color-border);border-radius:var(--radius-md);overflow:hidden;">
+                    <?php foreach ($notifications as $notif): ?>
+                        <?php $is_unread = !$notif->is_read; ?>
+                        <a href="<?php echo esc_url($notif->link ?: '#'); ?>" 
+                           style="display:flex;gap:12px;padding:12px 16px;background:<?php echo $is_unread ? 'var(--color-primary-light)' : 'var(--color-bg)'; ?>;text-decoration:none;color:var(--color-text-primary);transition:background 0.15s;align-items:flex-start;"
+                           class="notif-item" data-notif-id="<?php echo (int)$notif->id; ?>">
+                            <div style="flex:1;">
+                                <div style="font-weight:<?php echo $is_unread ? '600' : '400'; ?>;margin-bottom:4px;"><?php echo esc_html($notif->title); ?></div>
+                                <?php if ($notif->message): ?>
+                                    <div style="color:var(--color-text-muted);font-size:var(--font-size-sm);"><?php echo esc_html($notif->message); ?></div>
+                                <?php endif; ?>
+                                <div style="color:var(--color-text-muted);font-size:12px;margin-top:4px;"><?php echo mysql2date('H:i d/m/Y', $notif->created_at); ?></div>
+                            </div>
+                            <?php if ($is_unread): ?>
+                                <span style="width:8px;height:8px;border-radius:50%;background:var(--color-primary);flex-shrink:0;margin-top:6px;"></span>
+                            <?php endif; ?>
+                        </a>
+                    <?php endforeach; ?>
+                </div>
+                <?php hdk_get_pagination($notif_data['pages'], $page); ?>
             <?php endif; ?>
             <?php break;
     }
