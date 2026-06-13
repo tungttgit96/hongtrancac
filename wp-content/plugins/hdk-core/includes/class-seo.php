@@ -35,6 +35,15 @@ class HDK_SEO {
 
         ?>
         <link rel="canonical" href="<?php echo esc_url($url); ?>" />
+        <?php
+        // Category/Author meta description
+        if ($hdk_category && isset($hdk_category->description) && $hdk_category->description) {
+            $description = $hdk_category->description;
+        }
+        if ($hdk_author && isset($hdk_author->bio) && $hdk_author->bio) {
+            $description = $hdk_author->bio;
+        }
+        ?>
         <meta name="description" content="<?php echo esc_attr($description); ?>" />
         <meta property="og:title" content="<?php echo esc_attr($title); ?>" />
         <meta property="og:description" content="<?php echo esc_attr($description); ?>" />
@@ -62,6 +71,19 @@ class HDK_SEO {
             "image": "<?php echo esc_url($image); ?>"
         }
         </script>
+        <?php elseif ($hdk_story && $hdk_chapter):
+            $article = [
+                '@context' => 'https://schema.org',
+                '@type' => 'Article',
+                'headline' => $hdk_story->title . ' - Chương ' . $hdk_chapter->chapter_number,
+                'author' => ['@type' => 'Person', 'name' => $hdk_story->author_name],
+                'isPartOf' => ['@type' => 'Book', 'name' => $hdk_story->title, 'url' => home_url('/' . $hdk_story->slug)],
+            ];
+            if (!empty($hdk_story->published_at)) $article['datePublished'] = $hdk_story->published_at;
+            if (!empty($hdk_story->updated_at)) $article['dateModified'] = $hdk_story->updated_at;
+            if (!empty($hdk_story->cover_url)) $article['image'] = $hdk_story->cover_url;
+        ?>
+        <script type="application/ld+json"><?php echo json_encode($article, JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE); ?></script>
         <?php else: ?>
         <script type="application/ld+json">
         {
@@ -73,6 +95,28 @@ class HDK_SEO {
         }
         </script>
         <?php endif; ?>
+
+        <?php
+        // JSON-LD BreadcrumbList
+        $breadcrumb = [
+            '@context' => 'https://schema.org',
+            '@type' => 'BreadcrumbList',
+            'itemListElement' => [
+                ['@type' => 'ListItem', 'position' => 1, 'name' => 'Trang chủ', 'item' => home_url('/')],
+            ]
+        ];
+        if ($hdk_story) {
+            $breadcrumb['itemListElement'][] = ['@type' => 'ListItem', 'position' => 2, 'name' => $hdk_story->title, 'item' => home_url('/' . $hdk_story->slug)];
+            if ($hdk_chapter) {
+                $breadcrumb['itemListElement'][] = ['@type' => 'ListItem', 'position' => 3, 'name' => 'Chương ' . $hdk_chapter->chapter_number];
+            }
+        } elseif ($hdk_category) {
+            $breadcrumb['itemListElement'][] = ['@type' => 'ListItem', 'position' => 2, 'name' => $hdk_category->name, 'item' => home_url('/the-loai/' . $hdk_category->slug)];
+        } elseif ($hdk_author) {
+            $breadcrumb['itemListElement'][] = ['@type' => 'ListItem', 'position' => 2, 'name' => $hdk_author->name, 'item' => home_url('/tac-gia/' . $hdk_author->slug)];
+        }
+        echo "\n" . '<script type="application/ld+json">' . json_encode($breadcrumb, JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE) . '</script>' . "\n";
+        ?>
         <?php
     }
 }
