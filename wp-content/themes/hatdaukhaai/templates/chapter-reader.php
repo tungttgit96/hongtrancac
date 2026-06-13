@@ -58,6 +58,52 @@ get_header();
         <span>Chương <?php echo $chapter->chapter_number; ?></span>
     </nav>
 
+    <!-- Reader Settings Bar -->
+    <div class="reader-settings" id="reader-settings" style="display:flex;align-items:center;gap:8px;padding:8px 16px;background:var(--color-bg-secondary);border-radius:var(--radius-md);margin-bottom:12px;flex-wrap:wrap;font-size:var(--font-size-sm);">
+        <span style="color:var(--color-text-muted);margin-right:4px;">Cỡ chữ</span>
+        <button type="button" class="btn btn-ghost btn-sm" onclick="adjustFontSize(-2)" style="min-width:32px;">A⁻</button>
+        <span id="font-size-val" style="min-width:32px;text-align:center;font-weight:600;">20</span>
+        <button type="button" class="btn btn-ghost btn-sm" onclick="adjustFontSize(2)" style="min-width:32px;">A⁺</button>
+
+        <span style="color:var(--color-text-muted);margin-left:12px;margin-right:4px;">Font</span>
+        <select id="font-family-select" onchange="setFontFamily(this.value)" style="padding:4px 8px;border:1px solid var(--color-border);border-radius:4px;background:var(--color-bg);color:var(--color-text-primary);font-size:var(--font-size-sm);">
+            <option value="Be Vietnam Pro">Be Vietnam Pro</option>
+            <option value="Georgia">Georgia</option>
+            <option value="Arial">Arial</option>
+            <option value="Times New Roman">Times New Roman</option>
+        </select>
+
+        <span style="color:var(--color-text-muted);margin-left:12px;margin-right:4px;">Giãn dòng</span>
+        <select id="line-height-select" onchange="setLineHeight(this.value)" style="padding:4px 8px;border:1px solid var(--color-border);border-radius:4px;background:var(--color-bg);color:var(--color-text-primary);font-size:var(--font-size-sm);">
+            <option value="1.5">1.5</option>
+            <option value="1.8">1.8</option>
+            <option value="2.0">2.0</option>
+            <option value="2.5">2.5</option>
+        </select>
+
+        <span style="color:var(--color-text-muted);margin-left:12px;margin-right:4px;">Theme</span>
+        <button type="button" class="btn btn-ghost btn-sm reader-theme-btn" data-theme="light" onclick="setReaderTheme('light')" id="theme-btn-light">☀️</button>
+        <button type="button" class="btn btn-ghost btn-sm reader-theme-btn" data-theme="dark" onclick="setReaderTheme('dark')" id="theme-btn-dark">🌙</button>
+        <button type="button" class="btn btn-ghost btn-sm reader-theme-btn" data-theme="sepia" onclick="setReaderTheme('sepia')" id="theme-btn-sepia">📜</button>
+
+        <button type="button" class="btn btn-ghost btn-sm" onclick="toggleReadingWidth()" id="width-toggle-btn" style="margin-left:12px;">📏</button>
+    </div>
+
+    <!-- Floating TOC -->
+    <button type="button" class="toc-float-btn" id="toc-float-btn" onclick="toggleTOC()" aria-label="Mục lục" style="position:fixed;right:16px;bottom:80px;z-index:90;width:48px;height:48px;border-radius:50%;background:var(--color-primary);color:#fff;border:none;font-size:20px;cursor:pointer;box-shadow:0 4px 12px rgba(0,0,0,0.15);display:flex;align-items:center;justify-content:center;">📋</button>
+
+    <!-- TOC Drawer -->
+    <div class="toc-overlay" id="toc-overlay" style="display:none;position:fixed;top:0;left:0;right:0;bottom:0;background:var(--color-overlay);z-index:200;" onclick="closeTOC()"></div>
+    <div class="toc-drawer" id="toc-drawer" style="position:fixed;top:0;right:0;width:320px;max-width:85vw;height:100%;background:var(--color-bg);z-index:201;transform:translateX(100%);transition:transform 0.3s ease;overflow-y:auto;padding:20px;box-shadow:-4px 0 16px rgba(0,0,0,0.1);">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px;">
+            <h3 style="margin:0;">Mục lục</h3>
+            <button type="button" class="btn btn-ghost btn-sm" onclick="closeTOC()" aria-label="Đóng">✕</button>
+        </div>
+        <div id="toc-list" style="display:flex;flex-direction:column;gap:4px;">
+            <p style="color:var(--color-text-muted);text-align:center;padding:20px;">Đang tải…</p>
+        </div>
+    </div>
+
     <!-- Chapter Navigation -->
     <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:12px;margin-bottom:20px;background:var(--color-bg);border-radius:var(--radius-md);padding:16px;border:1px solid var(--color-border);">
         <?php if ($prev): ?>
@@ -79,7 +125,7 @@ get_header();
     </div>
 
     <!-- Chapter Content (JS-decoded to prevent scraping) -->
-    <article style="background:var(--color-bg);border-radius:var(--radius-md);padding:24px;border:1px solid var(--color-border);line-height:2;font-size:var(--font-size-lg);min-height:60vh;" id="chapter-content">
+    <article style="background:var(--color-bg);border-radius:var(--radius-md);padding:24px;border:1px solid var(--color-border);line-height:2;font-size:var(--font-size-lg);min-height:60vh;" id="chapter-content" data-story-id="<?php echo (int)$story->id; ?>" data-chapter-number="<?php echo (int)$chapter->chapter_number; ?>">
         <div id="content-loading" aria-live="polite" style="text-align:center;padding:40px;color:var(--color-text-muted);">Đang tải nội dung…</div>
     </article>
 
@@ -92,7 +138,7 @@ get_header();
         <?php else: ?>
             <span></span>
         <?php endif; ?>
-        <a href="/<?php echo $story->slug; ?>" class="btn btn-ghost btn-sm">📋 Mục lục</a>
+        <button type="button" class="btn btn-ghost btn-sm" onclick="toggleTOC()" style="min-height:var(--touch-target);">📋 Mục lục</button>
         <?php if ($next): ?>
             <a href="/<?php echo $story->slug; ?>?chuong=<?php echo $next; ?>" class="btn btn-primary">Chương sau &raquo;</a>
         <?php else: ?>
