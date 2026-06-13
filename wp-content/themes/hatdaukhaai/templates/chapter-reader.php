@@ -104,6 +104,35 @@ get_header();
         </div>
     </div>
 
+    <!-- Report Button -->
+    <div style="text-align:right;margin-bottom:8px;">
+        <button type="button" class="btn btn-ghost btn-sm" onclick="toggleReportModal()" style="font-size:var(--font-size-sm);">🚩 Báo lỗi</button>
+    </div>
+
+    <!-- Report Modal -->
+    <div id="report-modal" style="display:none;position:fixed;top:0;left:0;right:0;bottom:0;background:var(--color-overlay);z-index:300;align-items:center;justify-content:center;" onclick="if(event.target===this)this.style.display='none'">
+        <div style="background:var(--color-bg);border-radius:var(--radius-lg);padding:24px;max-width:420px;width:90%;">
+            <h3 style="margin:0 0 16px;">Báo lỗi chương</h3>
+            <form id="report-form" onsubmit="submitReport(event)" style="display:flex;flex-direction:column;gap:12px;">
+                <input type="hidden" id="report-story-id" value="<?php echo (int)$story_id; ?>">
+                <input type="hidden" id="report-chapter" value="<?php echo (int)$chapter->chapter_number; ?>">
+                <select id="report-type" required style="padding:8px;border:1px solid var(--color-border);border-radius:4px;background:var(--color-bg);color:var(--color-text-primary);">
+                    <option value="">Chọn loại lỗi</option>
+                    <option value="typo">Lỗi chính tả</option>
+                    <option value="wrong_content">Sai nội dung</option>
+                    <option value="display_error">Lỗi hiển thị</option>
+                    <option value="other">Khác</option>
+                </select>
+                <textarea id="report-note" placeholder="Mô tả lỗi (không bắt buộc)" rows="3" style="padding:8px;border:1px solid var(--color-border);border-radius:4px;background:var(--color-bg);color:var(--color-text-primary);resize:vertical;"></textarea>
+                <div style="display:flex;gap:8px;justify-content:flex-end;">
+                    <button type="button" class="btn btn-ghost btn-sm" onclick="document.getElementById('report-modal').style.display='none'">Hủy</button>
+                    <button type="submit" class="btn btn-primary btn-sm">Gửi báo lỗi</button>
+                </div>
+            </form>
+            <div id="report-msg" style="margin-top:12px;text-align:center;display:none;"></div>
+        </div>
+    </div>
+
     <!-- Chapter Navigation -->
     <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:12px;margin-bottom:20px;background:var(--color-bg);border-radius:var(--radius-md);padding:16px;border:1px solid var(--color-border);">
         <?php if ($prev): ?>

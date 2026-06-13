@@ -624,3 +624,8 @@ article p:last-child {
         max-width: none;
     }
 }
+
+/* ===== Report Modal ===== */
+#report-modal > div {
+    animation: modalIn 0.2s ease;
+}

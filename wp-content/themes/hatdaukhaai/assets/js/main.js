@@ -514,4 +514,37 @@
         };
     }
 
+    // ===== Report Modal =====
+    window.toggleReportModal = function() {
+        document.getElementById('report-modal').style.display = 'flex';
+    };
+
+    window.submitReport = function(e) {
+        e.preventDefault();
+        var type = document.getElementById('report-type').value;
+        if (!type) return;
+
+        var data = new FormData();
+        data.append('story_id', document.getElementById('report-story-id').value);
+        data.append('chapter_number', document.getElementById('report-chapter').value);
+        data.append('report_type', type);
+        data.append('note', document.getElementById('report-note').value);
+
+        var btn = document.querySelector('#report-form button[type="submit"]');
+        btn.disabled = true; btn.textContent = 'Đang gửi...';
+
+        fetch('/wp-json/hdk/v1/reports', { method: 'POST', body: data })
+            .then(function(r) { return r.json(); })
+            .then(function(d) {
+                var msg = document.getElementById('report-msg');
+                msg.style.display = 'block';
+                msg.style.color = 'var(--color-success)';
+                msg.textContent = 'Đã gửi báo lỗi. Cảm ơn bạn!';
+                setTimeout(function() { document.getElementById('report-modal').style.display = 'none'; }, 1500);
+            })
+            .catch(function() {
+                btn.disabled = false; btn.textContent = 'Gửi báo lỗi';
+            });
+    };
+
 })();
