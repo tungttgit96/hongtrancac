@@ -100,6 +100,24 @@ class HDK_REST_API {
             'callback' => [__CLASS__, 'get_reader_prefs'],
             'permission_callback' => function() { return is_user_logged_in(); },
         ]);
+
+        register_rest_route('hdk/v1', '/notifications', [
+            'methods' => 'GET',
+            'callback' => [__CLASS__, 'get_notifications'],
+            'permission_callback' => function() { return is_user_logged_in(); },
+        ]);
+
+        register_rest_route('hdk/v1', '/notifications/read', [
+            'methods' => 'POST',
+            'callback' => [__CLASS__, 'mark_read'],
+            'permission_callback' => function() { return is_user_logged_in(); },
+        ]);
+
+        register_rest_route('hdk/v1', '/notifications/unread-count', [
+            'methods' => 'GET',
+            'callback' => [__CLASS__, 'unread_count'],
+            'permission_callback' => function() { return is_user_logged_in(); },
+        ]);
     }
 
     public static function search($request) {
@@ -218,6 +236,23 @@ class HDK_REST_API {
         if ($parent_id) $comment_data['comment_parent'] = $parent_id;
 
         $comment_id = wp_insert_comment($comment_data);
+
+        $story = HDK_DB::get_story($story_id);
+        $story_slug = $story->slug ?? '';
+
+        // Notify parent comment author
+        if ($parent_id > 0) {
+            $parent = get_comment($parent_id);
+            if ($parent && $parent->user_id && $parent->user_id != get_current_user_id()) {
+                HDK_DB::create_notification(
+                    $parent->user_id, 'comment_reply',
+                    'Có người trả lời bình luận của bạn',
+                    'Một người dùng đã trả lời bình luận của bạn.',
+                    home_url('/' . $story_slug . '?chuong=' . $chapter_number)
+                );
+            }
+        }
+
         return rest_ensure_response(['comment_id' => $comment_id]);
     }
 
@@ -312,6 +347,14 @@ class HDK_REST_API {
         HDK_DB::log_credit_transaction($user_id, 'spend', -$price, 'chapter_purchase', $story_id,
             'Mua chương ' . $chapter_number . ' - ' . $story->title);
 
+        // Notify buyer
+        HDK_DB::create_notification(
+            $user_id, 'purchase_success',
+            'Mua chương thành công',
+            'Bạn đã mua chương ' . $chapter_number . ' - ' . $story->title,
+            home_url('/' . $story->slug . '?chuong=' . $chapter_number)
+        );
+
         $remaining = $credits - $price;
         return rest_ensure_response(['success' => true, 'credits_spent' => $price, 'credits_remaining' => $remaining]);
     }
@@ -360,6 +403,14 @@ class HDK_REST_API {
         // Log transaction
         HDK_DB::log_credit_transaction($user_id, 'spend', -$price, 'full_purchase', $story_id,
             'Mua full truyện - ' . $story->title);
+
+        // Notify buyer
+        HDK_DB::create_notification(
+            $user_id, 'purchase_success',
+            'Mua full truyện thành công',
+            'Bạn đã mua toàn bộ truyện ' . $story->title,
+            home_url('/' . $story->slug)
+        );
 
         $remaining = $credits - $price;
         return rest_ensure_response(['success' => true, 'credits_spent' => $price, 'credits_remaining' => $remaining]);
@@ -441,5 +492,25 @@ class HDK_REST_API {
         
         HDK_DB::save_reader_prefs(get_current_user_id(), $data);
         return rest_ensure_response(['saved' => true]);
+    }
+
+    public static function get_notifications($request) {
+        $user_id = get_current_user_id();
+        $page = (int)($request->get_param('page') ?? 1);
+        $result = HDK_DB::get_notifications($user_id, max(1, $page));
+        return rest_ensure_response($result);
+    }
+
+    public static function mark_read($request) {
+        $user_id = get_current_user_id();
+        $body = json_decode($request->get_body(), true) ?? [];
+        $notification_id = (int)($body['id'] ?? 0);
+        HDK_DB::mark_notifications_read($user_id, $notification_id);
+        return rest_ensure_response(['success' => true]);
+    }
+
+    public static function unread_count($request) {
+        $count = HDK_DB::get_unread_notification_count(get_current_user_id());
+        return rest_ensure_response(['count' => $count]);
     }
 }

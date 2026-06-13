@@ -652,4 +652,68 @@ class HDK_DB {
             $wpdb->insert($table, $data);
         }
     }
+
+    public static function create_notification($user_id, $type, $title, $message, $link = '') {
+        global $wpdb;
+        $table = self::table('hdk_notifications');
+        $wpdb->insert($table, [
+            'user_id' => $user_id,
+            'type' => $type,
+            'title' => $title,
+            'message' => $message,
+            'link' => $link,
+            'is_read' => 0,
+            'created_at' => current_time('mysql'),
+        ]);
+        return $wpdb->insert_id;
+    }
+
+    public static function get_notifications($user_id, $page = 1, $per_page = 20) {
+        global $wpdb;
+        $table = self::table('hdk_notifications');
+        $offset = ($page - 1) * $per_page;
+
+        $total = $wpdb->get_var($wpdb->prepare("SELECT COUNT(*) FROM $table WHERE user_id = %d", $user_id));
+        $rows = $wpdb->get_results($wpdb->prepare(
+            "SELECT * FROM $table WHERE user_id = %d ORDER BY created_at DESC LIMIT %d OFFSET %d",
+            $user_id, $per_page, $offset
+        ));
+
+        return ['rows' => $rows, 'total' => (int)$total, 'pages' => (int)ceil($total / $per_page)];
+    }
+
+    public static function get_unread_notification_count($user_id) {
+        global $wpdb;
+        return (int)$wpdb->get_var($wpdb->prepare(
+            "SELECT COUNT(*) FROM " . self::table('hdk_notifications') . " WHERE user_id = %d AND is_read = 0",
+            $user_id
+        ));
+    }
+
+    public static function mark_notifications_read($user_id, $notification_id = 0) {
+        global $wpdb;
+        $table = self::table('hdk_notifications');
+        if ($notification_id) {
+            $wpdb->update($table, ['is_read' => 1], ['id' => $notification_id, 'user_id' => $user_id]);
+        } else {
+            $wpdb->update($table, ['is_read' => 1], ['user_id' => $user_id, 'is_read' => 0]);
+        }
+    }
+
+    public static function notify_favoriting_users($story_id, $chapter_number, $chapter_title, $story_title, $story_slug) {
+        global $wpdb;
+        $fav_table = self::table('hdk_favorites');
+        $fans = $wpdb->get_results($wpdb->prepare(
+            "SELECT user_id FROM $fav_table WHERE story_id = %d", $story_id
+        ));
+        $link = home_url('/' . $story_slug . '?chuong=' . $chapter_number);
+        foreach ($fans as $fan) {
+            self::create_notification(
+                $fan->user_id, 'chapter_published',
+                'Chương mới: ' . $story_title,
+                $chapter_title . ' vừa được đăng.',
+                $link
+            );
+        }
+    }
 }
