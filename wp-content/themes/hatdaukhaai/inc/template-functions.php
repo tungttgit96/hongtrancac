@@ -215,3 +215,23 @@ function hdk_get_rating_widget($story_id = 0, $current_rating = 0, $total_rating
     </div>
     <?php
 }
+
+function hdk_get_story_card_badge($type, $data = null) {
+    switch ($type) {
+        case 'reading':
+            $chap = (int)($data->current_chapter ?? 0);
+            $pct = (int)($data->scroll_percent ?? 0);
+            return sprintf(
+                '<div class="story-badge story-badge-reading">Đọc tiếp chương %d<span class="badge-progress" style="width:%d%%"></span></div>',
+                $chap, $pct
+            );
+        case 'purchased':
+            return '<div class="story-badge story-badge-purchased">💎 Đã mua</div>';
+        case 'history':
+            $chap = (int)($data->chapter_number ?? 0);
+            $time = mysql2date('H:i d/m/Y', $data->created_at ?? '');
+            return '<div class="story-badge story-badge-history">Chương ' . $chap . ' — ' . $time . '</div>';
+        default:
+            return '';
+    }
+}
