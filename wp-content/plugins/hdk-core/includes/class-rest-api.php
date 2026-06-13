@@ -298,6 +298,9 @@ class HDK_REST_API {
     }
 
     public static function purchase_chapter($request) {
+        if (!wp_verify_nonce($_REQUEST['_wpnonce'] ?? $_SERVER['HTTP_X_WP_NONCE'] ?? '', 'wp_rest')) {
+            return new WP_Error('rest_forbidden', 'Nonce verification failed', ['status' => 403]);
+        }
         $story_id = (int)$request->get_param('story_id');
         $chapter_number = (int)$request->get_param('chapter_number');
         $user_id = get_current_user_id();
@@ -366,6 +369,9 @@ class HDK_REST_API {
     }
 
     public static function purchase_full_story($request) {
+        if (!wp_verify_nonce($_REQUEST['_wpnonce'] ?? $_SERVER['HTTP_X_WP_NONCE'] ?? '', 'wp_rest')) {
+            return new WP_Error('rest_forbidden', 'Nonce verification failed', ['status' => 403]);
+        }
         $story_id = (int)$request->get_param('story_id');
         $user_id = get_current_user_id();
         global $wpdb;
@@ -437,6 +443,9 @@ class HDK_REST_API {
     }
 
     public static function daily_claim($request) {
+        if (!wp_verify_nonce($_REQUEST['_wpnonce'] ?? $_SERVER['HTTP_X_WP_NONCE'] ?? '', 'wp_rest')) {
+            return new WP_Error('rest_forbidden', 'Nonce verification failed', ['status' => 403]);
+        }
         $user_id = get_current_user_id();
         $result = HDK_DB::claim_daily_credits($user_id);
         if (!$result['success']) {
