@@ -389,3 +389,74 @@ article p:last-child {
         display: none !important;
     }
 }
+
+/* ===== User Dropdown ===== */
+.user-dropdown {
+    position: relative;
+}
+
+.user-dropdown-toggle {
+    cursor: pointer;
+    white-space: nowrap;
+}
+
+.user-dropdown-toggle .dropdown-arrow {
+    font-size: 0.7rem;
+    transition: transform 0.2s;
+}
+
+.user-dropdown-toggle[aria-expanded="true"] .dropdown-arrow {
+    transform: rotate(180deg);
+}
+
+.dropdown-item:hover {
+    background: var(--color-bg-secondary);
+}
+
+.user-name {
+    max-width: 120px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+/* ===== Account Page Tabs ===== */
+.account-tab:hover {
+    color: var(--color-text-primary) !important;
+    border-bottom-color: var(--color-border) !important;
+}
+
+/* ===== Progress Bar ===== */
+.progress-bar {
+    width: 100%;
+}
+
+/* ===== History List ===== */
+.history-list a:hover {
+    background: var(--color-bg-secondary) !important;
+}
+
+/* ===== Empty State ===== */
+.empty-state a {
+    display: inline-block;
+    margin-top: 8px;
+}
+
+/* ===== Mobile: hide user name, show icon only ===== */
+@media (max-width: 768px) {
+    .user-name {
+        display: none;
+    }
+    
+    .user-dropdown-menu {
+        position: fixed;
+        top: var(--header-height);
+        right: 8px;
+        left: auto;
+        min-width: 180px;
+    }
+    
+    .account-tab {
+        padding: 10px 14px;
+        font-size: var(--font-size-sm);
+    }
+}
