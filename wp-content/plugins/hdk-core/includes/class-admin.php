@@ -1441,14 +1441,14 @@ Nội dung chương 2 viết ở đây..."
         $lines = explode("\n", trim($content));
         if (count($lines) < 2) return [];
         
-        $header = str_getcsv(array_shift($lines));
+        $header = str_getcsv(array_shift($lines), ',', '"', '');
         $header = array_map('trim', $header);
         
         $rows = [];
         foreach ($lines as $line) {
             $line = trim($line);
             if (empty($line)) continue;
-            $values = str_getcsv($line);
+            $values = str_getcsv($line, ',', '"', '');
             $row = [];
             foreach ($header as $i => $key) {
                 $row[$key] = $values[$i] ?? '';
@@ -1492,7 +1492,7 @@ Nội dung chương 2 viết ở đây..."
                     case 'author':
                         $slug = sanitize_title($row['slug'] ?: $row['title']);
                         $exists = $wpdb->get_var($wpdb->prepare("SELECT id FROM " . HDK_DB::table('hdk_authors') . " WHERE slug = %s", $slug));
-                        if ($exists) { $skipped++; $author_map[$slug] = $exists; continue; }
+                        if ($exists) { $skipped++; $author_map[$slug] = $exists; continue 2; }
                         $wpdb->insert(HDK_DB::table('hdk_authors'), [
                             'name' => $row['title'], 'slug' => $slug,
                             'bio' => $row['summary'] ?? '',
@@ -1505,7 +1505,7 @@ Nội dung chương 2 viết ở đây..."
                     case 'category':
                         $slug = sanitize_title($row['slug'] ?: $row['title']);
                         $exists = $wpdb->get_var($wpdb->prepare("SELECT id FROM " . HDK_DB::table('hdk_categories') . " WHERE slug = %s", $slug));
-                        if ($exists) { $skipped++; $category_map[$slug] = $exists; continue; }
+                        if ($exists) { $skipped++; $category_map[$slug] = $exists; continue 2; }
                         $wpdb->insert(HDK_DB::table('hdk_categories'), [
                             'name' => $row['title'], 'slug' => $slug,
                             'description' => $row['summary'] ?? '',
@@ -1518,7 +1518,7 @@ Nội dung chương 2 viết ở đây..."
                     case 'story':
                         $slug = sanitize_title($row['slug'] ?: $row['title']);
                         $exists = $wpdb->get_var($wpdb->prepare("SELECT id FROM " . HDK_DB::table('hdk_stories') . " WHERE slug = %s", $slug));
-                        if ($exists) { $skipped++; $story_map[$slug] = $exists; continue; }
+                        if ($exists) { $skipped++; $story_map[$slug] = $exists; continue 2; }
 
                         // Handle author
                         $author_name = $row['author'] ?? '';
@@ -1564,16 +1564,16 @@ Nội dung chương 2 viết ở đây..."
                             $story_id = $wpdb->get_var($wpdb->prepare("SELECT id FROM " . HDK_DB::table('hdk_stories') . " WHERE slug = %s", $story_slug));
                             if ($story_id) $story_map[$story_slug] = (int)$story_id;
                         }
-                        if (!$story_id) { $errors++; continue; }
+                        if (!$story_id) { $errors++; continue 2; }
 
                         $chap_num = (int)($row['chapter_number'] ?? 0);
-                        if (!$chap_num) { $errors++; continue; }
+                        if (!$chap_num) { $errors++; continue 2; }
 
                         $exists = $wpdb->get_var($wpdb->prepare(
                             "SELECT id FROM " . HDK_DB::table('hdk_chapters') . " WHERE story_id = %d AND chapter_number = %d",
                             $story_id, $chap_num
                         ));
-                        if ($exists) { $skipped++; continue; }
+                        if ($exists) { $skipped++; continue 2; }
 
                         $wpdb->insert(HDK_DB::table('hdk_chapters'), [
                             'story_id' => $story_id, 'chapter_number' => $chap_num,
@@ -1587,7 +1587,7 @@ Nội dung chương 2 viết ở đây..."
                         break;
                 }
             } catch (\Exception $e) {
-                if ($skip_errors) { $errors++; continue; }
+                if ($skip_errors) { $errors++; continue 2; }
                 throw $e;
             }
         }
