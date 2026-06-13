@@ -93,7 +93,8 @@ class HDK_Schema {
             content LONGTEXT,
             word_count INT UNSIGNED DEFAULT 0,
             views BIGINT UNSIGNED DEFAULT 0,
-            status ENUM('draft','published') DEFAULT 'draft',
+            status ENUM('draft','published','scheduled') DEFAULT 'draft',
+            scheduled_at DATETIME NULL,
             created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
             updated_at DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
             INDEX idx_story (story_id),
@@ -221,6 +222,11 @@ class HDK_Schema {
         self::add_column_if_not_exists("{$wpdb->prefix}hdk_stories", 'free_chapters', "INT UNSIGNED DEFAULT 0 AFTER total_chapters");
         self::add_column_if_not_exists("{$wpdb->prefix}hdk_stories", 'chapter_price', "INT UNSIGNED DEFAULT 0 AFTER free_chapters");
         self::add_column_if_not_exists("{$wpdb->prefix}hdk_stories", 'full_price', "INT UNSIGNED DEFAULT 0 AFTER chapter_price");
+        self::add_column_if_not_exists("{$wpdb->prefix}hdk_chapters", 'price', "INT UNSIGNED DEFAULT 0 AFTER word_count");
+        self::add_column_if_not_exists("{$wpdb->prefix}hdk_chapters", 'scheduled_at', "DATETIME NULL AFTER price");
+
+        // Add 'scheduled' to chapters status ENUM for existing installs
+        $wpdb->query("ALTER TABLE {$wpdb->prefix}hdk_chapters MODIFY COLUMN status ENUM('draft','published','scheduled') DEFAULT 'draft'");
     }
 
     private static function add_column_if_not_exists($table, $column, $definition) {

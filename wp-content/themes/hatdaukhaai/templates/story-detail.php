@@ -95,17 +95,51 @@ get_header();
     <!-- Chapter List -->
     <section style="margin-top:24px;background:var(--color-bg);border-radius:var(--radius-md);padding:20px;border:1px solid var(--color-border);">
         <h2 style="font-size:var(--font-size-lg);font-weight:600;margin-bottom:12px;">Danh sách chương (<?php echo count($chapters); ?>)</h2>
-        <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(250px,1fr));gap:8px;">
-            <?php foreach ($chapters as $chap): ?>
-                <a href="/<?php echo $story->slug; ?>?chuong=<?php echo $chap->chapter_number; ?>"
-                   style="display:flex;justify-content:space-between;align-items:center;padding:8px 12px;
-                          border-radius:var(--radius-sm);transition:background 0.2s;
-                          color:var(--color-text-primary);text-decoration:none;"
-                   onmouseover="this.style.background='var(--color-bg-tertiary)'"
-                   onmouseout="this.style.background='transparent'">
-                    <span style="font-size:var(--font-size-sm);"><?php echo esc_html($chap->title); ?></span>
-                    <span style="font-size:var(--font-size-xs);color:var(--color-text-muted);">👁 <?php echo number_format($chap->views); ?></span>
-                </a>
+        <?php
+        $free_limit = (int)($story->free_chapters ?? 0);
+        $chapter_def_price = (int)($story->chapter_price ?? 0);
+        $full_price = (int)($story->full_price ?? 0);
+        $has_pricing = ($chapter_def_price > 0 || $full_price > 0);
+        $user_id = get_current_user_id();
+        ?>
+        <?php if ($has_pricing): ?>
+        <div style="margin-bottom:12px;font-size:13px;color:var(--color-text-muted);">
+            🔓 <?php echo $free_limit; ?> chương đầu miễn phí
+            <?php if ($chapter_def_price > 0): ?> · 💎 <?php echo $chapter_def_price; ?> hạt / chương<?php endif; ?>
+            <?php if ($full_price > 0): ?> · 📚 Mở full: <?php echo $full_price; ?> hạt
+                <?php if ($user_id): ?>
+                <button onclick="purchaseFullStory(<?php echo $story->id; ?>)" style="margin-left:8px;font-size:12px;padding:2px 10px;border-radius:12px;border:1px solid var(--color-primary);background:var(--color-primary);color:#fff;cursor:pointer;">Mua full</button>
+                <?php endif; ?>
+            <?php endif; ?>
+            <span id="purchase-msg" style="margin-left:8px;font-weight:600;"></span>
+        </div>
+        <?php endif; ?>
+        <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:8px;">
+            <?php foreach ($chapters as $chap):
+                $locked = $has_pricing && $chap->chapter_number > $free_limit;
+                $chap_price = $chap->price > 0 ? (int)$chap->price : $chapter_def_price;
+                $purchased = $locked && $user_id ? HDK_Template_Loader::has_purchased_chapter($story->id, $chap->chapter_number) : false;
+                $icon = !$locked ? '🔓' : ($purchased ? '✅' : '🔒');
+            ?>
+                <div style="display:flex;justify-content:space-between;align-items:center;padding:8px 12px;
+                           border-radius:var(--radius-sm);border:1px solid var(--color-border-light);
+                           <?php echo $locked && !$purchased ? 'background:var(--color-bg-tertiary);' : ''; ?>">
+                    <a href="/<?php echo $story->slug; ?>?chuong=<?php echo $chap->chapter_number; ?>"
+                       style="color:var(--color-text-primary);text-decoration:none;font-size:14px;flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">
+                        <span style="margin-right:6px;"><?php echo $icon; ?></span>
+                        <?php echo esc_html($chap->title); ?>
+                    </a>
+                    <?php if ($locked && !$purchased && $user_id): ?>
+                        <button onclick="event.preventDefault();purchaseChapterInline(<?php echo $story->id; ?>, <?php echo $chap->chapter_number; ?>, this)"
+                            style="margin-left:8px;font-size:11px;padding:3px 10px;border-radius:12px;border:1px solid var(--color-primary);background:transparent;color:var(--color-primary);cursor:pointer;white-space:nowrap;">
+                            <?php echo $chap_price; ?> 💎
+                        </button>
+                    <?php elseif (!$locked || $purchased): ?>
+                        <span style="font-size:var(--font-size-xs);color:var(--color-text-muted);white-space:nowrap;">👁 <?php echo number_format($chap->views); ?></span>
+                    <?php else: ?>
+                        <a href="<?php echo wp_login_url('/' . $story->slug . '?chuong=' . $chap->chapter_number); ?>" style="font-size:11px;color:var(--color-text-muted);white-space:nowrap;text-decoration:none;">🔒 Đăng nhập</a>
+                    <?php endif; ?>
+                </div>
             <?php endforeach; ?>
         </div>
     </section>
@@ -141,3 +175,55 @@ get_header();
 </div>
 
 <?php get_footer(); ?>
+
+<script>
+function purchaseChapterInline(storyId, chapterNum, btn) {
+    btn.disabled = true;
+    btn.textContent = '...';
+    var msg = document.getElementById('purchase-msg');
+    fetch('/wp-json/hdk/v1/purchase/chapter', {
+        method: 'POST',
+        headers: {'Content-Type': 'application/json'},
+        body: JSON.stringify({story_id: storyId, chapter_number: chapterNum})
+    })
+    .then(r => r.json())
+    .then(d => {
+        if (d.success) {
+            if (msg) { msg.innerHTML = '<span style="color:#10B981;">Mua thành công!</span>'; }
+            btn.textContent = '✅';
+            btn.style.borderColor = '#10B981';
+            btn.style.color = '#10B981';
+            btn.style.background = 'transparent';
+            setTimeout(function(){ location.reload(); }, 500);
+        } else if (d.code === 'insufficient_credits') {
+            if (msg) msg.innerHTML = '<span style="color:#EF4444;">' + d.message + '</span>';
+            btn.disabled = false;
+            btn.textContent = btn.textContent.replace('...', '💎');
+        }
+    })
+    .catch(function() {
+        btn.disabled = false;
+        btn.textContent = btn.textContent.replace('...', '💎');
+    });
+}
+
+function purchaseFullStory(storyId) {
+    if (!confirm('Mở toàn bộ truyện với giá <?php echo $full_price; ?> hạt?')) return;
+    var msg = document.getElementById('purchase-msg');
+    if (msg) msg.innerHTML = 'Đang xử lý...';
+    fetch('/wp-json/hdk/v1/purchase/full', {
+        method: 'POST',
+        headers: {'Content-Type': 'application/json'},
+        body: JSON.stringify({story_id: storyId})
+    })
+    .then(r => r.json())
+    .then(d => {
+        if (d.success) {
+            if (msg) msg.innerHTML = '<span style="color:#10B981;">Mua full thành công!</span>';
+            setTimeout(function(){ location.reload(); }, 500);
+        } else if (d.code === 'insufficient_credits') {
+            if (msg) msg.innerHTML = '<span style="color:#EF4444;">' + d.message + '</span>';
+        }
+    });
+}
+</script>

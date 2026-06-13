@@ -78,10 +78,12 @@ get_header();
         <?php endif; ?>
     </div>
 
-    <!-- Chapter Content -->
-    <article style="background:var(--color-bg);border-radius:var(--radius-md);padding:24px;border:1px solid var(--color-border);line-height:2;font-size:var(--font-size-lg);min-height:60vh;">
-        <?php echo $chapter->content; ?>
+    <!-- Chapter Content (JS-decoded to prevent scraping) -->
+    <article style="background:var(--color-bg);border-radius:var(--radius-md);padding:24px;border:1px solid var(--color-border);line-height:2;font-size:var(--font-size-lg);min-height:60vh;" id="chapter-content">
+        <div id="content-loading" style="text-align:center;padding:40px;color:var(--color-text-muted);">Đang tải nội dung...</div>
     </article>
+
+    <script id="chapter-data" type="text/plain" style="display:none;"><?php echo HDK_Protection::obfuscate($chapter->content); ?></script>
 
     <!-- Bottom Navigation -->
     <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:12px;margin-top:20px;background:var(--color-bg);border-radius:var(--radius-md);padding:16px;border:1px solid var(--color-border);">
@@ -100,6 +102,36 @@ get_header();
 </div>
 
 <script>
+// Decode and render chapter content (anti-scraping)
+(function() {
+    var dataEl = document.getElementById('chapter-data');
+    var target = document.getElementById('chapter-content');
+    if (!dataEl || !target) return;
+
+    try {
+        var encoded = dataEl.textContent.replace(/\s+/g, '');
+        var decoded = atob(encoded);
+        target.innerHTML = decoded;
+    } catch(e) {
+        target.innerHTML = '<div style="text-align:center;padding:40px;color:var(--color-text-muted);">Không thể tải nội dung. Vui lòng bật JavaScript.</div>';
+    }
+
+    // Disable right-click + text selection on content
+    target.addEventListener('contextmenu', function(e) { e.preventDefault(); });
+    target.addEventListener('copy', function(e) { 
+        e.preventDefault(); 
+        alert('Sao chép nội dung bị vô hiệu hóa.');
+    });
+    target.addEventListener('selectstart', function(e) { e.preventDefault(); });
+    target.style.userSelect = 'none';
+    target.style.webkitUserSelect = 'none';
+
+    // Prevent print screen via CSS
+    var style = document.createElement('style');
+    style.textContent = '@media print { #chapter-content { display: none !important; } #chapter-content::after { content: "Nội dung bị ẩn khi in. Vui lòng đọc online."; } }';
+    document.head.appendChild(style);
+})();
+
 // Auto-save reading progress
 var scrollTimer;
 window.addEventListener('scroll', function() {

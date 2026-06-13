@@ -222,9 +222,19 @@ class HDK_Admin {
             'title' => sanitize_text_field($data['title'] ?? ''),
             'content' => wp_kses_post($data['content'] ?? ''),
             'word_count' => str_word_count(strip_tags($data['content'] ?? '')),
+            'price' => (int)($data['chapter_price'] ?? 0),
             'status' => $data['status'] ?? 'draft',
             'updated_at' => $now,
         ];
+
+        // Handle scheduling
+        $scheduled = sanitize_text_field($data['scheduled_at'] ?? '');
+        if ($scheduled && $chap_data['status'] === 'published' && strtotime($scheduled) > time()) {
+            $chap_data['status'] = 'scheduled';
+            $chap_data['scheduled_at'] = date('Y-m-d H:i:s', strtotime($scheduled));
+        } else {
+            $chap_data['scheduled_at'] = null;
+        }
         $chapter_id = (int)($data['chapter_id'] ?? 0);
         if ($chapter_id > 0) {
             $wpdb->update($table, $chap_data, ['id' => $chapter_id]);
@@ -250,6 +260,9 @@ class HDK_Admin {
         $now = current_time('mysql');
         $story_id = (int)($data['story_id'] ?? 0);
         $status = $data['bulk_status'] ?? 'published';
+        $default_price = (int)($data['bulk_chapter_price'] ?? 0);
+        $scheduled_at = sanitize_text_field($data['bulk_scheduled_at'] ?? '');
+        $is_scheduled = $scheduled_at && strtotime($scheduled_at) > time();
 
         // Get content from textarea or uploaded file
         $raw = trim($data['bulk_content'] ?? '');
@@ -282,6 +295,13 @@ class HDK_Admin {
             $final_title = 'Chương ' . $chapter_number . ': ' . $title_line;
             $final_content = $content_raw;
 
+            // Parse inline price: "Tên chương (5 hạt)" -> price = 5
+            $chap_price = $default_price;
+            if (preg_match('/\((\d+)\s*hạt\s*\)/ui', $title_line, $pm)) {
+                $chap_price = (int)$pm[1];
+                $final_title = 'Chương ' . $chapter_number . ': ' . trim(preg_replace('/\s*\(\d+\s*hạt\s*\)/ui', '', $title_line));
+            }
+
             // Check if chapter number already exists
             $exists = $wpdb->get_var($wpdb->prepare(
                 "SELECT id FROM $table WHERE story_id = %d AND chapter_number = %d", $story_id, $chapter_number
@@ -293,7 +313,9 @@ class HDK_Admin {
                 'title' => sanitize_text_field($final_title),
                 'content' => wp_kses_post('<p>' . nl2br(esc_html($final_content)) . '</p>'),
                 'word_count' => str_word_count($final_content),
-                'status' => $status,
+                'price' => $chap_price,
+                'status' => $is_scheduled ? 'scheduled' : $status,
+                'scheduled_at' => $is_scheduled ? date('Y-m-d H:i:s', strtotime($scheduled_at)) : null,
                 'updated_at' => $now,
             ];
 
@@ -581,6 +603,20 @@ Nội dung chương thứ ba...</code>
                                 </td>
                             </tr>
                             <tr>
+                                <th>Giá mỗi chương</th>
+                                <td>
+                                    <input type="number" name="bulk_chapter_price" value="0" style="width:100px;" min="0"> hạt
+                                    <p class="description">Áp dụng cho tất cả chương. 0 = dùng giá mặc định của truyện. Có thể ghi đè từng chương bằng format <code>Chương1: Tên (5 hạt)</code></p>
+                                </td>
+                            </tr>
+                            <tr>
+                                <th>Lên lịch đăng</th>
+                                <td>
+                                    <input type="datetime-local" name="bulk_scheduled_at" value="" style="min-width:220px;">
+                                    <p class="description">Để trống = đăng ngay. Chọn ngày tương lai = tất cả chương tự publish vào thời điểm đó.</p>
+                                </td>
+                            </tr>
+                            <tr>
                                 <th>Upload file .txt</th>
                                 <td>
                                     <input type="file" name="bulk_file" accept=".txt" style="margin-bottom:8px;">
@@ -609,13 +645,18 @@ Nội dung chương 2 viết ở đây..."
                     <div style="flex:1;min-width:300px;">
                         <h3>Danh sách chương (<?php echo count($chapters); ?>)</h3>
                         <table class="wp-list-table widefat striped">
-                            <thead><tr><th>#</th><th>Tiêu đề</th><th>Trạng thái</th><th>Lượt xem</th><th></th></tr></thead>
+                            <thead><tr><th>#</th><th>Tiêu đề</th><th>Trạng thái</th><th>Giá</th><th>Lượt xem</th><th></th></tr></thead>
                             <tbody>
                                 <?php foreach ($chapters as $c): ?>
                                 <tr>
                                     <td><?php echo $c->chapter_number; ?></td>
                                     <td><?php echo esc_html($c->title); ?></td>
-                                    <td><?php echo $c->status === 'published' ? '✅' : '📝 Nháp'; ?></td>
+                                    <td><?php 
+                                        if ($c->status === 'published') echo '✅';
+                                        elseif ($c->status === 'scheduled') echo '⏰ ' . esc_html($c->scheduled_at ?? '');
+                                        else echo '📝 Nháp';
+                                    ?></td>
+                                    <td><?php echo (int)($c->price ?? 0) > 0 ? $c->price . ' 💎' : '-'; ?></td>
                                     <td><?php echo number_format($c->views); ?></td>
                                     <td><a href="?page=hdk-chapters&story_id=<?php echo $story_id; ?>&edit_chapter=<?php echo $c->id; ?>">Sửa</a></td>
                                 </tr>
@@ -647,6 +688,20 @@ Nội dung chương 2 viết ở đây..."
                                             <option value="draft" <?php selected(($edit_chapter->status ?? ''), 'draft'); ?>>Nháp</option>
                                             <option value="published" <?php selected(($edit_chapter->status ?? ''), 'published'); ?>>Xuất bản</option>
                                         </select>
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <th>Giá (hạt)</th>
+                                    <td>
+                                        <input type="number" name="chapter_price" value="<?php echo (int)($edit_chapter->price ?? 0); ?>" style="width:100px;" min="0"> hạt
+                                        <p class="description">0 = dùng giá mặc định của truyện. Để trống nếu chương miễn phí.</p>
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <th>Lên lịch đăng</th>
+                                    <td>
+                                        <input type="datetime-local" name="scheduled_at" value="<?php echo esc_attr($edit_chapter->scheduled_at ?? ''); ?>" style="min-width:220px;">
+                                        <p class="description">Để trống nếu đăng ngay. Nếu chọn ngày trong tương lai, chương sẽ tự động publish vào thời điểm đó.</p>
                                     </td>
                                 </tr>
                                 <tr>

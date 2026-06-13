@@ -33,4 +33,14 @@ class HDK_Cache {
     public static function invalidate_chapter($story_id) {
         self::invalidate_story($story_id);
     }
+
+    public static function publish_scheduled() {
+        global $wpdb;
+        $now = current_time('mysql');
+        $table = HDK_DB::table('hdk_chapters');
+        $wpdb->query($wpdb->prepare(
+            "UPDATE $table SET status = 'published', scheduled_at = NULL, updated_at = %s WHERE status = 'scheduled' AND scheduled_at <= %s",
+            $now, $now
+        ));
+    }
 }
