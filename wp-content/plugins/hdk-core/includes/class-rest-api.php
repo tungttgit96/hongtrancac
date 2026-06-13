@@ -52,6 +52,18 @@ class HDK_REST_API {
             'callback' => [__CLASS__, 'get_credits'],
             'permission_callback' => function() { return is_user_logged_in(); },
         ]);
+
+        register_rest_route('hdk/v1', '/me/favorites', [
+            'methods' => 'GET',
+            'callback' => [__CLASS__, 'get_favorites'],
+            'permission_callback' => function() { return is_user_logged_in(); },
+        ]);
+
+        register_rest_route('hdk/v1', '/me/purchases', [
+            'methods' => 'GET',
+            'callback' => [__CLASS__, 'get_purchases'],
+            'permission_callback' => function() { return is_user_logged_in(); },
+        ]);
     }
 
     public static function search($request) {
@@ -190,6 +202,9 @@ class HDK_REST_API {
             'updated_at' => current_time('mysql'),
         ]);
 
+        // Log to reading history (deduplicated by user+story+chapter)
+        HDK_DB::log_reading_history($user_id, $story_id, $chapter_number);
+
         return rest_ensure_response(['saved' => true]);
     }
 
@@ -304,5 +319,19 @@ class HDK_REST_API {
 
         $remaining = $credits - $price;
         return rest_ensure_response(['success' => true, 'credits_spent' => $price, 'credits_remaining' => $remaining]);
+    }
+
+    public static function get_favorites($request) {
+        $user_id = get_current_user_id();
+        $page = (int)($request->get_param('page') ?? 1);
+        $result = HDK_DB::get_favorites($user_id, max(1, $page));
+        return rest_ensure_response($result);
+    }
+
+    public static function get_purchases($request) {
+        $user_id = get_current_user_id();
+        $page = (int)($request->get_param('page') ?? 1);
+        $result = HDK_DB::get_purchased_stories($user_id, max(1, $page));
+        return rest_ensure_response($result);
     }
 }
