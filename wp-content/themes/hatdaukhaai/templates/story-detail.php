@@ -23,7 +23,7 @@ if (is_user_logged_in()) {
 // Get chapters
 global $wpdb;
 $chapters = $wpdb->get_results($wpdb->prepare(
-    "SELECT id, chapter_number, title, views, updated_at FROM " . HDK_DB::table('hdk_chapters') . "
+    "SELECT id, chapter_number, title, price, views, updated_at FROM " . HDK_DB::table('hdk_chapters') . "
      WHERE story_id = %d AND status = 'published' ORDER BY chapter_number ASC LIMIT 100",
     $story->id
 ));
