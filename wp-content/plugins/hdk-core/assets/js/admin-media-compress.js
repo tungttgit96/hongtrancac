@@ -5,18 +5,22 @@
  * WordPress handlers. Shows Vietnamese-language notices for every state:
  * compressing, compressed, uploading, upload success, upload failure, rejection.
  *
+ * Only reports upload success after parsing WordPress JSON response and
+ * confirming data.success === true.
+ *
  * Depends on: jQuery, wp-plupload (WordPress admin uploader bridge).
  */
 (function($, plupload) {
     'use strict';
 
     var config = window._hdkMediaCompress || {};
-    var targetBytes = parseInt(config.targetBytes, 10) || 2097152;
+    var hardLimitBytes = parseInt(config.hardLimitBytes, 10) || 2097152;
+    var targetBytes = parseInt(config.targetBytes, 10) || 2031616;
     var sourceMaxBytes = parseInt(config.sourceMaxBytes, 10) || 52428800;
     var supportedTypes = config.supportedTypes || ['image/jpeg', 'image/png', 'image/webp'];
 
-    if (sourceMaxBytes < targetBytes) {
-        sourceMaxBytes = targetBytes;
+    if (sourceMaxBytes < hardLimitBytes) {
+        sourceMaxBytes = hardLimitBytes;
     }
 
     var hasCanvas = (typeof document !== 'undefined' &&
@@ -62,11 +66,6 @@
         return $notices;
     }
 
-    /**
-     * Show a notification inside the media modal or admin upload UI.
-     * @param {string} type - 'info', 'success', or 'error'
-     * @param {string} message - plain text message
-     */
     function notify(type, message) {
         if (typeof document === 'undefined') {
             if (window.console && typeof window.console.log === 'function') {
@@ -127,6 +126,35 @@
 
     function getFileName(file) {
         return (file && file.name) || 'file';
+    }
+
+    function buildFileItem(file) {
+        var nativeFile = getPluploadNativeFile(file);
+        var source = nativeFile || file || {};
+        return {
+            plFile: file,
+            nativeFile: nativeFile,
+            name: getFileName(file),
+            size: source.size || file.size || 0,
+            type: source.type || file.type || ''
+        };
+    }
+
+    function getResponsePayload(response) {
+        if (!response) return null;
+        if (typeof response === 'string') return response;
+        if (typeof response.response === 'string') return response.response;
+        if (typeof response.responseText === 'string') return response.responseText;
+        return response;
+    }
+
+    function getServerMessage(data) {
+        if (!data) return '';
+        if (typeof data === 'string') return data;
+        if (data.data && typeof data.data === 'string') return data.data;
+        if (data.data && data.data.message) return data.data.message;
+        if (data.message) return data.message;
+        return '';
     }
 
     function trackFile(up, file, message) {
@@ -276,9 +304,28 @@
 
         up.bind('FileUploaded', function(_up, file, response) {
             var name = getFileName(file);
-            if (_up._hdkTrackedFiles[name]) {
-                delete _up._hdkTrackedFiles[name];
+            if (!_up._hdkTrackedFiles[name]) return;
+            delete _up._hdkTrackedFiles[name];
+
+            var success = false;
+            var serverMsg = '';
+
+            try {
+                var payload = getResponsePayload(response);
+                var data = typeof payload === 'string' ? JSON.parse(payload) : payload;
+                if (data && data.success === true) {
+                    success = true;
+                } else {
+                    serverMsg = getServerMessage(data);
+                }
+            } catch (e) {
+                serverMsg = getServerMessage(getResponsePayload(response));
+            }
+
+            if (success) {
                 notify('success', 'Upload thanh cong: ' + name);
+            } else {
+                notify('error', 'Upload that bai: ' + name + (serverMsg ? ' - ' + serverMsg : ''));
             }
         });
 
@@ -305,13 +352,17 @@
         var validFiles = [];
 
         for (var i = 0; i < files.length; i++) {
-            var f = files[i];
+            var f = buildFileItem(files[i]);
+
             if (f.size > sourceMaxBytes) {
                 toReject.push(f);
-            } else if (f.size > targetBytes && isSupportedImage(f)) {
+
+            } else if (isSupportedImage(f) && f.size >= targetBytes) {
                 toCompress.push(f);
-            } else if (f.size > targetBytes) {
+
+            } else if (!isSupportedImage(f) && f.size >= hardLimitBytes) {
                 toReject.push(f);
+
             } else {
                 validFiles.push(f);
             }
@@ -330,13 +381,13 @@
 
         for (var r = 0; r < toReject.length; r++) {
             var rf = toReject[r];
-            var limitStr = rf.size > sourceMaxBytes ? formatSize(sourceMaxBytes) : formatSize(targetBytes);
+            var limitStr = rf.size > sourceMaxBytes ? formatSize(sourceMaxBytes) : formatSize(hardLimitBytes);
             var msg = '"' + rf.name + '" vuot qua gioi han upload ' + limitStr + '.';
             notify('error', msg);
             up.trigger('Error', {
                 message: msg,
-                code: -600,
-                file: rf,
+                code: -61000,
+                file: rf.plFile,
                 _hdkNotified: true
             });
         }
@@ -345,7 +396,11 @@
             up._hdkBypass = true;
             for (var vi = 0; vi < validFiles.length; vi++) {
                 trackFile(up, validFiles[vi], 'Dang upload: ' + getFileName(validFiles[vi]));
-                up.addFile(getPluploadNativeFile(validFiles[vi]));
+                if (validFiles[vi].nativeFile) {
+                    up.addFile(validFiles[vi].nativeFile);
+                } else {
+                    notify('error', 'Khong the doc file goc "' + validFiles[vi].name + '".');
+                }
             }
             up._hdkBypass = false;
             return false;
@@ -364,16 +419,19 @@
 
             for (var ei = 0; ei < errorMessages.length; ei++) {
                 notify('error', errorMessages[ei]);
-                up.trigger('Error', { message: errorMessages[ei], code: -600, _hdkNotified: true });
             }
 
             up._hdkBypass = true;
             for (var vi = 0; vi < validFiles.length; vi++) {
                 trackFile(up, validFiles[vi], 'Dang upload: ' + getFileName(validFiles[vi]));
-                up.addFile(getPluploadNativeFile(validFiles[vi]));
+                if (validFiles[vi].nativeFile) {
+                    up.addFile(validFiles[vi].nativeFile);
+                } else {
+                    notify('error', 'Khong the doc file goc "' + validFiles[vi].name + '".');
+                }
             }
             for (var ci = 0; ci < compressedFiles.length; ci++) {
-                notify('success', 'Da nen xong "' + compressedFiles[ci].name + '". Dang upload...');
+                notify('info', 'Da nen xong "' + compressedFiles[ci].name + '". Dang upload...');
                 trackFile(up, compressedFiles[ci], null);
                 up.addFile(compressedFiles[ci]);
             }
@@ -381,9 +439,12 @@
         }
 
         for (var ci = 0; ci < toCompress.length; ci++) {
-            (function(plFile) {
+            (function(fileItem) {
                 try {
-                    compressImage(plFile.getNative(), function(err, result) {
+                    if (!fileItem.nativeFile) {
+                        throw new Error('Khong the doc file goc "' + fileItem.name + '".');
+                    }
+                    compressImage(fileItem.nativeFile, function(err, result) {
                         pending--;
                         if (err) {
                             errorMessages.push(err.message);
@@ -394,7 +455,7 @@
                     });
                 } catch (e) {
                     pending--;
-                    errorMessages.push('Loi he thong khi nen "' + plFile.name + '".');
+                    errorMessages.push((e && e.message) || ('Loi he thong khi nen "' + fileItem.name + '".'));
                     onAllDone();
                 }
             })(toCompress[ci]);
