@@ -90,7 +90,7 @@ get_header();
     </div>
 
     <!-- Floating TOC -->
-    <button type="button" class="toc-float-btn" id="toc-float-btn" onclick="toggleTOC()" aria-label="Mục lục" style="position:fixed;right:16px;bottom:80px;z-index:90;width:48px;height:48px;border-radius:50%;background:var(--color-primary);color:#fff;border:none;font-size:20px;cursor:pointer;box-shadow:0 4px 12px rgba(0,0,0,0.15);display:flex;align-items:center;justify-content:center;">📋</button>
+    <button type="button" class="toc-float-btn" id="toc-float-btn" onclick="toggleTOC()" aria-label="Mục lục" style="position:fixed;right:16px;bottom:80px;z-index:90;width:48px;height:48px;border-radius:50%;background:var(--color-primary);color:var(--color-on-primary);border:none;font-size:20px;cursor:pointer;box-shadow:0 4px 12px rgba(0,0,0,0.15);display:flex;align-items:center;justify-content:center;">📋</button>
 
     <!-- TOC Drawer -->
     <div class="toc-overlay" id="toc-overlay" style="display:none;position:fixed;top:0;left:0;right:0;bottom:0;background:var(--color-overlay);z-index:200;" onclick="closeTOC()"></div>

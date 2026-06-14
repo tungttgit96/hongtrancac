@@ -36,7 +36,7 @@ function hdk_get_story_card($story, $index = 0) {
             <?php endif; ?>
             <?php if ($has_pricing): ?>
                 <div class="card-meta" style="margin-top:4px;">
-                    <span style="color:#F59E0B;">💎 <?php echo $free_chapters; ?> chương free · <?php echo $chapter_price; ?> hạt/chương<?php echo $full_price > 0 ? ' · Full ' . $full_price . ' hạt' : ''; ?></span>
+                    <span style="color:var(--color-warning);">💎 <?php echo $free_chapters; ?> chương free · <?php echo $chapter_price; ?> hạt/chương<?php echo $full_price > 0 ? ' · Full ' . $full_price . ' hạt' : ''; ?></span>
                 </div>
             <?php endif; ?>
             <div class="card-meta" style="display:flex;justify-content:space-between;margin-top:6px">
@@ -108,7 +108,7 @@ function hdk_get_hero_section() {
 
     if (empty($stories)) {
         ?>
-        <section class="hero" style="background:linear-gradient(135deg, var(--color-hero-bg), #5B1500); color:var(--color-banner-text); padding:48px 0;">
+        <section class="hero" style="background:linear-gradient(135deg, var(--color-hero-bg), #362336); color:var(--color-banner-text); padding:48px 0;">
             <div class="container">
                 <div class="hero-content" style="display:flex;align-items:center;gap:32px;flex-wrap:wrap;">
                     <div class="hero-text" style="flex:1;min-width:280px;">

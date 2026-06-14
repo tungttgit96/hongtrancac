@@ -37,7 +37,7 @@
             <?php if (is_user_logged_in()): ?>
                 <span id="notif-bell" style="position:relative;cursor:pointer;min-height:var(--touch-target);min-width:var(--touch-target);display:inline-flex;align-items:center;justify-content:center;font-size:1.15rem;" onclick="toggleNotifDropdown()" aria-label="Thông báo">
                     🔔
-                    <span id="notif-badge" style="display:none;position:absolute;top:2px;right:2px;background:var(--color-danger);color:#fff;border-radius:10px;padding:0 5px;font-size:10px;font-weight:700;min-width:16px;text-align:center;line-height:16px;"></span>
+                    <span id="notif-badge" style="display:none;position:absolute;top:2px;right:2px;background:var(--color-danger);color:var(--color-on-danger);border-radius:10px;padding:0 5px;font-size:10px;font-weight:700;min-width:16px;text-align:center;line-height:16px;"></span>
                 </span>
                 <!-- Notification Dropdown -->
                 <div id="notif-dropdown" style="display:none;position:absolute;top:100%;right:0;min-width:320px;max-width:90vw;background:var(--color-bg);border:1px solid var(--color-border);border-radius:var(--radius-md);box-shadow:0 4px 16px rgba(0,0,0,0.12);z-index:150;max-height:400px;overflow-y:auto;margin-top:4px;">

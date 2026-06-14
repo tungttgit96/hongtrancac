@@ -1,86 +1,102 @@
 <?php
 /**
- * DesignMD Design Tokens for Hạt Đậu Khả Ái
- * Primary: #54CFD6 | Hero accent: #410000 | Text: #0F1419 / #333333 | Border: #E1EAEF
- * Font: Be Vietnam Pro | Cards: 12px radius | Buttons: 24px pill | Touch: 44px
+ * Design Tokens for Hạt Đậu Khả Ái — TweakCN "hồng" palette
+ *
+ * Light: primary #ff9de3, text #4d3957, bg #fdf9fa, accent #fff2f9
+ * Dark:  bg #1b1e18, card #39262f, primary #ffc1ed, text #fffdff
+ * Font: Be Vietnam Pro | Radius: softer | Shadow: rgba(26,26,26,0.08)
  */
 
 function hdk_design_tokens_css() {
     ?>
     <style>
         :root {
-            --color-primary: #54CFD6;
-            --color-primary-hover: #3BB5BC;
-            --color-primary-light: #E0F7F9;
-            --color-on-primary: #FFFFFF;
-            --color-hero-accent: #410000;
-            --color-hero-bg: #410000;
-            --color-text-primary: #0F1419;
-            --color-text-secondary: #333333;
-            --color-text-muted: #6B7280;
-            --color-bg: #FFFFFF;
-            --color-bg-secondary: #F9FAFB;
-            --color-bg-tertiary: #F3F4F6;
-            --color-border: #E1EAEF;
-            --color-border-light: #EEF2F5;
-            --color-success: #10B981;
-            --color-warning: #F59E0B;
-            --color-danger: #EF4444;
-            --color-rating: #F59E0B;
+            /* ── Primary ── */
+            --color-primary: #ff9de3;
+            --color-primary-hover: #fe68cb;
+            --color-primary-light: #fff2f9;
+            --color-on-primary: #4d3957;
 
-            /* Footer */
-            --color-footer-bg: #0F1419;
+            /* ── Hero accent ── */
+            --color-hero-accent: #fe68cb;
+            --color-hero-bg: #4d3957;
+
+            /* ── Text ── */
+            --color-text-primary: #4d3957;
+            --color-text-secondary: #5f4e6a;
+            --color-text-muted: #817089;
+
+            /* ── Background ── */
+            --color-bg: #FFFFFF;
+            --color-bg-secondary: #fdf9fa;
+            --color-bg-tertiary: #fff2f9;
+
+            /* ── Border ── */
+            --color-border: #f2dae6;
+            --color-border-light: #fdf2f7;
+
+            /* ── Semantic ── */
+            --color-success: #10B981;
+            --color-on-success: #1b1e18;
+            --color-warning: #c91b7f;
+            --color-danger: #EF4444;
+            --color-on-danger: #FFFFFF;
+            --color-rating: #c91b7f;
+
+            /* ── Footer ── */
+            --color-footer-bg: #1b1e18;
             --color-footer-text: #FFFFFF;
             --color-footer-text-muted: rgba(255,255,255,0.6);
             --color-footer-border: rgba(255,255,255,0.1);
             --color-footer-link: rgba(255,255,255,0.8);
             --color-footer-link-hover: #FFFFFF;
 
-            /* Input */
+            /* ── Input ── */
             --color-input-bg: #FFFFFF;
-            --color-input-border: var(--color-border);
-            --color-input-focus-ring: rgba(84,207,214,0.3);
+            --color-input-border: #f2dae6;
+            --color-input-focus-ring: rgba(255,157,227,0.3);
 
-            /* Overlay */
+            /* ── Overlay ── */
             --color-overlay: rgba(0,0,0,0.5);
 
-            /* Select indicator */
-            --color-select-indicator: #6B7280;
+            /* ── Select ── */
+            --color-select-indicator: #817089;
 
-            /* Banner card overlay (always bright for readability over images) */
+            /* ── Banner overlay (always bright over images) ── */
             --color-banner-overlay-text: #FFFFFF;
             --color-banner-overlay-text-muted: rgba(255,255,255,0.72);
 
-            /* Badge semantic backgrounds (light) */
-            --color-badge-primary-bg: var(--color-primary-light);
-            --color-badge-primary-text: var(--color-primary-hover);
+            /* ── Badge ── */
+            --color-badge-primary-bg: #fff2f9;
+            --color-badge-primary-text: #d4529e;
             --color-badge-success-bg: #D1FAE5;
             --color-badge-success-text: #065F46;
-            --color-badge-warning-bg: #FEF3C7;
-            --color-badge-warning-text: #92400E;
+            --color-badge-warning-bg: #fdffbb;
+            --color-badge-warning-text: #4d3957;
             --color-badge-danger-bg: #FEE2E2;
             --color-badge-danger-text: #991B1B;
 
-            /* Banner (light mode) */
-            --color-banner-bg: var(--color-bg-secondary);
-            --color-banner-text: var(--color-text-primary);
-            --color-banner-text-muted: var(--color-text-muted);
-            --color-banner-card-bg: var(--color-bg-tertiary);
-            --color-banner-shell-gradient: linear-gradient(135deg, rgba(84,207,214,0.06), rgba(84,207,214,0.02) 48%, transparent);
-            --color-banner-shell-ambient: radial-gradient(circle at 50% 18%, rgba(84,207,214,0.1), transparent 32%);
-            --color-banner-shell-border: var(--color-border);
+            /* ── Banner (light) ── */
+            --color-banner-bg: #fdf9fa;
+            --color-banner-text: #4d3957;
+            --color-banner-text-muted: #817089;
+            --color-banner-card-bg: #fff2f9;
+            --color-banner-shell-gradient: linear-gradient(135deg, rgba(255,157,227,0.08), rgba(255,157,227,0.03) 48%, transparent);
+            --color-banner-shell-ambient: radial-gradient(circle at 50% 18%, rgba(255,157,227,0.12), transparent 32%);
+            --color-banner-shell-border: #f2dae6;
             --color-banner-veil: none;
-            --color-banner-cover-border: var(--color-border);
-            --color-banner-cover-shadow: 0 8px 32px rgba(0,0,0,0.12);
-            --color-banner-card-active-border: var(--color-primary);
-            --color-banner-card-active-shadow: 0 0 18px rgba(84,207,214,0.3);
-            --color-banner-card-hover-border: rgba(84,207,214,0.5);
-            --color-banner-card-hover-shadow: 0 0 12px rgba(84,207,214,0.15);
+            --color-banner-cover-border: #f2dae6;
+            --color-banner-cover-shadow: 0 8px 32px rgba(26,26,26,0.10);
+            --color-banner-card-active-border: #fe68cb;
+            --color-banner-card-active-shadow: 0 0 18px rgba(255,157,227,0.35);
+            --color-banner-card-hover-border: rgba(255,157,227,0.55);
+            --color-banner-card-hover-shadow: 0 0 12px rgba(255,157,227,0.18);
             --color-banner-card-rank-bg: rgba(0,0,0,0.65);
-            --color-banner-card-rank-active-bg: var(--color-primary);
+            --color-banner-card-rank-active-bg: #fe68cb;
             --color-banner-card-overlay: linear-gradient(transparent, rgba(0,0,0,0.78));
-            --shadow-banner: 0 12px 40px rgba(0,0,0,0.1);
+            --shadow-banner: 0 12px 40px rgba(26,26,26,0.08);
 
+            /* ── Typography ── */
             --font-family: 'Be Vietnam Pro', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
             --font-size-xs: 0.75rem;
             --font-size-sm: 0.875rem;
@@ -90,78 +106,90 @@ function hdk_design_tokens_css() {
             --font-size-2xl: 1.5rem;
             --font-size-3xl: 1.875rem;
 
-            --radius-sm: 8px;
-            --radius-md: 12px;
-            --radius-lg: 16px;
+            /* ── Radius ── */
+            --radius-sm: 10px;
+            --radius-md: 14px;
+            --radius-lg: 18px;
             --radius-pill: 24px;
             --radius-full: 9999px;
 
+            /* ── Spacing / Touch ── */
             --touch-target: 44px;
 
-            --shadow-sm: 0 1px 2px rgba(0,0,0,0.05);
-            --shadow-md: 0 4px 6px -1px rgba(0,0,0,0.1);
-            --shadow-lg: 0 10px 15px -3px rgba(0,0,0,0.1);
+            /* ── Shadow ── */
+            --shadow-sm: 0 1px 2px rgba(26,26,26,0.04);
+            --shadow-md: 0 4px 8px rgba(26,26,26,0.06);
+            --shadow-lg: 0 12px 24px rgba(26,26,26,0.08);
 
+            /* ── Layout ── */
             --container-max: 1280px;
             --sidebar-width: 300px;
-
             --header-height: 64px;
             --card-min-width: 200px;
-
             --grid-gap: 16px;
         }
 
+        /* ─────────────────── DARK THEME ─────────────────── */
+
         html[data-theme="dark"] {
-            --color-primary: #54CFD6;
-            --color-primary-hover: #6FE0E6;
-            --color-primary-light: #0D3B3E;
+            --color-primary: #ffc1ed;
+            --color-primary-hover: #ff9de3;
+            --color-primary-light: #3d2a38;
+            --color-on-primary: #1b1e18;
 
-            --color-text-primary: #E5E7EB;
-            --color-text-secondary: #D1D5DB;
-            --color-text-muted: #9CA3AF;
+            --color-text-primary: #fffdff;
+            --color-text-secondary: #e4dfe7;
+            --color-text-muted: #b2a6b9;
 
-            --color-bg: #111827;
-            --color-bg-secondary: #0F172A;
-            --color-bg-tertiary: #1F2937;
+            --color-bg: #1b1e18;
+            --color-bg-secondary: #232622;
+            --color-bg-tertiary: #39262f;
 
-            --color-border: #374151;
-            --color-border-light: #2D3748;
+            --color-border: #503440;
+            --color-border-light: #402a35;
 
-            --color-footer-bg: #0A0F1A;
+            --color-on-success: #1b1e18;
+            --color-on-danger: #FFFFFF;
+            --color-warning: #ffc1ed;
+            --color-rating: #ffc1ed;
 
-            --color-input-bg: #1F2937;
-            --color-input-border: #4B5563;
-            --color-input-focus-ring: rgba(84,207,214,0.2);
+            --color-footer-bg: #1b1e18;
+
+            --color-input-bg: #39262f;
+            --color-input-border: #503440;
+            --color-input-focus-ring: rgba(255,193,237,0.2);
 
             --color-overlay: rgba(0,0,0,0.7);
 
-            --color-select-indicator: #9CA3AF;
+            --color-select-indicator: #b2a6b9;
 
+            --color-badge-primary-bg: #503440;
+            --color-badge-primary-text: #ffc1ed;
             --color-badge-success-bg: #064E3B;
             --color-badge-success-text: #6EE7B7;
-            --color-badge-warning-bg: #78350F;
-            --color-badge-warning-text: #FCD34D;
+            --color-badge-warning-bg: #503440;
+            --color-badge-warning-text: #ffc1ed;
             --color-badge-danger-bg: #7F1D1D;
             --color-badge-danger-text: #FCA5A5;
 
             --shadow-sm: 0 1px 2px rgba(0,0,0,0.3);
-            --shadow-md: 0 4px 6px -1px rgba(0,0,0,0.4);
-            --shadow-lg: 0 10px 15px -3px rgba(0,0,0,0.5);
+            --shadow-md: 0 4px 8px rgba(0,0,0,0.4);
+            --shadow-lg: 0 12px 24px rgba(0,0,0,0.5);
 
-            /* Banner dark mode */
-            --color-banner-bg: #070b12;
-            --color-banner-text: #FFFFFF;
+            /* Banner dark */
+            --color-banner-bg: #141714;
+            --color-banner-text: #fffdff;
             --color-banner-text-muted: rgba(255,255,255,0.72);
-            --color-banner-card-bg: #10151f;
-            --color-banner-shell-gradient: linear-gradient(100deg, rgba(8,12,23,0.96), rgba(34,54,70,0.92) 48%, rgba(12,19,31,0.98));
-            --color-banner-shell-ambient: radial-gradient(circle at 50% 18%, rgba(255,255,255,0.16), transparent 32%);
+            --color-banner-card-bg: #39262f;
+            --color-banner-shell-gradient: linear-gradient(100deg, rgba(20,23,20,0.96), rgba(57,38,47,0.92) 48%, rgba(20,23,20,0.98));
+            --color-banner-shell-ambient: radial-gradient(circle at 50% 18%, rgba(255,255,255,0.12), transparent 32%);
             --color-banner-shell-border: rgba(255,255,255,0.08);
             --color-banner-veil: linear-gradient(90deg, rgba(0,0,0,0.38), transparent 36%, rgba(0,0,0,0.26));
             --color-banner-cover-border: rgba(255,255,255,0.16);
             --color-banner-cover-shadow: 0 20px 50px rgba(0,0,0,0.42);
-            --color-banner-card-active-shadow: 0 0 18px rgba(84,207,214,0.5);
-            --color-banner-card-hover-border: rgba(84,207,214,0.75);
-            --color-banner-card-hover-shadow: 0 0 12px rgba(84,207,214,0.34);
+            --color-banner-card-active-shadow: 0 0 18px rgba(255,193,237,0.4);
+            --color-banner-card-hover-border: rgba(255,193,237,0.65);
+            --color-banner-card-hover-shadow: 0 0 12px rgba(255,193,237,0.25);
             --shadow-banner: 0 24px 60px rgba(0,0,0,0.35);
         }
 
@@ -192,10 +220,10 @@ function hdk_design_tokens_css() {
             transition: background-color 0.2s, border-color 0.2s, color 0.2s, box-shadow 0.2s, transform 0.2s;
             gap: 8px; white-space: nowrap;
         }
-        .btn-primary { background: var(--color-primary); color: #FFF; }
+        .btn-primary { background: var(--color-primary); color: var(--color-on-primary); }
         .btn-primary:hover { background: var(--color-primary-hover); }
         .btn-outline { background: transparent; border: 2px solid var(--color-primary); color: var(--color-primary); }
-        .btn-outline:hover { background: var(--color-primary); color: #FFF; }
+        .btn-outline:hover { background: var(--color-primary); color: var(--color-on-primary); }
         .btn-ghost { background: transparent; color: var(--color-text-secondary); }
         .btn-ghost:hover { background: var(--color-bg-tertiary); }
         .btn-sm { min-height: 36px; padding: 6px 16px; font-size: var(--font-size-xs); }
@@ -285,7 +313,7 @@ function hdk_design_tokens_css() {
         }
         select {
             appearance: none;
-            background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath fill='%236B7280' d='M6 8L1 3h10z'/%3E%3C/svg%3E");
+            background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath fill='%23817089' d='M6 8L1 3h10z'/%3E%3C/svg%3E");
             background-position: right 14px center;
             background-repeat: no-repeat;
             padding-right: 36px;
@@ -304,6 +332,10 @@ function hdk_design_tokens_css() {
             position: absolute; width: 1px; height: 1px;
             padding: 0; margin: -1px; overflow: hidden;
             clip: rect(0,0,0,0); border: 0;
+        }
+
+        html[data-theme="dark"] select {
+            background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath fill='%23b2a6b9' d='M6 8L1 3h10z'/%3E%3C/svg%3E");
         }
 
         @media (prefers-reduced-motion: reduce) {

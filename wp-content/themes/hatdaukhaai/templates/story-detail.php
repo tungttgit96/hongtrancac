@@ -108,7 +108,7 @@ get_header();
             <?php if ($chapter_def_price > 0): ?> · 💎 <?php echo $chapter_def_price; ?> hạt / chương<?php endif; ?>
             <?php if ($full_price > 0): ?> · 📚 Mở full: <?php echo $full_price; ?> hạt
                 <?php if ($user_id): ?>
-                <button type="button" onclick="purchaseFullStory(<?php echo $story->id; ?>)" style="margin-left:8px;font-size:12px;padding:2px 10px;border-radius:12px;border:1px solid var(--color-primary);background:var(--color-primary);color:#fff;cursor:pointer;">Mua full</button>
+                <button type="button" onclick="purchaseFullStory(<?php echo $story->id; ?>)" style="margin-left:8px;font-size:12px;padding:2px 10px;border-radius:12px;border:1px solid var(--color-primary);background:var(--color-primary);color:var(--color-on-primary);cursor:pointer;">Mua full</button>
                 <?php endif; ?>
             <?php endif; ?>
             <span id="purchase-msg" style="margin-left:8px;font-weight:600;"></span>
@@ -189,14 +189,14 @@ function purchaseChapterInline(storyId, chapterNum, btn) {
     .then(r => r.json())
     .then(d => {
         if (d.success) {
-            if (msg) { msg.innerHTML = '<span style="color:#10B981;">Mua thành công!</span>'; }
+            if (msg) { msg.innerHTML = '<span style="color:var(--color-success);">Mua thành công!</span>'; }
             btn.textContent = '✅';
-            btn.style.borderColor = '#10B981';
-            btn.style.color = '#10B981';
+            btn.style.borderColor = 'var(--color-success)';
+            btn.style.color = 'var(--color-success)';
             btn.style.background = 'transparent';
             setTimeout(function(){ location.reload(); }, 500);
         } else if (d.code === 'insufficient_credits') {
-            if (msg) msg.innerHTML = '<span style="color:#EF4444;">' + d.message + '</span>';
+            if (msg) msg.innerHTML = '<span style="color:var(--color-danger);">' + d.message + '</span>';
             btn.disabled = false;
             btn.textContent = btn.textContent.replace('…', '💎');
         }
@@ -219,10 +219,10 @@ function purchaseFullStory(storyId) {
     .then(r => r.json())
     .then(d => {
         if (d.success) {
-            if (msg) msg.innerHTML = '<span style="color:#10B981;">Mua full thành công!</span>';
+            if (msg) msg.innerHTML = '<span style="color:var(--color-success);">Mua full thành công!</span>';
             setTimeout(function(){ location.reload(); }, 500);
         } else if (d.code === 'insufficient_credits') {
-            if (msg) msg.innerHTML = '<span style="color:#EF4444;">' + d.message + '</span>';
+            if (msg) msg.innerHTML = '<span style="color:var(--color-danger);">' + d.message + '</span>';
         }
     });
 }

@@ -63,7 +63,7 @@ get_header();
             $url = home_url('/tai-khoan?tab=' . $key);
             ?>
             <a href="<?php echo esc_url($url); ?>" class="account-tab <?php echo $is_active ? 'active' : ''; ?>"
-               style="padding:12px 20px;text-decoration:none;font-weight:600;color:var(--color-text-<?php echo $is_active ? 'primary' : 'muted'; ?>);border-bottom:3px solid <?php echo $is_active ? 'var(--color-primary)' : 'transparent'; ?>;transition:all 0.2s;">
+               style="padding:12px 20px;text-decoration:none;font-weight:600;color:var(--color-text-<?php echo $is_active ? 'primary' : 'muted'; ?>);border-bottom:3px solid <?php echo $is_active ? 'var(--color-primary)' : 'transparent'; ?>;transition:color 0.2s, border-color 0.2s;">
                 <?php echo $label; ?>
             </a>
         <?php } ?>

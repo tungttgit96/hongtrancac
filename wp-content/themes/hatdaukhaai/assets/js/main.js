@@ -257,7 +257,7 @@
                 if (result.status === 200 && result.data.success) {
                     btn.textContent = 'Đã nhận +' + result.data.credits_earned + ' hạt!';
                     btn.style.background = 'var(--color-success)';
-                    btn.style.color = '#fff';
+                    btn.style.color = 'var(--color-on-success)';
                     btn.style.borderColor = 'var(--color-success)';
                     setTimeout(function() { location.reload(); }, 1500);
                 } else if (result.status === 409) {

@@ -99,16 +99,16 @@ function purchaseChapter(sid, cnum) {
     .then(r => r.json())
     .then(d => {
         if (d.success) {
-            document.getElementById('purchase-message').innerHTML = '<span style="color:#10B981;">Mua thành công! Đang chuyển trang…</span>';
+            document.getElementById('purchase-message').innerHTML = '<span style="color:var(--color-success);">Mua thành công! Đang chuyển trang…</span>';
             setTimeout(function(){ location.reload(); }, 800);
         } else if (d.code === 'insufficient_credits') {
-            document.getElementById('purchase-message').innerHTML = '<span style="color:#EF4444;">' + d.message + '</span>';
+            document.getElementById('purchase-message').innerHTML = '<span style="color:var(--color-danger);">' + d.message + '</span>';
             btn.disabled = false;
             btn.textContent = '🔑 Mua chương này (' + <?php echo $chapter_price; ?> + ' hạt)';
         }
     })
     .catch(function() {
-        document.getElementById('purchase-message').innerHTML = '<span style="color:#EF4444;">Lỗi kết nối. Thử lại.</span>';
+        document.getElementById('purchase-message').innerHTML = '<span style="color:var(--color-danger);">Lỗi kết nối. Thử lại.</span>';
         btn.disabled = false;
         btn.textContent = '🔑 Mua chương này (' + <?php echo $chapter_price; ?> + ' hạt)';
     });
@@ -127,16 +127,16 @@ function purchaseFull(sid) {
     .then(r => r.json())
     .then(d => {
         if (d.success) {
-            document.getElementById('purchase-message').innerHTML = '<span style="color:#10B981;">Mua full thành công! Đang chuyển trang…</span>';
+            document.getElementById('purchase-message').innerHTML = '<span style="color:var(--color-success);">Mua full thành công! Đang chuyển trang…</span>';
             setTimeout(function(){ location.reload(); }, 800);
         } else if (d.code === 'insufficient_credits') {
-            document.getElementById('purchase-message').innerHTML = '<span style="color:#EF4444;">' + d.message + '</span>';
+            document.getElementById('purchase-message').innerHTML = '<span style="color:var(--color-danger);">' + d.message + '</span>';
             btn.disabled = false;
             btn.textContent = '📚 Mở toàn bộ (' + <?php echo $full_price; ?> + ' hạt)';
         }
     })
     .catch(function() {
-        document.getElementById('purchase-message').innerHTML = '<span style="color:#EF4444;">Lỗi kết nối.</span>';
+        document.getElementById('purchase-message').innerHTML = '<span style="color:var(--color-danger);">Lỗi kết nối.</span>';
         btn.disabled = false;
         btn.textContent = '📚 Mở toàn bộ (' + <?php echo $full_price; ?> + ' hạt)';
     });

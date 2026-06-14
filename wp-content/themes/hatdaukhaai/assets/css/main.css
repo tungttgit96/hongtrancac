@@ -99,10 +99,10 @@
     gap: 14px;
 }
 .hero-banner .banner-read-link {
-    color: #fff;
+    color: var(--color-banner-overlay-text);
 }
 .hero-banner .banner-read-link:hover {
-    color: #fff;
+    color: var(--color-banner-overlay-text);
 }
 .hero-banner .banner-views {
     color: var(--color-banner-text-muted);
@@ -299,7 +299,7 @@
     color: var(--color-rating);
 }
 .stars .star:hover ~ .star {
-    color: #D1D5DB;
+    color: var(--color-text-muted);
 }
 
 /* ===== Chapter Reader ===== */
@@ -504,7 +504,7 @@ article p:last-child {
 
 .reader-theme-btn.active {
     background: var(--color-primary);
-    color: #fff;
+    color: var(--color-on-primary);
 }
 
 /* ===== Reader Content ===== */
