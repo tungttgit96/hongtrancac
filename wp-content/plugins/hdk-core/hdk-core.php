@@ -27,9 +27,13 @@ require_once HDK_PLUGIN_DIR . 'includes/class-cache.php';
 require_once HDK_PLUGIN_DIR . 'includes/class-template-loader.php';
 require_once HDK_PLUGIN_DIR . 'includes/class-protection.php';
 require_once HDK_PLUGIN_DIR . 'includes/class-cli.php';
+require_once HDK_PLUGIN_DIR . 'includes/class-media-compress.php';
 
 // Protection: anti-crawl, anti-webtoepub
 HDK_Protection::init();
+
+// Media upload compressor - must register early, before admin_menu
+HDK_Media_Compress::init();
 
 // Activation / Deactivation
 register_activation_hook(__FILE__, ['HDK_Activator', 'activate']);

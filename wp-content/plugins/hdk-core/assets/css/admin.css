@@ -1,0 +1,45 @@
+/**
+ * HDK Admin styles
+ */
+
+.hdk-upload-btn {
+    cursor: pointer;
+}
+
+#cover_preview {
+    max-width: 200px;
+    margin-top: 8px;
+}
+
+/* Upload compression notices inside media modal */
+.hdk-upload-notices {
+    padding: 4px 6px 0;
+}
+
+.hdk-upload-notice {
+    margin: 0 0 4px;
+    padding: 6px 10px;
+    border-left: 4px solid #ccc;
+    background: #fff;
+    box-shadow: 0 1px 1px rgba(0,0,0,.04);
+    font-size: 13px;
+    line-height: 1.5;
+    display: none;
+}
+
+.hdk-upload-notice p {
+    margin: 0;
+    padding: 0;
+}
+
+.hdk-upload-notice.hdk-notice-info {
+    border-left-color: #72aee6;
+}
+
+.hdk-upload-notice.hdk-notice-success {
+    border-left-color: #00a32a;
+}
+
+.hdk-upload-notice.hdk-notice-error {
+    border-left-color: #d63638;
+}

@@ -529,13 +529,15 @@ class HDK_Admin {
                             $cp = (int)($s->chapter_price ?? 0);
                             $fc = (int)($s->free_chapters ?? 0);
                             $fp = (int)($s->full_price ?? 0);
-                            if ((int)($s->is_free ?? 0)): echo '🆓 Free';
-                            elseif ($cp > 0 || $fp > 0):
+                            if ((int)($s->is_free ?? 0)) {
+                                echo 'Free';
+                            } elseif ($cp > 0 || $fp > 0) {
                                 if ($fc > 0) echo "F:$fc "; 
                                 if ($cp > 0) echo "💎$cp"; 
                                 if ($fp > 0) echo " Full:$fp";
-                            else: echo '-';
-                            endif;
+                            } else {
+                                echo '-';
+                            }
                             ?>
                         </td>
                         <td><?php echo $s->total_chapters; ?></td>
