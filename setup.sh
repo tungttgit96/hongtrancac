@@ -43,7 +43,11 @@ fi
 if [ ! -f "$SITE_DIR/wp-config.php" ]; then
     echo "[2/8] Downloading WordPress..."
     cd "$SITE_DIR"
-    wp core download --locale=vi --path="$SITE_DIR" 2>/dev/null || curl -O https://wordpress.org/latest-vi.zip && unzip -o latest-vi.zip -d "$SITE_DIR/.." && rm latest-vi.zip
+    if ! wp core download --locale=vi --path="$SITE_DIR" 2>/dev/null; then
+        curl -O https://wordpress.org/latest-vi.zip
+        unzip -o latest-vi.zip -d "$SITE_DIR/.."
+        rm latest-vi.zip
+    fi
 else
     echo "[2/8] WordPress already installed"
 fi
@@ -121,16 +125,33 @@ create_page "bang-xep-hang" "Bảng Xếp Hạng"
 create_page "hoan-thanh" "Hoàn Thành"
 create_page "truyen-free" "Truyện Free"
 create_page "the-loai" "Thể Loại"
+create_page "tin-tuc" "Tin Tức"
+create_page "dang-nhap" "Đăng Nhập"
+create_page "dang-ky" "Đăng Ký"
+create_page "tai-khoan" "Tài Khoản"
 
-# Set homepage
-wp option update show_on_front page 2>/dev/null
-wp option update page_on_front $(wp post list --post_type=page --name=trang-chu --field=ID --format=count 2>/dev/null || echo 0) 2>/dev/null || true
+# Assign page templates where needed
+LOGIN_ID="$(wp post list --post_type=page --name=dang-nhap --field=ID 2>/dev/null | head -n1)"
+REGISTER_ID="$(wp post list --post_type=page --name=dang-ky --field=ID 2>/dev/null | head -n1)"
+ACCOUNT_ID="$(wp post list --post_type=page --name=tai-khoan --field=ID 2>/dev/null | head -n1)"
+if [ -n "$LOGIN_ID" ]; then wp post update "$LOGIN_ID" --page_template='page-dang-nhap.php' >/dev/null; fi
+if [ -n "$REGISTER_ID" ]; then wp post update "$REGISTER_ID" --page_template='page-dang-ky.php' >/dev/null; fi
+if [ -n "$ACCOUNT_ID" ]; then wp post update "$ACCOUNT_ID" --page_template='page-tai-khoan.php' >/dev/null; fi
+
+# Use theme index.php as homepage
+wp option update show_on_front posts 2>/dev/null || true
 
 # Flush rewrite rules
 wp rewrite flush 2>/dev/null
 
 # Update permalink structure
 wp rewrite structure '/%postname%/' 2>/dev/null
+
+# Link with Herd when available
+if command -v herd >/dev/null 2>&1; then
+    herd link "$SITE_DIR" >/dev/null 2>&1 || true
+    herd secure "$SITE_DOMAIN" >/dev/null 2>&1 || true
+fi
 
 echo ""
 echo "====================================="

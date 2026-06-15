@@ -26,6 +26,7 @@ Nền tảng đọc truyện chữ online xây dựng trên **WordPress** + cust
 ### Người dùng
 - 👤 Trang tài khoản độc giả (`/tai-khoan`): tủ truyện, đang đọc, đã mua, lịch sử đọc
 - 🔐 Trang đăng nhập có theme (`/dang-nhap`) thay vì `wp-login.php` gốc
+- 🧾 Trang đăng ký (`/dang-ky`) bằng tên đăng nhập, tên hiển thị và mật khẩu
 - ❤️ Yêu thích, đánh giá sao, bình luận
 - 🔔 Thông báo (chương mới, trả lời bình luận, mua thành công)
 - 📖 Auto-save tiến độ đọc
@@ -60,7 +61,76 @@ Nền tảng đọc truyện chữ online xây dựng trên **WordPress** + cust
 
 ---
 
-## Cài đặt trên macOS (Laravel Herd)
+## Chạy local nhanh nhất trên macOS (Laravel Herd)
+
+Đây là cách khuyến nghị để start site local dễ nhất.
+
+### Cần có
+
+- [Laravel Herd](https://herd.laravel.com) đang chạy
+- MySQL local
+- WP-CLI
+
+Herd thường đã có PHP/WP-CLI. Nếu thiếu MySQL:
+
+```bash
+brew install mysql@8.0
+brew services start mysql@8.0
+```
+
+### Một lệnh setup
+
+Chạy từ thư mục repo:
+
+```bash
+bash setup.sh hongtrancac.test
+```
+
+Script sẽ:
+
+- Tạo site trong `~/Herd/hongtrancac.test`
+- Tải WordPress tiếng Việt
+- Tạo database `hongtrancac`
+- Tạo `wp-config.php`
+- Cài WordPress
+- Copy theme `hongtrancac` và plugin `hdk-core`
+- Active theme/plugin
+- Tạo các page cần thiết: `/dang-nhap`, `/dang-ky`, `/tai-khoan`, `/danh-sach-truyen`, `/bang-xep-hang`, `/the-loai`, `/hoan-thanh`, `/truyen-free`
+- Flush permalink
+
+Sau khi xong:
+
+```text
+Site:  https://hongtrancac.test
+Admin: https://hongtrancac.test/wp-admin
+User:  admin
+Pass:  admin123
+```
+
+Seed dữ liệu mẫu:
+
+```bash
+wp --path="$HOME/Herd/hongtrancac.test" hdk seed
+```
+
+Nếu đổi code trong repo sau khi đã setup, chạy lại:
+
+```bash
+bash setup.sh hongtrancac.test
+```
+
+Script sẽ copy lại theme/plugin sang thư mục Herd.
+
+### Lỗi thường gặp
+
+- `mysql: command not found`: cài MySQL bằng Homebrew hoặc dùng MySQL đi kèm app khác.
+- `wp: command not found`: cài WP-CLI hoặc mở terminal do Herd cung cấp.
+- `hongtrancac.test` không mở được: kiểm tra Herd đang chạy, rồi chạy `herd link ~/Herd/hongtrancac.test` và `herd secure hongtrancac.test`.
+- CSS không đổi sau khi sửa: theme đã dùng `filemtime()` để cache-bust CSS/JS, chỉ cần refresh browser.
+
+---
+
+## Cài đặt thủ công trên macOS (Laravel Herd)
 
 ### Prerequisites
 
@@ -124,19 +194,23 @@ wp post create --post_type=page --post_title="Truyện Free" --post_name="truyen
 wp post create --post_type=page --post_title="Thể Loại" --post_name="the-loai" --post_status=publish
 wp post create --post_type=page --post_title="Tin Tức" --post_name="tin-tuc" --post_status=publish
 wp post create --post_type=page --post_title="Đăng Nhập" --post_name="dang-nhap" --post_status=publish
+wp post create --post_type=page --post_title="Đăng Ký" --post_name="dang-ky" --post_status=publish
+wp post create --post_type=page --post_title="Tài Khoản" --post_name="tai-khoan" --post_status=publish
 
-# 10. Set login page template
+# 10. Set page templates
 wp post update $(wp post list --post_type=page --post_name="dang-nhap" --field=ID) --page_template='page-dang-nhap.php'
+wp post update $(wp post list --post_type=page --post_name="dang-ky" --field=ID) --page_template='page-dang-ky.php'
+wp post update $(wp post list --post_type=page --post_name="tai-khoan" --field=ID) --page_template='page-tai-khoan.php'
 
-# 12. Permalink + rewrite
+# 11. Permalink + rewrite
 wp rewrite structure '/%postname%/'
 wp rewrite flush
 
-# 13. Link với Herd
+# 12. Link với Herd
 herd link ~/Herd/hongtrancac
 herd secure hongtrancac
 
-# 14. Seed demo data (optional)
+# 13. Seed demo data (optional)
 wp hdk seed
 ```
 
@@ -287,6 +361,7 @@ wp hdk create_account_page    # Tạo trang /tai-khoan nếu chưa có
 | `/tin-tuc` | Tin tức (WP posts) |
 | `/tai-khoan` | Trang tài khoản độc giả (tủ truyện, ví hạt, thông báo...) |
 | `/dang-nhap` | Trang đăng nhập có theme |
+| `/dang-ky` | Trang đăng ký tài khoản |
 | `/{story-slug}` | Chi tiết truyện + danh sách chương |
 | `/{story-slug}?chuong={n}` | Đọc chương |
 | `/sitemap.xml` | XML Sitemap |

@@ -130,7 +130,13 @@
             <a href="<?php echo home_url('/the-loai'); ?>" class="btn btn-ghost">Thể loại</a>
             <a href="<?php echo home_url('/hoan-thanh'); ?>" class="btn btn-ghost">Hoàn thành</a>
             <a href="<?php echo home_url('/truyen-free'); ?>" class="btn btn-ghost">Truyện Free</a>
-            <?php if (!is_user_logged_in()): ?>
+            <?php if (is_user_logged_in()): ?>
+                <a href="<?php echo home_url('/tai-khoan'); ?>" class="btn btn-primary">Tài khoản</a>
+                <?php if (current_user_can('manage_options')): ?>
+                    <a href="<?php echo admin_url(); ?>" class="btn btn-outline">Admin</a>
+                <?php endif; ?>
+                <a href="<?php echo wp_logout_url(home_url()); ?>" class="btn btn-ghost">Đăng xuất</a>
+            <?php else: ?>
                 <a href="<?php echo esc_url(hdk_login_url(home_url(add_query_arg([])))); ?>" class="btn btn-primary">Đăng nhập</a>
                 <a href="<?php echo esc_url(hdk_register_url(home_url(add_query_arg([])))); ?>" class="btn btn-outline">Đăng ký</a>
             <?php endif; ?>

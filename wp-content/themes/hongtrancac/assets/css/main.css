@@ -376,6 +376,10 @@ html[data-theme="dark"] select {
     -webkit-backdrop-filter: blur(8px);
     transition: background 0.3s, border-color 0.3s;
 }
+.site-logo {
+    min-width: 0;
+    white-space: nowrap;
+}
 .header-actions {
     flex: 0 0 auto;
     min-width: 0;
@@ -782,9 +786,31 @@ article p:last-child {
     }
     .site-logo {
         font-size: var(--font-size-base) !important;
+        flex: 1 1 auto;
+        max-width: calc(100vw - 148px);
+        overflow: hidden;
+        text-overflow: ellipsis;
+    }
+    .site-header .container {
+        gap: 6px !important;
     }
     .main-nav {
         display: none !important;
+    }
+    .header-actions {
+        gap: 4px !important;
+    }
+    .auth-login-link,
+    .auth-register-link {
+        display: none !important;
+    }
+    #notif-bell,
+    .user-dropdown {
+        display: none !important;
+    }
+    .mobile-menu-toggle {
+        display: inline-flex !important;
+        min-width: var(--touch-target);
     }
     .hero {
         padding: 32px 0 !important;
