@@ -300,7 +300,7 @@ class HDK_DB {
                 'title' => $title,
                 'slug' => $slug,
                 'author_id' => $author_id,
-                'cover_url' => 'https://picsum.photos/seed/' . $slug . '/300/400',
+                'cover_url' => get_template_directory_uri() . '/assets/img/placeholder.svg',
                 'summary' => "Đây là phần tóm tắt của truyện \"$title\". Một câu chuyện hấp dẫn với nhiều tình tiết ly kỳ và cảm động.",
                 'status' => $status,
                 'is_free' => $i % 4 === 0 ? 1 : 0,

@@ -23,15 +23,35 @@ class HDK_Cache {
 
     public static function invalidate_story($story_id) {
         self::delete('story_' . $story_id);
-        self::delete('home_sections');
-        self::delete('home_new');
-        self::delete('home_hot');
-        self::delete('home_completed');
+        self::invalidate_home();
         self::delete('ranking_views_all');
     }
 
     public static function invalidate_chapter($story_id) {
         self::invalidate_story($story_id);
+    }
+
+    public static function invalidate_home() {
+        $keys = ['home_new', 'home_hot', 'home_completed', 'home_free', 'home_editor', 'home_weekly'];
+        foreach ($keys as $key) {
+            self::delete($key);
+        }
+    }
+
+    public static function get_home_stories($args, $cache_key, $ttl = self::TTL_HOME) {
+        $cached = self::get($cache_key);
+        if ($cached !== false) return $cached;
+        $result = HDK_DB::get_stories($args);
+        self::set($cache_key, $result, $ttl);
+        return $result;
+    }
+
+    public static function get_home_ranking($metric, $period, $category_id, $page, $per_page, $cache_key, $ttl = self::TTL_HOME) {
+        $cached = self::get($cache_key);
+        if ($cached !== false) return $cached;
+        $result = HDK_DB::get_ranking($metric, $period, $category_id, $page, $per_page, true);
+        self::set($cache_key, $result, $ttl);
+        return $result;
     }
 
     public static function publish_scheduled() {

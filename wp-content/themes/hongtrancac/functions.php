@@ -37,4 +37,4 @@ add_action('wp_head', function() {
 
 // Include template parts
 require_once get_template_directory() . '/inc/template-functions.php';
-require_once get_template_directory() . '/inc/design-tokens.php';
+

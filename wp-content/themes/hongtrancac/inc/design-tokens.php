@@ -349,4 +349,5 @@ function hdk_design_tokens_css() {
     </style>
     <?php
 }
-add_action('wp_head', 'hdk_design_tokens_css', 1);
+// CSS tokens moved to assets/css/main.css for cache/performance.
+// This file is kept for reference and is no longer included by functions.php.

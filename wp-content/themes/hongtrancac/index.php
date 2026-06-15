@@ -9,16 +9,16 @@ $page = isset($_GET['page']) ? max(1, (int)$_GET['page']) : 1;
 $per_page = 20;
 
 // Get new/updated stories
-$new_stories = HDK_DB::get_stories(['per_page' => 12, 'orderby' => 'updated_at', 'order' => 'DESC', 'exclude_hidden' => true]);
+$new_stories = HDK_Cache::get_home_stories(['per_page' => 12, 'orderby' => 'updated_at', 'order' => 'DESC', 'exclude_hidden' => true], 'home_new');
 
 // Get hot stories (most views)
-$hot_stories = HDK_DB::get_stories(['per_page' => 12, 'orderby' => 'total_views', 'order' => 'DESC', 'exclude_hidden' => true]);
+$hot_stories = HDK_Cache::get_home_stories(['per_page' => 12, 'orderby' => 'total_views', 'order' => 'DESC', 'exclude_hidden' => true], 'home_hot');
 
 // Get completed stories
-$completed_stories = HDK_DB::get_stories(['per_page' => 12, 'status' => 'completed', 'orderby' => 'updated_at', 'order' => 'DESC', 'exclude_hidden' => true]);
+$completed_stories = HDK_Cache::get_home_stories(['per_page' => 12, 'status' => 'completed', 'orderby' => 'updated_at', 'order' => 'DESC', 'exclude_hidden' => true], 'home_completed');
 
 // Get free stories
-$free_stories = HDK_DB::get_stories(['per_page' => 12, 'is_free' => 1, 'orderby' => 'total_views', 'order' => 'DESC', 'exclude_hidden' => true]);
+$free_stories = HDK_Cache::get_home_stories(['per_page' => 12, 'is_free' => 1, 'orderby' => 'total_views', 'order' => 'DESC', 'exclude_hidden' => true], 'home_free');
 
 // Get categories
 global $wpdb;
@@ -107,7 +107,7 @@ $categories = $wpdb->get_results("SELECT * FROM " . HDK_DB::table('hdk_categorie
 
 <!-- Editor Picks -->
 <?php
-$editor_picks = HDK_DB::get_stories(['orderby' => 'average_rating', 'order' => 'DESC', 'per_page' => 6, 'exclude_hidden' => true]);
+$editor_picks = HDK_Cache::get_home_stories(['orderby' => 'average_rating', 'order' => 'DESC', 'per_page' => 6, 'exclude_hidden' => true], 'home_editor');
 if (!empty($editor_picks['stories'])): ?>
 <section class="section">
     <div class="container">
@@ -125,7 +125,7 @@ if (!empty($editor_picks['stories'])): ?>
 
 <!-- Weekly Hot -->
 <?php
-$weekly_hot = HDK_DB::get_ranking('views', 'week', 0, 1, 6, true);
+$weekly_hot = HDK_Cache::get_home_ranking('views', 'week', 0, 1, 6, 'home_weekly');
 if (!empty($weekly_hot['stories'])): ?>
 <section class="section" style="background:var(--color-bg);">
     <div class="container">
