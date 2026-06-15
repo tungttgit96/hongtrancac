@@ -41,7 +41,13 @@ class HDK_Template_Loader {
 
     private static function load_story_template($slug) {
         $story = HDK_DB::get_story($slug);
-        if (!$story) return;
+        if (!$story) {
+            global $wp_query;
+            $wp_query->set_404();
+            status_header(404);
+            get_template_part('404');
+            exit;
+        }
 
         // Log view
         $chapter_number = isset($_GET['chuong']) ? (int)$_GET['chuong'] : 0;
@@ -134,7 +140,13 @@ class HDK_Template_Loader {
 
         if (isset($term) && $term) {
             get_template_part('templates/taxonomy');
+            exit;
         }
+
+        global $wp_query;
+        $wp_query->set_404();
+        status_header(404);
+        get_template_part('404');
         exit;
     }
 
