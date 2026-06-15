@@ -15,7 +15,7 @@ $chapter_number = $access['chapter_number'] ?? 0;
 get_header();
 ?>
 
-<div class="container" style="padding-top:24px;padding-bottom:32px;">
+<div class="container page-shell" style="padding-bottom:32px;">
     <nav style="font-size:var(--font-size-sm);color:var(--color-text-muted);margin-bottom:16px;">
         <a href="<?php echo home_url('/'); ?>">Trang chủ</a> &raquo;
         <a href="/<?php echo $story->slug; ?>"><?php echo esc_html($story->title); ?></a> &raquo;
@@ -45,7 +45,7 @@ get_header();
             </p>
 
             <!-- Preview: first 200 chars -->
-            <div style="background:var(--color-bg);border-radius:var(--radius-md);padding:20px;border:1px solid var(--color-border);text-align:left;margin-bottom:24px;max-height:200px;overflow:hidden;position:relative;">
+            <div class="panel panel-pad" style="text-align:left;margin-bottom:24px;max-height:200px;overflow:hidden;position:relative;">
                 <div style="line-height:2;font-size:var(--font-size-base);opacity:0.6;">
                     <?php echo wp_trim_words(strip_tags($chapter->content ?? ''), 50, '…'); ?>
                 </div>

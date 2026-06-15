@@ -18,6 +18,46 @@
     transform: scale(0.9);
 }
 
+/* ===== Layout Utilities ===== */
+.page-shell {
+    padding-top: 24px;
+}
+.panel {
+    background: var(--color-bg);
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-md);
+}
+.panel-pad {
+    padding: 20px;
+}
+.toolbar {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 12px;
+    align-items: center;
+}
+.story-list-row {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    padding: 16px;
+    border-bottom: 1px solid var(--color-border-light);
+}
+.story-list-row:nth-child(even) {
+    background: var(--color-bg-secondary);
+}
+.empty-state {
+    text-align: center;
+    padding: 48px 0;
+    color: var(--color-text-muted);
+}
+.footer-link {
+    color: var(--color-footer-link);
+}
+.footer-link:hover {
+    color: var(--color-footer-link-hover);
+}
+
 /* ===== Story Card ===== */
 .story-card {
     display: block;

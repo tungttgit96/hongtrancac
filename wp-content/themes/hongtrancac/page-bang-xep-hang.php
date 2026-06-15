@@ -25,7 +25,7 @@ $period_labels = ['day' => 'Hôm nay', 'week' => 'Tuần này', 'month' => 'Thá
 get_header();
 ?>
 
-<div class="container" style="padding-top:24px;">
+<div class="container page-shell">
     <h1 class="section-title" style="margin-bottom:16px;">🏆 Bảng xếp hạng</h1>
 
     <!-- Filter Tabs -->
@@ -64,7 +64,7 @@ get_header();
             $rank = ($page - 1) * 20 + $i + 1;
             $medal = $rank === 1 ? '🥇' : ($rank === 2 ? '🥈' : ($rank === 3 ? '🥉' : '#'.$rank));
         ?>
-        <div style="display:flex;align-items:center;gap:16px;padding:16px;border-bottom:1px solid var(--color-border-light);<?php echo $i % 2 === 0 ? '' : 'background:var(--color-bg-secondary);'; ?>">
+        <div class="story-list-row">
             <div style="font-size:var(--font-size-xl);font-weight:700;min-width:50px;text-align:center;"><?php echo $medal; ?></div>
             <a href="/<?php echo $story->slug; ?>" style="flex:0 0 60px;">
                 <img src="<?php echo esc_url($story->cover_url); ?>" alt="<?php echo esc_attr($story->title); ?>"

@@ -27,14 +27,14 @@ $categories = $wpdb->get_results("SELECT * FROM " . HDK_DB::table('hdk_categorie
 get_header();
 ?>
 
-<div class="container" style="padding-top:24px;">
+<div class="container page-shell">
     <div class="section-header">
         <h1 class="section-title">Danh sách truyện</h1>
         <span style="color:var(--color-text-muted);"><?php echo $result['total']; ?> truyện</span>
     </div>
 
     <!-- Filters -->
-    <div style="background:var(--color-bg);border-radius:var(--radius-md);padding:16px;border:1px solid var(--color-border);margin-bottom:20px;display:flex;flex-wrap:wrap;gap:12px;align-items:center;">
+    <div class="panel toolbar" style="padding:16px;margin-bottom:20px;">
         <input type="text" id="search-input" name="search" aria-label="Tìm truyện" autocomplete="off" placeholder="Tìm truyện…" value="<?php echo esc_attr($search); ?>"
                style="flex:1;min-width:200px;padding:8px 16px;border:2px solid var(--color-input-border);background:var(--color-input-bg);color:var(--color-text-primary);border-radius:var(--radius-pill);font-family:var(--font-family);min-height:var(--touch-target);">
         <select id="status-filter" name="status" aria-label="Lọc theo trạng thái" style="padding:8px 16px;border:2px solid var(--color-input-border);background:var(--color-input-bg);color:var(--color-text-primary);border-radius:var(--radius-pill);font-family:var(--font-family);min-height:var(--touch-target);">

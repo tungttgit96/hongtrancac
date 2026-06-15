@@ -50,7 +50,7 @@ if (is_user_logged_in()) {
 get_header();
 ?>
 
-<div class="container" style="padding-top:16px;padding-bottom:32px;">
+<div class="container page-shell" style="padding-top:16px;padding-bottom:32px;">
     <!-- Breadcrumb -->
     <nav style="font-size:var(--font-size-sm);color:var(--color-text-muted);margin-bottom:16px;">
         <a href="<?php echo home_url('/'); ?>">Trang chủ</a> &raquo;

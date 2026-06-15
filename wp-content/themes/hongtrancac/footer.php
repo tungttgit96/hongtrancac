@@ -17,18 +17,18 @@
             <div>
                 <h4 style="font-size:var(--font-size-base);margin-bottom:12px;">Liên kết</h4>
                 <ul style="list-style:none;display:flex;flex-direction:column;gap:8px;">
-                    <li><a href="<?php echo home_url('/danh-sach-truyen'); ?>" style="color:var(--color-footer-link);">Danh sách truyện</a></li>
-                    <li><a href="<?php echo home_url('/bang-xep-hang'); ?>" style="color:var(--color-footer-link);">Bảng xếp hạng</a></li>
-                    <li><a href="<?php echo home_url('/the-loai'); ?>" style="color:var(--color-footer-link);">Thể loại</a></li>
-                    <li><a href="<?php echo home_url('/tin-tuc'); ?>" style="color:var(--color-footer-link);">Tin tức</a></li>
+                    <li><a href="<?php echo home_url('/danh-sach-truyen'); ?>" class="footer-link">Danh sách truyện</a></li>
+                    <li><a href="<?php echo home_url('/bang-xep-hang'); ?>" class="footer-link">Bảng xếp hạng</a></li>
+                    <li><a href="<?php echo home_url('/the-loai'); ?>" class="footer-link">Thể loại</a></li>
+                    <li><a href="<?php echo home_url('/tin-tuc'); ?>" class="footer-link">Tin tức</a></li>
                 </ul>
             </div>
             <div>
                 <h4 style="font-size:var(--font-size-base);margin-bottom:12px;">Hỗ trợ</h4>
                 <ul style="list-style:none;display:flex;flex-direction:column;gap:8px;">
-                    <li><a href="<?php echo home_url('/lien-he'); ?>" style="color:var(--color-footer-link);">Liên hệ</a></li>
-                    <li><a href="<?php echo home_url('/dieu-khoan'); ?>" style="color:var(--color-footer-link);">Điều khoản</a></li>
-                    <li><a href="<?php echo home_url('/chinh-sach-bao-mat'); ?>" style="color:var(--color-footer-link);">Chính sách bảo mật</a></li>
+                    <li><a href="<?php echo home_url('/lien-he'); ?>" class="footer-link">Liên hệ</a></li>
+                    <li><a href="<?php echo home_url('/dieu-khoan'); ?>" class="footer-link">Điều khoản</a></li>
+                    <li><a href="<?php echo home_url('/chinh-sach-bao-mat'); ?>" class="footer-link">Chính sách bảo mật</a></li>
                 </ul>
             </div>
         </div>

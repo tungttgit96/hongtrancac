@@ -39,7 +39,7 @@ $comments = get_comments([
 get_header();
 ?>
 
-<div class="container" style="padding-top:24px;">
+<div class="container page-shell">
     <nav style="font-size:var(--font-size-sm);color:var(--color-text-muted);margin-bottom:20px;">
         <a href="<?php echo home_url('/'); ?>">Trang chủ</a> &raquo;
         <?php if (!empty($story->categories)): ?>
@@ -87,13 +87,13 @@ get_header();
     </div>
 
     <!-- Summary -->
-    <section style="margin-top:24px;background:var(--color-bg);border-radius:var(--radius-md);padding:20px;border:1px solid var(--color-border);">
+    <section class="panel panel-pad" style="margin-top:24px;">
         <h2 style="font-size:var(--font-size-lg);font-weight:600;margin-bottom:12px;">Tóm tắt</h2>
         <div style="line-height:1.8;color:var(--color-text-secondary);"><?php echo nl2br(esc_html($story->summary)); ?></div>
     </section>
 
     <!-- Chapter List -->
-    <section style="margin-top:24px;background:var(--color-bg);border-radius:var(--radius-md);padding:20px;border:1px solid var(--color-border);">
+    <section class="panel panel-pad" style="margin-top:24px;">
         <h2 style="font-size:var(--font-size-lg);font-weight:600;margin-bottom:12px;">Danh sách chương (<?php echo count($chapters); ?>)</h2>
         <?php
         $free_limit = (int)($story->free_chapters ?? 0);
@@ -154,7 +154,7 @@ get_header();
     </section>
 
     <!-- Comments -->
-    <section style="margin-top:24px;background:var(--color-bg);border-radius:var(--radius-md);padding:20px;border:1px solid var(--color-border);margin-bottom:32px;">
+    <section class="panel panel-pad" style="margin-top:24px;margin-bottom:32px;">
         <h2 style="font-size:var(--font-size-lg);font-weight:600;margin-bottom:16px;">Bình luận</h2>
         <?php if (is_user_logged_in()): ?>
             <form class="comment-form" style="margin-bottom:16px;" data-story-id="<?php echo $story->id; ?>">

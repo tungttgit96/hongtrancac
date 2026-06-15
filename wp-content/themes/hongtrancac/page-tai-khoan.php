@@ -76,9 +76,9 @@ get_header();
             $stories = $data['stories'];
             ?>
             <?php if (empty($stories)): ?>
-                <div class="empty-state" style="text-align:center;padding:48px 0;">
+                <div class="empty-state">
                     <div style="font-size:48px;margin-bottom:16px;">📖</div>
-                    <p style="color:var(--color-text-muted);margin-bottom:16px;">Bạn chưa yêu thích truyện nào.</p>
+                    <p style="margin-bottom:16px;">Bạn chưa yêu thích truyện nào.</p>
                     <a href="<?php echo home_url('/danh-sach-truyen'); ?>" class="btn btn-primary">Khám phá truyện ngay!</a>
                 </div>
             <?php else: ?>
@@ -95,7 +95,7 @@ get_header();
             $stories = HDK_DB::get_reading_stories($user_id);
             ?>
             <?php if (empty($stories)): ?>
-                <div class="empty-state" style="text-align:center;padding:48px 0;">
+                <div class="empty-state">
                     <div style="font-size:48px;margin-bottom:16px;">📌</div>
                     <p style="color:var(--color-text-muted);margin-bottom:16px;">Bắt đầu đọc truyện đầu tiên của bạn!</p>
                     <a href="<?php echo home_url('/danh-sach-truyen'); ?>" class="btn btn-primary">Khám phá truyện</a>
@@ -127,7 +127,7 @@ get_header();
             $stories = $data['stories'];
             ?>
             <?php if (empty($stories)): ?>
-                <div class="empty-state" style="text-align:center;padding:48px 0;">
+                <div class="empty-state">
                     <div style="font-size:48px;margin-bottom:16px;">💎</div>
                     <p style="color:var(--color-text-muted);margin-bottom:16px;">Khám phá truyện hay để mua bằng hạt</p>
                     <a href="<?php echo home_url('/danh-sach-truyen'); ?>" class="btn btn-primary">Khám phá truyện</a>
@@ -157,7 +157,7 @@ get_header();
             $rows = $data['rows'];
             ?>
             <?php if (empty($rows)): ?>
-                <div class="empty-state" style="text-align:center;padding:48px 0;">
+                <div class="empty-state">
                     <div style="font-size:48px;margin-bottom:16px;">🕐</div>
                     <p style="color:var(--color-text-muted);">Lịch sử đọc sẽ xuất hiện ở đây</p>
                 </div>
@@ -248,7 +248,7 @@ get_header();
 
             <h3 style="margin-bottom:12px;">Lịch sử giao dịch</h3>
             <?php if (empty($transactions)): ?>
-                <div class="empty-state" style="text-align:center;padding:48px 0;">
+                <div class="empty-state">
                     <div style="font-size:48px;margin-bottom:16px;">💎</div>
                     <p style="color:var(--color-text-muted);">Chưa có giao dịch nào</p>
                 </div>
@@ -292,7 +292,7 @@ get_header();
                 <?php endif; ?>
             </div>
             <?php if (empty($notifications)): ?>
-                <div class="empty-state" style="text-align:center;padding:48px 0;">
+                <div class="empty-state">
                     <div style="font-size:48px;margin-bottom:16px;">🔔</div>
                     <p style="color:var(--color-text-muted);">Chưa có thông báo nào</p>
                 </div>
