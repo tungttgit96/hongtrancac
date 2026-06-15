@@ -627,12 +627,21 @@ html[data-theme="dark"] select {
 }
 
 @media (max-width: 768px) {
+    .hero-banner {
+        padding: 12px 0 20px;
+    }
+    .hero-banner > .container {
+        padding-left: 6px;
+        padding-right: 6px;
+    }
     .hero-banner .banner-shell {
-        border-radius: 20px;
-        padding: 22px;
+        border-radius: 18px;
+        padding: 14px;
     }
     .hero-banner .banner-grid {
+        gap: 14px;
         grid-template-columns: 1fr;
+        min-height: 0;
     }
     .hero-banner .banner-info {
         order: 2;
@@ -641,31 +650,55 @@ html[data-theme="dark"] select {
     .hero-banner .banner-summary {
         margin-left: auto;
         margin-right: auto;
+        margin-bottom: 14px;
+        -webkit-line-clamp: 3;
     }
     .hero-banner .banner-actions {
         justify-content: center;
     }
     .hero-banner .banner-cover {
         justify-self: center;
-        max-width: 220px;
+        max-width: min(56vw, 220px);
         order: 0;
     }
+    .hero-banner .banner-cover-img {
+        max-height: 280px;
+    }
     .hero-banner .banner-cards {
+        display: flex;
+        gap: 10px;
+        margin: 0 -6px;
+        overflow-x: auto;
+        padding: 0 6px 4px;
+        scroll-snap-type: x proximity;
         order: 1;
-        grid-template-columns: repeat(3, minmax(0, 1fr));
+        -webkit-overflow-scrolling: touch;
+    }
+    .hero-banner .banner-card {
+        aspect-ratio: 3 / 4;
+        flex: 0 0 112px;
+        scroll-snap-align: start;
     }
     .hero-banner .banner-title {
         font-size: var(--font-size-xl) !important;
+        margin-bottom: 8px;
     }
 }
 
 @media (max-width: 375px) {
-    .hero-banner .banner-shell {
-        padding: 16px;
+    .hero-banner > .container {
+        padding-left: 4px;
+        padding-right: 4px;
     }
-    .hero-banner .banner-cards {
-        gap: 10px;
-        grid-template-columns: repeat(2, minmax(0, 1fr));
+    .hero-banner .banner-shell {
+        border-radius: 16px;
+        padding: 12px;
+    }
+    .hero-banner .banner-card {
+        flex-basis: 104px;
+    }
+    .hero-banner .banner-card-title {
+        font-size: var(--font-size-xs);
     }
 }
 
