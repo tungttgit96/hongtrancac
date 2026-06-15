@@ -60,6 +60,44 @@ class HDK_DB {
         ));
     }
 
+    public static function get_chapter_price($story, $chapter_number) {
+        global $wpdb;
+
+        $story_id = is_object($story) ? (int)$story->id : (int)$story;
+        $story_default = is_object($story) ? (int)($story->chapter_price ?? 0) : 0;
+
+        $chapter_price = $wpdb->get_var($wpdb->prepare(
+            "SELECT price FROM " . self::table('hdk_chapters') . " WHERE story_id = %d AND chapter_number = %d",
+            $story_id,
+            (int)$chapter_number
+        ));
+
+        $chapter_price = $chapter_price === null ? 0 : (int)$chapter_price;
+        return $chapter_price > 0 ? $chapter_price : $story_default;
+    }
+
+    public static function get_story_max_chapter_prices(array $story_ids) {
+        global $wpdb;
+
+        $story_ids = array_values(array_filter(array_map('intval', $story_ids)));
+        if (!$story_ids) {
+            return [];
+        }
+
+        $ids_list = implode(',', $story_ids);
+        $chapters_table = self::table('hdk_chapters');
+        $rows = $wpdb->get_results(
+            "SELECT story_id, MAX(price) AS max_price FROM $chapters_table WHERE story_id IN ($ids_list) GROUP BY story_id"
+        );
+
+        $prices = [];
+        foreach ($rows as $row) {
+            $prices[(int)$row->story_id] = (int)$row->max_price;
+        }
+
+        return $prices;
+    }
+
     public static function get_stories($args = []) {
         global $wpdb;
         $table = self::table('hdk_stories');
@@ -107,19 +145,14 @@ class HDK_DB {
             $story->chapter_count = (int)$story->total_chapters;
         }
 
-        // Bulk fetch max chapter prices for all stories in one query
         if (!empty($stories)) {
-            $story_ids = array_map(function($s) { return $s->id; }, $stories);
-            $ids_list = implode(',', array_map('intval', $story_ids));
-            $chap_table = self::table('hdk_chapters');
-            $prices = $wpdb->get_results(
-                "SELECT story_id, MAX(price) as max_price FROM $chap_table WHERE story_id IN ($ids_list) GROUP BY story_id"
-            );
-            $price_map = [];
-            foreach ($prices as $p) $price_map[$p->story_id] = (int)$p->max_price;
+            $price_map = self::get_story_max_chapter_prices(array_map(function($story) {
+                return (int)$story->id;
+            }, $stories));
+
             foreach ($stories as $story) {
-                if (empty($story->chapter_price) && isset($price_map[$story->id]) && $price_map[$story->id] > 0) {
-                    $story->chapter_price = $price_map[$story->id];
+                if (empty($story->chapter_price) && !empty($price_map[(int)$story->id])) {
+                    $story->chapter_price = $price_map[(int)$story->id];
                 }
             }
         }
@@ -170,24 +203,19 @@ class HDK_DB {
             $story->chapter_count = (int)$story->total_chapters;
         }
 
-        // Bulk fetch max chapter prices
         if (!empty($stories)) {
-            $story_ids = array_map(function($s) { return $s->id; }, $stories);
-            $ids_list = implode(',', array_map('intval', $story_ids));
-            $chap_table = self::table('hdk_chapters');
-            $prices = $wpdb->get_results(
-                "SELECT story_id, MAX(price) as max_price FROM $chap_table WHERE story_id IN ($ids_list) GROUP BY story_id"
-            );
-            $price_map = [];
-            foreach ($prices as $p) $price_map[$p->story_id] = (int)$p->max_price;
+            $price_map = self::get_story_max_chapter_prices(array_map(function($story) {
+                return (int)$story->id;
+            }, $stories));
+
             foreach ($stories as $story) {
-                if (empty($story->chapter_price) && isset($price_map[$story->id]) && $price_map[$story->id] > 0) {
-                    $story->chapter_price = $price_map[$story->id];
+                if (empty($story->chapter_price) && !empty($price_map[(int)$story->id])) {
+                    $story->chapter_price = $price_map[(int)$story->id];
                 }
             }
         }
 
-        return ['stories' => $stories, 'total' => (int)$total, 'pages' => (int)ceil($total / $per_page)];
+        return ['stories' => $stories, 'total' => (int)$total, 'pages' => (int)ceil($total / $args['per_page'])];
     }
 
     public static function log_view($story_id, $chapter_number = 0) {
