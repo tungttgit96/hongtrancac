@@ -240,8 +240,12 @@ a.btn-primary:focus-visible {
 }
 .card-meta { font-size: var(--font-size-xs); color: var(--color-text-muted); margin-top: 4px; }
 
-.grid { display: grid; gap: var(--grid-gap); }
-.grid-6 { grid-template-columns: repeat(6, 1fr); }
+.grid { display: grid; gap: var(--grid-gap); width: 100%; }
+.grid-6 {
+    gap: clamp(16px, 1.8vw, 28px);
+    grid-template-columns: repeat(6, minmax(0, 1fr));
+    justify-content: stretch;
+}
 .grid-4 { grid-template-columns: repeat(4, 1fr); }
 .grid-3 { grid-template-columns: repeat(3, 1fr); }
 .grid-2 { grid-template-columns: repeat(2, 1fr); }
