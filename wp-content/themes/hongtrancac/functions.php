@@ -38,3 +38,11 @@ add_action('wp_head', function() {
 
 // Include template parts
 require_once get_template_directory() . '/inc/template-functions.php';
+
+add_action('template_redirect', function() {
+    $path = trim(parse_url($_SERVER['REQUEST_URI'] ?? '', PHP_URL_PATH), '/');
+    if ($path === 'dang-ky') {
+        include get_template_directory() . '/page-dang-ky.php';
+        exit;
+    }
+}, 0);

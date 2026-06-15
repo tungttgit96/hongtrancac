@@ -29,7 +29,7 @@
             <a href="<?php echo home_url('/truyen-free'); ?>" class="btn btn-ghost btn-sm">Free</a>
         </nav>
 
-        <div style="display:flex;align-items:center;gap:8px;">
+        <div class="header-actions" style="display:flex;align-items:center;gap:8px;">
             <button type="button" class="btn btn-ghost btn-sm theme-toggle" id="theme-toggle" aria-label="Chuyển chế độ sáng/tối" aria-pressed="false" style="min-height:var(--touch-target);min-width:var(--touch-target);font-size:1.15rem;">☀</button>
             <button type="button" class="btn btn-ghost btn-sm search-toggle" aria-label="Tìm kiếm" style="min-height:var(--touch-target);min-width:var(--touch-target);">
                 🔍
@@ -82,7 +82,8 @@
                     </div>
                 </div>
             <?php else: ?>
-                <a href="<?php echo home_url('/dang-nhap'); ?>" class="btn btn-primary btn-sm">Đăng nhập</a>
+                <a href="<?php echo esc_url(hdk_login_url(home_url(add_query_arg([])))); ?>" class="btn btn-primary btn-sm auth-login-link">Đăng nhập</a>
+                <a href="<?php echo esc_url(hdk_register_url(home_url(add_query_arg([])))); ?>" class="btn btn-outline btn-sm auth-register-link">Đăng ký</a>
             <?php endif; ?>
             <button type="button" class="btn btn-ghost btn-sm mobile-menu-toggle" style="display:none;min-height:var(--touch-target);">
                 ☰
@@ -129,6 +130,10 @@
             <a href="<?php echo home_url('/the-loai'); ?>" class="btn btn-ghost">Thể loại</a>
             <a href="<?php echo home_url('/hoan-thanh'); ?>" class="btn btn-ghost">Hoàn thành</a>
             <a href="<?php echo home_url('/truyen-free'); ?>" class="btn btn-ghost">Truyện Free</a>
+            <?php if (!is_user_logged_in()): ?>
+                <a href="<?php echo esc_url(hdk_login_url(home_url(add_query_arg([])))); ?>" class="btn btn-primary">Đăng nhập</a>
+                <a href="<?php echo esc_url(hdk_register_url(home_url(add_query_arg([])))); ?>" class="btn btn-outline">Đăng ký</a>
+            <?php endif; ?>
         </nav>
     </div>
 </div>

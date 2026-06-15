@@ -20,7 +20,8 @@ function hdk_login_url($redirect_to = '') {
 }
 
 function hdk_register_url($redirect_to = '') {
-    return wp_registration_url();
+    $redirect_to = $redirect_to ?: home_url(add_query_arg([]));
+    return add_query_arg('redirect_to', $redirect_to, home_url('/dang-ky'));
 }
 
 function hdk_get_story_card($story, $index = 0) {

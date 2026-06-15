@@ -346,6 +346,14 @@ html[data-theme="dark"] select {
     -webkit-backdrop-filter: blur(8px);
     transition: background 0.3s, border-color 0.3s;
 }
+.header-actions {
+    flex: 0 0 auto;
+    min-width: 0;
+}
+.auth-login-link,
+.auth-register-link {
+    min-width: 86px;
+}
 
 /* ===== Theme Toggle ===== */
 .theme-toggle {
@@ -416,6 +424,9 @@ html[data-theme="dark"] select {
     padding: 28px 0 32px;
     transition: background 0.3s, color 0.3s;
 }
+.hero-banner > .container {
+    max-width: 1160px;
+}
 .hero-banner .banner-shell {
     background:
         var(--color-banner-shell-ambient),
@@ -423,9 +434,9 @@ html[data-theme="dark"] select {
     border: 1px solid var(--color-banner-shell-border);
     border-radius: 28px;
     box-shadow: var(--shadow-banner);
-    min-height: 520px;
+    min-height: 480px;
     overflow: hidden;
-    padding: 34px 40px;
+    padding: 30px 34px;
     position: relative;
     transition: background 0.3s, border-color 0.3s, box-shadow 0.3s;
 }
@@ -439,9 +450,9 @@ html[data-theme="dark"] select {
 .hero-banner .banner-grid {
     align-items: center;
     display: grid;
-    gap: 28px;
-    grid-template-columns: minmax(230px, 0.82fr) minmax(260px, 0.95fr) minmax(360px, 1.2fr);
-    min-height: 452px;
+    gap: 24px;
+    grid-template-columns: minmax(220px, 0.8fr) minmax(250px, 0.9fr) minmax(330px, 1.12fr);
+    min-height: 420px;
     position: relative;
     z-index: 1;
 }
@@ -497,15 +508,15 @@ html[data-theme="dark"] select {
     border-radius: 12px;
     box-shadow: var(--color-banner-cover-shadow);
     display: block;
-    max-height: 450px;
-    max-width: 330px;
+    max-height: 420px;
+    max-width: 310px;
     object-fit: cover;
     transition: opacity 0.4s ease;
     width: 100%;
 }
 .hero-banner .banner-cards {
     display: grid;
-    gap: 14px;
+    gap: 12px;
     grid-template-columns: repeat(3, minmax(0, 1fr));
     grid-template-rows: repeat(2, minmax(0, 1fr));
     min-width: 0;
