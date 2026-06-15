@@ -56,8 +56,9 @@ function hdk_get_hero_section() {
     $stories_table = HDK_DB::table('hdk_stories');
     $stories = [];
     $placeholder = get_template_directory_uri() . '/assets/img/placeholder.svg';
+    $has_manual_banner = !empty($saved_ids) && is_array($saved_ids);
 
-    if (!empty($saved_ids) && is_array($saved_ids)) {
+    if ($has_manual_banner) {
         $ids = array_values(array_filter(array_map('intval', $saved_ids), function($id) {
             return $id > 0;
         }));
@@ -80,19 +81,19 @@ function hdk_get_hero_section() {
         }
     }
 
-    if (count($stories) < 6) {
+    if (!$has_manual_banner && count($stories) < 6) {
         $existing_ids = array_map(function($story) {
             return (int)$story->id;
         }, $stories);
         $limit = 6 - count($stories);
-        $where = '';
+        $where = 'WHERE is_featured_hidden = 0 AND title <> \'\' AND LENGTH(title) >= 3';
 
         if (!empty($existing_ids)) {
-            $where = 'WHERE id NOT IN (' . implode(',', array_map('intval', $existing_ids)) . ')';
+            $where .= ' AND id NOT IN (' . implode(',', array_map('intval', $existing_ids)) . ')';
         }
 
         $fallback = $wpdb->get_results($wpdb->prepare(
-            "SELECT id, title, slug, cover_url, summary, total_views FROM $stories_table $where AND is_featured_hidden = 0 AND title <> '' AND LENGTH(title) >= 3 ORDER BY total_views DESC LIMIT %d",
+            "SELECT id, title, slug, cover_url, summary, total_views FROM $stories_table $where ORDER BY total_views DESC LIMIT %d",
             $limit
         ));
         $stories = array_merge($stories, $fallback);

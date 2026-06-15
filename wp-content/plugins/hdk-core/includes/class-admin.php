@@ -662,7 +662,7 @@ class HDK_Admin {
                     <tr>
                         <th><label for="is_featured_hidden">Ẩn khỏi đề cử</label></th>
                         <td><label><input type="checkbox" name="is_featured_hidden" id="is_featured_hidden" value="1" <?php checked(($story->is_featured_hidden ?? 0), 1); ?>> Ẩn khỏi trang chủ / đề cử</label>
-                            <p class="description">Truyện vẫn hiển thị qua link trực tiếp nhưng không xuất hiện ở banner, mới cập nhật, v.v.</p></td>
+                            <p class="description">Truyện vẫn hiển thị qua link trực tiếp. Tùy chọn này chỉ áp dụng cho các khu vực tự động; banner thủ công vẫn theo cấu hình banner.</p></td>
                     </tr>
                     <tr>
                         <th>Thu phí hạt</th>
