@@ -117,7 +117,7 @@ get_header();
         <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:8px;">
             <?php foreach ($chapters as $chap):
                 $locked = $has_pricing && $chap->chapter_number > $free_limit;
-                $chap_price = $chap->price > 0 ? (int)$chap->price : $chapter_def_price;
+                $chap_price = HDK_DB::get_chapter_price($story, $chap->chapter_number);
                 $purchased = $locked && $user_id ? HDK_Template_Loader::has_purchased_chapter($story->id, $chap->chapter_number) : false;
                 $icon = !$locked ? '🔓' : ($purchased ? '✅' : '🔒');
             ?>

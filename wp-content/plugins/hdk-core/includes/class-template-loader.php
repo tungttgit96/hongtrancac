@@ -144,12 +144,7 @@ class HDK_Template_Loader {
         $user_id = get_current_user_id();
         global $wpdb;
 
-        // Get chapter-level price if set, otherwise use story default
-        $chapter = $wpdb->get_row($wpdb->prepare(
-            "SELECT price FROM " . HDK_DB::table('hdk_chapters') . " WHERE story_id = %d AND chapter_number = %d",
-            $story->id, $chapter_number
-        ));
-        $chapter_price = $chapter && $chapter->price > 0 ? (int)$chapter->price : (int)($story->chapter_price ?? 0);
+        $chapter_price = HDK_DB::get_chapter_price($story, $chapter_number);
 
         // Free story or chapter is within free range
         if ($chapter_price <= 0 && $full_price <= 0) {
@@ -192,13 +187,7 @@ class HDK_Template_Loader {
     }
 
     public static function get_chapter_price($story, $chapter_number) {
-        global $wpdb;
-        $chapter = $wpdb->get_row($wpdb->prepare(
-            "SELECT price FROM " . HDK_DB::table('hdk_chapters') . " WHERE story_id = %d AND chapter_number = %d",
-            $story->id, $chapter_number
-        ));
-        if ($chapter && $chapter->price > 0) return (int)$chapter->price;
-        return (int)($story->chapter_price ?? 0);
+        return HDK_DB::get_chapter_price($story, $chapter_number);
     }
 
     public static function has_purchased_chapter($story_id, $chapter_number) {
