@@ -36,9 +36,9 @@ class HDK_Rewrite {
 
     public static function add_rules() {
         // Static routes handled by WordPress pages
-        // Story detail: /{storySlug}
+        // Story detail: /{storySlug} (exclude files with extensions like robots.txt, sitemap.xml)
         add_rewrite_rule(
-            '^([^/]+)/?$',
+            '^([^/\.]+)/?$',
             'index.php?hdk_story=$matches[1]',
             'top'
         );

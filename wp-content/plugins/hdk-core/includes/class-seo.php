@@ -4,6 +4,27 @@
  */
 
 class HDK_SEO {
+    public static function init() {
+        add_action('wp_head', [__CLASS__, 'head_meta']);
+        add_filter('document_title_parts', [__CLASS__, 'document_title_parts']);
+    }
+
+    public static function document_title_parts($parts) {
+        global $hdk_story, $hdk_chapter, $hdk_category, $hdk_author;
+
+        if ($hdk_story && $hdk_chapter) {
+            $parts['title'] = $hdk_story->title . ' - Chương ' . (int)$hdk_chapter->chapter_number;
+        } elseif ($hdk_story) {
+            $parts['title'] = $hdk_story->title;
+        } elseif ($hdk_category) {
+            $parts['title'] = 'Truyện ' . $hdk_category->name;
+        } elseif ($hdk_author) {
+            $parts['title'] = 'Tác giả ' . $hdk_author->name;
+        }
+
+        return $parts;
+    }
+
     public static function head_meta() {
         global $hdk_story, $hdk_chapter, $hdk_category, $hdk_author;
 

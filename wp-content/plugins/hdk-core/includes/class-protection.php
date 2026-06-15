@@ -79,11 +79,16 @@ class HDK_Protection {
 
     // Security headers
     public static function security_headers() {
+        $uri = $_SERVER['REQUEST_URI'] ?? '';
+        if (str_starts_with($uri, '/sitemap') || str_starts_with($uri, '/robots.txt')) {
+            return;
+        }
+
         header('X-Content-Type-Options: nosniff');
         header('X-Frame-Options: SAMEORIGIN');
-        header('X-Robots-Tag: noarchive, nocache');
         header('Referrer-Policy: strict-origin-when-cross-origin');
-        if (is_singular() || self::is_chapter_page()) {
+        if (self::is_chapter_page()) {
+            header('X-Robots-Tag: noarchive, nocache');
             header('Cache-Control: no-store, must-revalidate');
         }
     }

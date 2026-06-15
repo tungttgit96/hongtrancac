@@ -48,7 +48,7 @@ add_action('rest_api_init', ['HDK_REST_API', 'init']);
 add_action('admin_menu', ['HDK_Admin', 'init']);
 add_action('init', ['HDK_Sitemap', 'init']);
 add_action('template_redirect', ['HDK_Template_Loader', 'init']);
-add_action('wp_head', ['HDK_SEO', 'head_meta']);
+HDK_SEO::init();
 
 // Cache invalidation on story update
 add_action('hdk_story_updated', ['HDK_Cache', 'invalidate_story']);
