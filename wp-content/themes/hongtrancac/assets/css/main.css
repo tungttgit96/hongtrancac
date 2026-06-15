@@ -242,9 +242,11 @@ a.btn-primary:focus-visible {
 
 .grid { display: grid; gap: var(--grid-gap); width: 100%; }
 .grid-6 {
-    gap: clamp(16px, 1.8vw, 28px);
     grid-template-columns: repeat(6, minmax(0, 1fr));
     justify-content: stretch;
+    margin-left: -16px;
+    margin-right: -16px;
+    width: calc(100% + 32px);
 }
 .grid-4 { grid-template-columns: repeat(4, 1fr); }
 .grid-3 { grid-template-columns: repeat(3, 1fr); }
@@ -260,6 +262,11 @@ a.btn-primary:focus-visible {
 }
 @media (max-width: 375px) {
     .grid-6, .grid-4, .grid-3, .grid-2 { grid-template-columns: 1fr; }
+    .grid-6 {
+        margin-left: -12px;
+        margin-right: -12px;
+        width: calc(100% + 24px);
+    }
 }
 
 .badge {
