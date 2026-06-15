@@ -20,9 +20,6 @@ $completed_stories = HDK_Cache::get_home_stories(['per_page' => 12, 'status' => 
 // Get free stories
 $free_stories = HDK_Cache::get_home_stories(['per_page' => 12, 'is_free' => 1, 'orderby' => 'total_views', 'order' => 'DESC', 'exclude_hidden' => true], 'home_free');
 
-// Get categories
-global $wpdb;
-$categories = $wpdb->get_results("SELECT * FROM " . HDK_DB::table('hdk_categories') . " ORDER BY sort_order");
 ?>
 
 <?php hdk_get_hero_section(); ?>
@@ -52,24 +49,6 @@ $categories = $wpdb->get_results("SELECT * FROM " . HDK_DB::table('hdk_categorie
         <div class="grid grid-6 home-story-grid">
             <?php foreach ($hot_stories['stories'] as $i => $story): ?>
                 <?php hdk_get_story_card($story, $i); ?>
-            <?php endforeach; ?>
-        </div>
-    </div>
-</section>
-
-<!-- Categories -->
-<section class="section">
-    <div class="container">
-        <div class="section-header">
-            <h2 class="section-title">📂 Thể loại</h2>
-            <a href="/the-loai" class="btn btn-outline btn-sm">Tất cả thể loại</a>
-        </div>
-        <div style="display:flex;flex-wrap:wrap;gap:8px;">
-            <?php foreach ($categories as $cat): ?>
-                <a href="/the-loai/<?php echo $cat->slug; ?>" class="badge badge-primary" style="text-decoration:none;padding:8px 16px;font-size:var(--font-size-sm);">
-                    <?php echo esc_html($cat->name); ?>
-                    <span style="opacity:0.7;">(<?php echo $cat->story_count; ?>)</span>
-                </a>
             <?php endforeach; ?>
         </div>
     </div>
