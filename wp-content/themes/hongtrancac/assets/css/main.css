@@ -430,9 +430,9 @@ html[data-theme="dark"] select {
     transition: background 0.3s, color 0.3s;
 }
 .hero-banner > .container {
-    max-width: min(100%, 1180px);
-    padding-left: 20px;
-    padding-right: 20px;
+    max-width: none;
+    padding-left: 8px;
+    padding-right: 8px;
 }
 .hero-banner .banner-shell {
     background:
@@ -443,7 +443,7 @@ html[data-theme="dark"] select {
     box-shadow: var(--shadow-banner);
     min-height: 480px;
     overflow: hidden;
-    padding: 30px clamp(28px, 3vw, 44px);
+    padding: 18px clamp(12px, 1.5vw, 22px);
     position: relative;
     transition: background 0.3s, border-color 0.3s, box-shadow 0.3s;
 }
