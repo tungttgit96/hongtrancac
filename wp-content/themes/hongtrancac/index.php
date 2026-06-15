@@ -34,7 +34,7 @@ $categories = $wpdb->get_results("SELECT * FROM " . HDK_DB::table('hdk_categorie
             <h2 class="section-title">🆕 Truyện mới cập nhật</h2>
             <a href="/danh-sach-truyen" class="btn btn-outline btn-sm">Xem tất cả</a>
         </div>
-        <div class="grid grid-6">
+        <div class="grid grid-6 home-story-grid">
             <?php foreach ($new_stories['stories'] as $i => $story): ?>
                 <?php hdk_get_story_card($story, $i); ?>
             <?php endforeach; ?>
@@ -49,7 +49,7 @@ $categories = $wpdb->get_results("SELECT * FROM " . HDK_DB::table('hdk_categorie
             <h2 class="section-title">🔥 Truyện hot nhất</h2>
             <a href="/bang-xep-hang" class="btn btn-outline btn-sm">Bảng xếp hạng</a>
         </div>
-        <div class="grid grid-6">
+        <div class="grid grid-6 home-story-grid">
             <?php foreach ($hot_stories['stories'] as $i => $story): ?>
                 <?php hdk_get_story_card($story, $i); ?>
             <?php endforeach; ?>
@@ -82,7 +82,7 @@ $categories = $wpdb->get_results("SELECT * FROM " . HDK_DB::table('hdk_categorie
             <h2 class="section-title">✅ Truyện hoàn thành</h2>
             <a href="/hoan-thanh" class="btn btn-outline btn-sm">Xem tất cả</a>
         </div>
-        <div class="grid grid-6">
+        <div class="grid grid-6 home-story-grid">
             <?php foreach ($completed_stories['stories'] as $i => $story): ?>
                 <?php hdk_get_story_card($story, $i); ?>
             <?php endforeach; ?>
@@ -97,7 +97,7 @@ $categories = $wpdb->get_results("SELECT * FROM " . HDK_DB::table('hdk_categorie
             <h2 class="section-title">🎁 Truyện miễn phí</h2>
             <a href="/truyen-free" class="btn btn-outline btn-sm">Xem tất cả</a>
         </div>
-        <div class="grid grid-6">
+        <div class="grid grid-6 home-story-grid">
             <?php foreach ($free_stories['stories'] as $i => $story): ?>
                 <?php hdk_get_story_card($story, $i); ?>
             <?php endforeach; ?>
@@ -114,7 +114,7 @@ if (!empty($editor_picks['stories'])): ?>
         <div class="section-header">
             <h2 class="section-title">⭐ Đề cử biên tập</h2>
         </div>
-        <div class="grid grid-6">
+        <div class="grid grid-6 home-story-grid">
             <?php foreach ($editor_picks['stories'] as $i => $story): ?>
                 <?php hdk_get_story_card($story, $i); ?>
             <?php endforeach; ?>
@@ -133,7 +133,7 @@ if (!empty($weekly_hot['stories'])): ?>
             <h2 class="section-title">🔥 Hot tuần này</h2>
             <a href="/bang-xep-hang" class="btn btn-outline btn-sm">Xem thêm →</a>
         </div>
-        <div class="grid grid-6">
+        <div class="grid grid-6 home-story-grid">
             <?php foreach ($weekly_hot['stories'] as $i => $story): ?>
                 <?php hdk_get_story_card($story, $i); ?>
             <?php endforeach; ?>
