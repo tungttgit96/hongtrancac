@@ -696,6 +696,27 @@ class HDK_DB {
         return $wpdb->insert_id;
     }
 
+    public static function notify_favoriting_users($story_id, $chapter_number, $chapter_title, $story_title, $story_slug) {
+        global $wpdb;
+        $fav_table = self::table('hdk_favorites');
+        $user_ids = $wpdb->get_col($wpdb->prepare(
+            "SELECT user_id FROM $fav_table WHERE story_id = %d",
+            $story_id
+        ));
+
+        if (empty($user_ids)) {
+            return;
+        }
+
+        $link = home_url('/' . $story_slug . '?chuong=' . $chapter_number);
+        $title = 'Chương mới: ' . $story_title;
+        $message = $chapter_title . ' đã ra mắt. Đọc ngay!';
+
+        foreach ($user_ids as $user_id) {
+            self::create_notification((int)$user_id, 'new_chapter', $title, $message, $link);
+        }
+    }
+
     public static function get_notifications($user_id, $page = 1, $per_page = 20) {
         global $wpdb;
         $table = self::table('hdk_notifications');
