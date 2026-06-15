@@ -7,8 +7,21 @@
 }
 
 #cover_preview {
-    max-width: 200px;
-    margin-top: 8px;
+    aspect-ratio: 2 / 3;
+    background: #f6f7f7;
+    border: 1px solid #dcdcde;
+    border-radius: 8px;
+    display: block;
+    margin-top: 10px;
+    object-fit: cover;
+    object-position: center;
+    width: 160px;
+}
+
+.hdk-cover-hint {
+    color: #646970;
+    font-size: 12px;
+    margin: 6px 0 0;
 }
 
 /* Upload compression notices inside media modal */

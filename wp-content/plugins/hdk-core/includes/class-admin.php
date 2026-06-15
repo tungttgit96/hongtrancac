@@ -644,10 +644,11 @@ class HDK_Admin {
                                 <input type="text" name="cover_url" id="cover_url" class="regular-text" value="<?php echo esc_attr($story->cover_url ?? ''); ?>" placeholder="URL ảnh bìa">
                                 <button type="button" class="button hdk-upload-btn" data-target="cover_url">Chọn ảnh</button>
                             </div>
+                            <p class="hdk-cover-hint">Khung bìa tự fit theo tỉ lệ 2:3. Ảnh ngang hoặc quá cao sẽ được crop giữa khung khi hiển thị.</p>
                             <?php if (!empty($story->cover_url)): ?>
-                                <img src="<?php echo esc_url($story->cover_url); ?>" style="max-width:120px;margin-top:8px;border-radius:4px;" id="cover_preview">
+                                <img src="<?php echo esc_url($story->cover_url); ?>" id="cover_preview" alt="Xem trước ảnh bìa">
                             <?php else: ?>
-                                <img src="" style="max-width:120px;margin-top:8px;border-radius:4px;display:none;" id="cover_preview">
+                                <img src="" id="cover_preview" alt="Xem trước ảnh bìa" style="display:none;">
                             <?php endif; ?>
                         </td>
                     </tr>
@@ -696,8 +697,15 @@ class HDK_Admin {
                 var frame = wp.media({title:'Chọn ảnh bìa', button:{text:'Chọn ảnh'}, multiple:false});
                 frame.on('select', function(){
                     var attachment = frame.state().get('selection').first().toJSON();
-                    $('#'+target).val(attachment.url);
-                    $('#cover_preview').attr('src', attachment.url).show();
+                    var imageUrl = attachment.url;
+                    if (attachment.sizes) {
+                        imageUrl = (attachment.sizes.large && attachment.sizes.large.url) ||
+                            (attachment.sizes.medium_large && attachment.sizes.medium_large.url) ||
+                            (attachment.sizes.full && attachment.sizes.full.url) ||
+                            imageUrl;
+                    }
+                    $('#'+target).val(imageUrl);
+                    $('#cover_preview').attr('src', imageUrl).show();
                 });
                 frame.open();
             });

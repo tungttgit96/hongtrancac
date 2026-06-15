@@ -235,7 +235,7 @@ function hdk_design_tokens_css() {
             transition: box-shadow 0.2s, transform 0.2s, background 0.3s, border-color 0.3s;
         }
         .card:hover { box-shadow: var(--shadow-md); transform: translateY(-2px); }
-        .card-img { width: 100%; aspect-ratio: 3/4; object-fit: cover; display: block; }
+        .card-img { width: 100%; aspect-ratio: 2/3; object-fit: cover; object-position: center; display: block; }
         .card-body { padding: 12px; }
         .card-title {
             font-size: var(--font-size-sm); font-weight: 600;

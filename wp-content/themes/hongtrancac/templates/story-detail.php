@@ -51,7 +51,7 @@ get_header();
     <div class="story-header" style="display:flex;gap:24px;flex-wrap:wrap;">
         <div style="flex:0 0 200px;">
             <img src="<?php echo esc_url($story->cover_url); ?>" alt="<?php echo esc_attr($story->title); ?>"
-                 style="width:100%;border-radius:var(--radius-md);box-shadow:var(--shadow-lg);aspect-ratio:3/4;object-fit:cover;">
+                 style="width:100%;border-radius:var(--radius-md);box-shadow:var(--shadow-lg);aspect-ratio:2/3;object-fit:cover;object-position:center;">
         </div>
         <div style="flex:1;min-width:280px;">
             <h1 style="font-size:var(--font-size-2xl);font-weight:700;margin-bottom:8px;"><?php echo esc_html($story->title); ?></h1>

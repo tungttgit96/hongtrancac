@@ -192,7 +192,14 @@ body {
     background: var(--color-bg-secondary);
     line-height: 1.6;
     -webkit-font-smoothing: antialiased;
+    padding-top: var(--header-height);
     transition: background 0.3s, color 0.3s;
+}
+body.wp-theme-hongtrancac {
+    padding-top: var(--header-height);
+}
+:target {
+    scroll-margin-top: calc(var(--header-height) + 16px);
 }
 a { color: var(--color-primary); text-decoration: none; transition: color 0.2s; }
 a:hover { color: var(--color-primary-hover); }
@@ -230,7 +237,7 @@ a.btn-primary:focus-visible {
     transition: box-shadow 0.2s, transform 0.2s, background 0.3s, border-color 0.3s;
 }
 .card:hover { box-shadow: var(--shadow-md); transform: translateY(-2px); }
-.card-img { width: 100%; aspect-ratio: 3/4; object-fit: cover; display: block; }
+.card-img { width: 100%; aspect-ratio: 2/3; object-fit: cover; object-position: center; display: block; }
 .card-body { padding: 12px; }
 .card-title {
     font-size: var(--font-size-sm); font-weight: 600;
@@ -374,7 +381,16 @@ html[data-theme="dark"] select {
 .site-header {
     backdrop-filter: blur(8px);
     -webkit-backdrop-filter: blur(8px);
-    transition: background 0.3s, border-color 0.3s;
+    box-shadow: 0 8px 24px rgba(15, 23, 42, 0.06);
+    left: 0;
+    position: fixed;
+    right: 0;
+    top: 0;
+    transition: background 0.3s, border-color 0.3s, box-shadow 0.3s;
+    z-index: 1000;
+}
+body.admin-bar .site-header {
+    top: 32px;
 }
 .site-logo {
     min-width: 0;
@@ -538,16 +554,19 @@ html[data-theme="dark"] select {
     display: flex;
     justify-content: center;
     min-width: 0;
+    width: 100%;
 }
 .hero-banner .banner-cover-img {
-    aspect-ratio: 3 / 4;
+    aspect-ratio: 2 / 3;
     border: 1px solid var(--color-banner-cover-border);
     border-radius: 12px;
     box-shadow: var(--color-banner-cover-shadow);
     display: block;
-    max-height: 420px;
-    max-width: 310px;
+    height: auto;
+    max-height: 460px;
+    max-width: 340px;
     object-fit: cover;
+    object-position: center;
     transition: opacity 0.4s ease;
     width: 100%;
 }
@@ -560,7 +579,7 @@ html[data-theme="dark"] select {
 }
 .hero-banner .banner-card {
     appearance: none;
-    aspect-ratio: 3 / 4;
+    aspect-ratio: 2 / 3;
     background: var(--color-banner-card-bg);
     border: 2px solid transparent;
     border-radius: 12px;
@@ -687,11 +706,11 @@ html[data-theme="dark"] select {
     }
     .hero-banner .banner-cover {
         justify-self: center;
-        max-width: min(56vw, 220px);
+        max-width: min(68vw, 260px);
         order: 0;
     }
     .hero-banner .banner-cover-img {
-        max-height: 280px;
+        max-height: 390px;
     }
     .hero-banner .banner-cards {
         display: flex;
@@ -704,8 +723,8 @@ html[data-theme="dark"] select {
         -webkit-overflow-scrolling: touch;
     }
     .hero-banner .banner-card {
-        aspect-ratio: 3 / 4;
-        flex: 0 0 112px;
+        aspect-ratio: 2 / 3;
+        flex: 0 0 124px;
         scroll-snap-align: start;
     }
     .hero-banner .banner-title {
@@ -793,6 +812,9 @@ article p:last-child {
     }
     .site-header .container {
         gap: 6px !important;
+    }
+    body.admin-bar .site-header {
+        top: 46px;
     }
     .main-nav {
         display: none !important;
