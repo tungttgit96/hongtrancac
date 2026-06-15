@@ -92,7 +92,7 @@ function hdk_get_hero_section() {
         }
 
         $fallback = $wpdb->get_results($wpdb->prepare(
-            "SELECT id, title, slug, cover_url, summary, total_views FROM $stories_table $where ORDER BY total_views DESC LIMIT %d",
+            "SELECT id, title, slug, cover_url, summary, total_views FROM $stories_table $where AND is_featured_hidden = 0 AND title <> '' AND LENGTH(title) >= 3 ORDER BY total_views DESC LIMIT %d",
             $limit
         ));
         $stories = array_merge($stories, $fallback);

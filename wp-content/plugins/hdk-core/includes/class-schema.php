@@ -63,6 +63,7 @@ class HDK_Schema {
             summary TEXT,
             status ENUM('ongoing','completed','dropped') DEFAULT 'ongoing',
             is_free TINYINT(1) DEFAULT 0,
+            is_featured_hidden TINYINT(1) DEFAULT 0,
             total_chapters INT UNSIGNED DEFAULT 0,
             free_chapters INT UNSIGNED DEFAULT 0,
             chapter_price INT UNSIGNED DEFAULT 0,
@@ -286,6 +287,7 @@ class HDK_Schema {
         }
 
         // Migration: add pricing columns to existing stories table
+        self::add_column_if_not_exists("{$wpdb->prefix}hdk_stories", 'is_featured_hidden', "TINYINT(1) DEFAULT 0 AFTER is_free");
         self::add_column_if_not_exists("{$wpdb->prefix}hdk_stories", 'free_chapters', "INT UNSIGNED DEFAULT 0 AFTER total_chapters");
         self::add_column_if_not_exists("{$wpdb->prefix}hdk_stories", 'chapter_price', "INT UNSIGNED DEFAULT 0 AFTER free_chapters");
         self::add_column_if_not_exists("{$wpdb->prefix}hdk_stories", 'full_price', "INT UNSIGNED DEFAULT 0 AFTER chapter_price");
@@ -298,7 +300,7 @@ class HDK_Schema {
     }
 
     public static function maybe_upgrade() {
-        $target_version = '2026.06.15.1';
+        $target_version = '2026.06.15.2';
         $current_version = get_option('hdk_schema_version', '0');
 
         if (version_compare($current_version, $target_version, '>=')) {

@@ -223,6 +223,7 @@ class HDK_Admin {
             'summary' => wp_kses_post($data['summary'] ?? ''),
             'status' => in_array($data['status'] ?? '', ['ongoing','completed','dropped']) ? $data['status'] : 'ongoing',
             'is_free' => isset($data['is_free']) ? 1 : 0,
+            'is_featured_hidden' => isset($data['is_featured_hidden']) ? 1 : 0,
             'free_chapters' => (int)($data['free_chapters'] ?? 0),
             'chapter_price' => (int)($data['chapter_price'] ?? 0),
             'full_price' => (int)($data['full_price'] ?? 0),
@@ -657,6 +658,11 @@ class HDK_Admin {
                         <th><label for="is_free">Miễn phí</label></th>
                         <td><label><input type="checkbox" name="is_free" id="is_free" value="1" <?php checked(($story->is_free ?? 0), 1); ?>> Truyện miễn phí</label>
                             <p class="description">Bỏ chọn để set giá bên dưới.</p></td>
+                    </tr>
+                    <tr>
+                        <th><label for="is_featured_hidden">Ẩn khỏi đề cử</label></th>
+                        <td><label><input type="checkbox" name="is_featured_hidden" id="is_featured_hidden" value="1" <?php checked(($story->is_featured_hidden ?? 0), 1); ?>> Ẩn khỏi trang chủ / đề cử</label>
+                            <p class="description">Truyện vẫn hiển thị qua link trực tiếp nhưng không xuất hiện ở banner, mới cập nhật, v.v.</p></td>
                     </tr>
                     <tr>
                         <th>Thu phí hạt</th>

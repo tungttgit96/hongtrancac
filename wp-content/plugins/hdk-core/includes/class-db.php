@@ -111,10 +111,13 @@ class HDK_DB {
             'search' => '',
             'orderby' => 'updated_at',
             'order' => 'DESC',
+            'exclude_hidden' => false,
         ];
         $args = wp_parse_args($args, $defaults);
 
-        $where = ["1=1"];
+        $where = ["1=1", "s.title <> ''", "LENGTH(s.title) >= 3"];
+        if ($args['exclude_hidden']) $where[] = "s.is_featured_hidden = 0";
+        if ($args['status']) $where[] = $wpdb->prepare("s.status = %s", $args['status']);
         if ($args['status']) $where[] = $wpdb->prepare("s.status = %s", $args['status']);
         if ($args['category_id']) {
             $where[] = $wpdb->prepare("s.id IN (SELECT story_id FROM " . self::table('hdk_story_categories') . " WHERE category_id = %d)", $args['category_id']);
@@ -160,16 +163,19 @@ class HDK_DB {
         return ['stories' => $stories, 'total' => (int)$total, 'pages' => (int)ceil($total / $args['per_page'])];
     }
 
-    public static function get_ranking($metric = 'views', $period = 'all', $category_id = 0, $page = 1, $per_page = 20) {
+    public static function get_ranking($metric = 'views', $period = 'all', $category_id = 0, $page = 1, $per_page = 20, $exclude_hidden = false) {
         global $wpdb;
         $stories_table = self::table('hdk_stories');
         $stats_table = self::table('hdk_daily_story_stats');
 
+        $base_where = "s.title <> '' AND LENGTH(s.title) >= 3";
+        if ($exclude_hidden) $base_where .= " AND s.is_featured_hidden = 0";
+
         if ($period === 'all') {
             $order = $metric === 'favorites' ? 's.total_favorites' : ($metric === 'ratings' ? 's.average_rating' : 's.total_views');
-            $where = '1=1';
+            $where = $base_where;
             if ($category_id) {
-                $where = $wpdb->prepare("s.id IN (SELECT story_id FROM " . self::table('hdk_story_categories') . " WHERE category_id = %d)", $category_id);
+                $where .= $wpdb->prepare(" AND s.id IN (SELECT story_id FROM " . self::table('hdk_story_categories') . " WHERE category_id = %d)", $category_id);
             }
             $offset = ($page - 1) * $per_page;
             $total = $wpdb->get_var("SELECT COUNT(*) FROM $stories_table s WHERE $where");
@@ -183,7 +189,7 @@ class HDK_DB {
             $days_ago = $days[$period] ?? 7;
             $stat_col = $metric === 'favorites' ? 'daily_favorites' : ($metric === 'ratings' ? 'daily_ratings' : 'daily_views');
 
-            $where = $wpdb->prepare("ds.stat_date >= DATE_SUB(CURDATE(), INTERVAL %d DAY)", $days_ago);
+            $where = $base_where . $wpdb->prepare(" AND ds.stat_date >= DATE_SUB(CURDATE(), INTERVAL %d DAY)", $days_ago);
             if ($category_id) {
                 $where .= $wpdb->prepare(" AND s.id IN (SELECT story_id FROM " . self::table('hdk_story_categories') . " WHERE category_id = %d)", $category_id);
             }
