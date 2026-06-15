@@ -4,7 +4,7 @@
  */
 
 if (!is_user_logged_in()) {
-    wp_redirect(wp_login_url(home_url('/tai-khoan')));
+    wp_redirect(home_url('/dang-nhap?redirect_to=' . rawurlencode(home_url('/tai-khoan'))));
     exit;
 }
 

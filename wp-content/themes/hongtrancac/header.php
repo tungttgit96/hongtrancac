@@ -82,7 +82,7 @@
                     </div>
                 </div>
             <?php else: ?>
-                <a href="<?php echo wp_login_url(); ?>" class="btn btn-primary btn-sm">Đăng nhập</a>
+                <a href="<?php echo home_url('/dang-nhap'); ?>" class="btn btn-primary btn-sm">Đăng nhập</a>
             <?php endif; ?>
             <button type="button" class="btn btn-ghost btn-sm mobile-menu-toggle" style="display:none;min-height:var(--touch-target);">
                 ☰
