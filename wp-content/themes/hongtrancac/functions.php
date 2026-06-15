@@ -20,10 +20,15 @@ add_action('after_setup_theme', 'hdk_theme_setup');
 
 // Enqueue assets
 function hdk_enqueue_assets() {
+    $theme_dir = get_template_directory();
+    $theme_uri = get_template_directory_uri();
+    $css_version = filemtime($theme_dir . '/assets/css/main.css') ?: wp_get_theme()->get('Version');
+    $js_version = filemtime($theme_dir . '/assets/js/main.js') ?: wp_get_theme()->get('Version');
+
     wp_enqueue_style('hdk-font', 'https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@400;500;600;700&display=swap', [], null);
-    wp_enqueue_style('hdk-main', get_template_directory_uri() . '/assets/css/main.css', [], wp_get_theme()->get('Version'));
+    wp_enqueue_style('hdk-main', $theme_uri . '/assets/css/main.css', [], $css_version);
     wp_enqueue_script('alpinejs', 'https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js', [], '3', ['strategy' => 'defer']);
-    wp_enqueue_script('hdk-main', get_template_directory_uri() . '/assets/js/main.js', ['alpinejs'], wp_get_theme()->get('Version'), true);
+    wp_enqueue_script('hdk-main', $theme_uri . '/assets/js/main.js', ['alpinejs'], $js_version, true);
     wp_localize_script('hdk-main', 'hdkApi', [
         'nonce' => wp_create_nonce('wp_rest'),
         'loginUrl' => function_exists('hdk_login_url') ? hdk_login_url(home_url(add_query_arg([]))) : wp_login_url(home_url(add_query_arg([]))),
