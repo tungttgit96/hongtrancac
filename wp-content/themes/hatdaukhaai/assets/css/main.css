@@ -513,6 +513,42 @@ article p:last-child {
     word-wrap: break-word;
 }
 
+.chapter-content img,
+#chapter-content img {
+    display: block;
+    height: auto;
+    max-width: 100%;
+    object-fit: contain;
+    margin: 16px auto;
+}
+
+.chapter-content figure,
+#chapter-content figure {
+    margin: 18px auto;
+    max-width: 100%;
+}
+
+.chapter-content figure img,
+#chapter-content figure img {
+    margin: 0 auto;
+}
+
+.chapter-content iframe,
+.chapter-content video,
+#chapter-content iframe,
+#chapter-content video {
+    display: block;
+    max-width: 100%;
+    margin: 16px auto;
+}
+
+.chapter-content table,
+#chapter-content table {
+    display: block;
+    max-width: 100%;
+    overflow-x: auto;
+}
+
 /* ===== Reader Themes ===== */
 .reader-theme-dark #chapter-content {
     background: #1a1a1a !important;
@@ -589,6 +625,11 @@ article p:last-child {
         bottom: 60px;
         width: 42px;
         height: 42px;
+    }
+
+    .chapter-content,
+    #chapter-content {
+        padding: 18px !important;
     }
 }
 

@@ -114,7 +114,7 @@ get_header();
         <div style="background:var(--color-bg);border-radius:var(--radius-lg);padding:24px;max-width:420px;width:90%;">
             <h3 style="margin:0 0 16px;">Báo lỗi chương</h3>
             <form id="report-form" onsubmit="submitReport(event)" style="display:flex;flex-direction:column;gap:12px;">
-                <input type="hidden" id="report-story-id" value="<?php echo (int)$story_id; ?>">
+                <input type="hidden" id="report-story-id" value="<?php echo (int)$story->id; ?>">
                 <input type="hidden" id="report-chapter" value="<?php echo (int)$chapter->chapter_number; ?>">
                 <select id="report-type" required style="padding:8px;border:1px solid var(--color-border);border-radius:4px;background:var(--color-bg);color:var(--color-text-primary);">
                     <option value="">Chọn loại lỗi</option>
@@ -154,7 +154,7 @@ get_header();
     </div>
 
     <!-- Chapter Content (JS-decoded to prevent scraping) -->
-    <article style="background:var(--color-bg);border-radius:var(--radius-md);padding:24px;border:1px solid var(--color-border);line-height:2;font-size:var(--font-size-lg);min-height:60vh;" id="chapter-content" data-story-id="<?php echo (int)$story->id; ?>" data-chapter-number="<?php echo (int)$chapter->chapter_number; ?>">
+    <article class="chapter-content" style="background:var(--color-bg);border-radius:var(--radius-md);padding:24px;border:1px solid var(--color-border);line-height:2;font-size:var(--font-size-lg);min-height:60vh;" id="chapter-content" data-story-id="<?php echo (int)$story->id; ?>" data-chapter-number="<?php echo (int)$chapter->chapter_number; ?>">
         <div id="content-loading" aria-live="polite" style="text-align:center;padding:40px;color:var(--color-text-muted);">Đang tải nội dung…</div>
     </article>
 
