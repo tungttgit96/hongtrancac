@@ -25,6 +25,7 @@ Nền tảng đọc truyện chữ online xây dựng trên **WordPress** + cust
 
 ### Người dùng
 - 👤 Trang tài khoản độc giả (`/tai-khoan`): tủ truyện, đang đọc, đã mua, lịch sử đọc
+- 🔐 Trang đăng nhập có theme (`/dang-nhap`) thay vì `wp-login.php` gốc
 - ❤️ Yêu thích, đánh giá sao, bình luận
 - 🔔 Thông báo (chương mới, trả lời bình luận, mua thành công)
 - 📖 Auto-save tiến độ đọc
@@ -44,12 +45,18 @@ Nền tảng đọc truyện chữ online xây dựng trên **WordPress** + cust
 - 🚩 Xử lý báo lỗi chương từ người dùng
 - 📊 Thống kê vận hành (views, top truyện, biểu đồ 7 ngày)
 - 🎨 Cấu hình banner trang chủ
+- 👁️ Cờ "Ẩn khỏi trang chủ / đề cử" cho từng truyện
 
 ### SEO & Bảo mật
-- 🔍 SEO: canonical URL, Open Graph, Twitter Cards, JSON-LD (BreadcrumbList, Book, Article), XML Sitemap
-- 🛡 Nonce cho REST API (purchase, daily-claim)
+- 🔍 SEO: title, canonical URL, Open Graph, Twitter Cards, JSON-LD (BreadcrumbList, Book, Article), XML Sitemap
+- 🛡 Nonce cho mọi REST API write endpoint (favorite, rating, comment, purchase, daily-claim, reader prefs, v.v.)
 - 🌙 Dark mode (theme built-in + darkify plugin)
 - 📱 Responsive (375px - 1440px)
+
+### Hiệu năng & Vận hành
+- ⚡ CSS design tokens nằm trong `main.css` thay vì inline `<head>`
+- 🗄️ Cache transient cho các section trang chủ (banner fallback, mới cập nhật, hot, đề cử, hot tuần)
+- ✅ Smoke checks trong `docs/review/website-smoke-checks.md`
 
 ---
 
@@ -116,16 +123,20 @@ wp post create --post_type=page --post_title="Hoàn Thành" --post_name="hoan-th
 wp post create --post_type=page --post_title="Truyện Free" --post_name="truyen-free" --post_status=publish
 wp post create --post_type=page --post_title="Thể Loại" --post_name="the-loai" --post_status=publish
 wp post create --post_type=page --post_title="Tin Tức" --post_name="tin-tuc" --post_status=publish
+wp post create --post_type=page --post_title="Đăng Nhập" --post_name="dang-nhap" --post_status=publish
 
-# 10. Permalink + rewrite
+# 10. Set login page template
+wp post update $(wp post list --post_type=page --post_name="dang-nhap" --field=ID) --page_template='page-dang-nhap.php'
+
+# 12. Permalink + rewrite
 wp rewrite structure '/%postname%/'
 wp rewrite flush
 
-# 11. Link với Herd
+# 13. Link với Herd
 herd link ~/Herd/hongtrancac
 herd secure hongtrancac
 
-# 12. Seed demo data (optional)
+# 14. Seed demo data (optional)
 wp hdk seed
 ```
 
@@ -275,6 +286,7 @@ wp hdk create_account_page    # Tạo trang /tai-khoan nếu chưa có
 | `/truyen-free` | Truyện miễn phí |
 | `/tin-tuc` | Tin tức (WP posts) |
 | `/tai-khoan` | Trang tài khoản độc giả (tủ truyện, ví hạt, thông báo...) |
+| `/dang-nhap` | Trang đăng nhập có theme |
 | `/{story-slug}` | Chi tiết truyện + danh sách chương |
 | `/{story-slug}?chuong={n}` | Đọc chương |
 | `/sitemap.xml` | XML Sitemap |
