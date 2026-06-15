@@ -39,6 +39,9 @@ HDK_Media_Compress::init();
 register_activation_hook(__FILE__, ['HDK_Activator', 'activate']);
 register_deactivation_hook(__FILE__, ['HDK_Activator', 'deactivate']);
 
+// Runtime schema migrations for active installs
+add_action('plugins_loaded', ['HDK_Schema', 'maybe_upgrade']);
+
 // Init
 add_action('init', ['HDK_Rewrite', 'init']);
 add_action('rest_api_init', ['HDK_REST_API', 'init']);

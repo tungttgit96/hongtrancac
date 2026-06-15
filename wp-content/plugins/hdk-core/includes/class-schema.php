@@ -92,6 +92,7 @@ class HDK_Schema {
             title VARCHAR(500),
             content LONGTEXT,
             word_count INT UNSIGNED DEFAULT 0,
+            price INT UNSIGNED DEFAULT 0,
             views BIGINT UNSIGNED DEFAULT 0,
             status ENUM('draft','published','scheduled') DEFAULT 'draft',
             scheduled_at DATETIME NULL,
@@ -99,6 +100,7 @@ class HDK_Schema {
             updated_at DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
             INDEX idx_story (story_id),
             INDEX idx_number (story_id, chapter_number),
+            INDEX idx_price (story_id, price),
             UNIQUE KEY uk_story_chapter (story_id, chapter_number)
         ) $charset;";
 
@@ -293,6 +295,18 @@ class HDK_Schema {
 
         // Add 'scheduled' to chapters status ENUM for existing installs
         $wpdb->query("ALTER TABLE {$wpdb->prefix}hdk_chapters MODIFY COLUMN status ENUM('draft','published','scheduled') DEFAULT 'draft'");
+    }
+
+    public static function maybe_upgrade() {
+        $target_version = '2026.06.15.1';
+        $current_version = get_option('hdk_schema_version', '0');
+
+        if (version_compare($current_version, $target_version, '>=')) {
+            return;
+        }
+
+        self::create_tables();
+        update_option('hdk_schema_version', $target_version, false);
     }
 
     private static function add_column_if_not_exists($table, $column, $definition) {
