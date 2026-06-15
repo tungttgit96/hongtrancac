@@ -1,9 +1,9 @@
 #!/bin/bash
 # ============================================
-# Hạt Đậu Khả Ái - WordPress Setup Script
+# Hồng Trần Các - WordPress Setup Script
 # ============================================
 # Usage: bash setup.sh [domain]
-# Example: bash setup.sh hatdaukhaai.test
+# Example: bash setup.sh hongtrancac.test
 #
 # Prerequisites:
 #   - Herd installed and running
@@ -13,18 +13,18 @@
 
 set -e
 
-SITE_DOMAIN="${1:-hatdaukhaai.test}"
+SITE_DOMAIN="${1:-hongtrancac.test}"
 SITE_DIR="$HOME/Herd/$SITE_DOMAIN"
-DB_NAME="hatdaukhaai"
+DB_NAME="hongtrancac"
 DB_USER="root"
 DB_PASS=""
 ADMIN_USER="admin"
 ADMIN_PASS="admin123"
-ADMIN_EMAIL="admin@hatdaukhaai.com"
-SITE_TITLE="Hạt Đậu Khả Ái"
+ADMIN_EMAIL="admin@hongtrancac.com"
+SITE_TITLE="Hồng Trần Các"
 
 echo "====================================="
-echo "  Hạt Đậu Khả Ái - WordPress Setup"
+echo "  Hồng Trần Các - WordPress Setup"
 echo "====================================="
 echo ""
 echo "Site: $SITE_DOMAIN"
@@ -80,12 +80,12 @@ wp core install \
 
 # Step 6: Copy theme and plugin
 echo "[6/8] Copying theme and plugin..."
-THEME_SRC="$(dirname "$0")/wp-content/themes/hatdaukhaai"
+THEME_SRC="$(dirname "$0")/wp-content/themes/hongtrancac"
 PLUGIN_SRC="$(dirname "$0")/wp-content/plugins/hdk-core"
 
 if [ -d "$THEME_SRC" ]; then
-    mkdir -p "$SITE_DIR/wp-content/themes/hatdaukhaai"
-    cp -r "$THEME_SRC"/* "$SITE_DIR/wp-content/themes/hatdaukhaai/"
+    mkdir -p "$SITE_DIR/wp-content/themes/hongtrancac"
+    cp -r "$THEME_SRC"/* "$SITE_DIR/wp-content/themes/hongtrancac/"
     echo "  Theme copied"
 fi
 
@@ -98,7 +98,7 @@ fi
 # Step 7: Activate theme and plugin
 echo "[7/8] Activating theme and plugin..."
 cd "$SITE_DIR"
-wp theme activate hatdaukhaai 2>/dev/null || echo "  Theme activation skipped"
+wp theme activate hongtrancac 2>/dev/null || echo "  Theme activation skipped"
 wp plugin activate hdk-core 2>/dev/null || echo "  Plugin activation skipped"
 
 # Step 8: Create required pages

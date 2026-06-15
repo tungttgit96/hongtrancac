@@ -1,6 +1,6 @@
 <?php
 /**
- * Hạt Đậu Khả Ái Theme Functions
+ * Hồng Trần Các Theme Functions
  */
 
 // Theme setup
@@ -12,8 +12,8 @@ function hdk_theme_setup() {
     add_theme_support('responsive-embeds');
 
     register_nav_menus([
-        'primary' => __('Primary Menu', 'hatdaukhaai'),
-        'footer'  => __('Footer Menu', 'hatdaukhaai'),
+        'primary' => __('Primary Menu', 'hongtrancac'),
+        'footer'  => __('Footer Menu', 'hongtrancac'),
     ]);
 }
 add_action('after_setup_theme', 'hdk_theme_setup');

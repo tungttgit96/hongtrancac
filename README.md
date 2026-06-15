@@ -6,7 +6,7 @@ Nền tảng đọc truyện chữ online xây dựng trên **WordPress** + cust
 
 - WordPress 6.x+ (PHP 8.0+)
 - MySQL 8.0+ / MariaDB 10.6+
-- Custom Theme: `hatdaukhaai`
+- Custom Theme: `hongtrancac`
 - Custom Plugin: `hdk-core`
 
 ## Tính năng
@@ -83,7 +83,7 @@ cd ~/Herd/hongtrancac
 wp core download --locale=vi
 
 # 4. Copy theme + plugin từ repo vào WordPress
-cp -r /path/to/repo/wp-content/themes/hatdaukhaai wp-content/themes/
+cp -r /path/to/repo/wp-content/themes/hongtrancac wp-content/themes/
 cp -r /path/to/repo/wp-content/plugins/hdk-core wp-content/plugins/
 
 # 5. Tạo database
@@ -106,7 +106,7 @@ wp core install \
   --skip-email
 
 # 8. Activate theme + plugin
-wp theme activate hatdaukhaai
+wp theme activate hongtrancac
 wp plugin activate hdk-core
 
 # 9. Tạo pages
@@ -159,7 +159,7 @@ cd C:\laragon\www\hongtrancac
 wp core download --locale=vi --path=C:\laragon\www\hongtrancac
 
 # 3. Copy theme + plugin
-cp -r wp-content/themes/hatdaukhaai C:\laragon\www\hongtrancac\wp-content\themes\
+cp -r wp-content/themes/hongtrancac C:\laragon\www\hongtrancac\wp-content\themes\
 cp -r wp-content/plugins/hdk-core C:\laragon\www\hongtrancac\wp-content\plugins\
 
 # 4. Tạo database
@@ -216,7 +216,7 @@ hongtrancac/
 ├── plan.md                          # Implementation plan
 ├── wp-content/
 │   ├── themes/
-│   │   └── hatdaukhaai/             # Custom theme
+│   │   └── hongtrancac/             # Custom theme
 │   │       ├── style.css
 │   │       ├── functions.php
 │   │       ├── header.php / footer.php

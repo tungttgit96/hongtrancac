@@ -1,6 +1,6 @@
 <?php
 /**
- * Design Tokens for Hạt Đậu Khả Ái — TweakCN "hồng" palette
+ * Design Tokens for Hồng Trần Các — TweakCN "hồng" palette
  *
  * Light: primary #ff9de3, text #4d3957, bg #fdf9fa, accent #fff2f9
  * Dark:  bg #1b1e18, card #39262f, primary #ffc1ed, text #fffdff

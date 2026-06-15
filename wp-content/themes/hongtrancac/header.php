@@ -1,6 +1,6 @@
 <?php
 /**
- * Header template - Hạt Đậu Khả Ái
+ * Header template - Hồng Trần Các
  */
 ?><!DOCTYPE html>
 <html <?php language_attributes(); ?>>

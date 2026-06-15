@@ -1,11 +1,11 @@
 <?php
 /**
  * Plugin Name: HDK Core
- * Plugin URI: https://hatdaukhaai.com
+ * Plugin URI: https://hongtrancac.com
  * Description: Core plugin for Hồng Trần Các - custom DB tables, rewrite rules, REST API, admin CMS, sitemap.
  * Version: 1.0.0
  * Author: HDK Team
- * Text Domain: hatdaukhaai
+ * Text Domain: hongtrancac
  */
 
 defined('ABSPATH') || exit;

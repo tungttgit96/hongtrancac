@@ -1,6 +1,6 @@
 <?php
 /**
- * Footer template - Hạt Đậu Khả Ái
+ * Footer template - Hồng Trần Các
  */
 ?>
 </main>

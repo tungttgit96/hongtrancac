@@ -10,14 +10,14 @@ class HDK_Activator {
         flush_rewrite_rules();
 
         // Default roles
-        add_role('reader', __('Reader', 'hatdaukhaai'), ['read' => true]);
-        add_role('contributor_custom', __('Contributor', 'hatdaukhaai'), [
+        add_role('reader', __('Reader', 'hongtrancac'), ['read' => true]);
+        add_role('contributor_custom', __('Contributor', 'hongtrancac'), [
             'read' => true,
             'edit_stories' => true,
-            'publish_stories' => true,
-            'delete_stories' => true,
+            'publish_stories' => false,
+            'delete_stories' => false,
         ]);
-        add_role('moderator', __('Moderator', 'hatdaukhaai'), [
+        add_role('moderator', __('Moderator', 'hongtrancac'), [
             'read' => true,
             'edit_stories' => true,
             'publish_stories' => true,
