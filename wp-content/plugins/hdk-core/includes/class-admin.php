@@ -350,13 +350,16 @@ class HDK_Admin {
         $table = HDK_DB::table('hdk_chapters');
         $now = current_time('mysql');
         $story_id = (int)($data['story_id'] ?? 0);
+        $story = HDK_DB::get_story($story_id);
+        $posted_price = (int)($data['chapter_price'] ?? 0);
+        $effective_price = $posted_price > 0 ? $posted_price : (int)($story->chapter_price ?? 0);
         $chap_data = [
             'story_id' => $story_id,
             'chapter_number' => (int)($data['chapter_number'] ?? 0),
             'title' => sanitize_text_field($data['title'] ?? ''),
             'content' => wp_kses_post($data['content'] ?? ''),
             'word_count' => str_word_count(strip_tags($data['content'] ?? '')),
-            'price' => (int)($data['chapter_price'] ?? 0),
+            'price' => $effective_price,
             'status' => $data['status'] ?? 'draft',
             'updated_at' => $now,
         ];
@@ -404,8 +407,10 @@ class HDK_Admin {
         $table = HDK_DB::table('hdk_chapters');
         $now = current_time('mysql');
         $story_id = (int)($data['story_id'] ?? 0);
+        $story = HDK_DB::get_story($story_id);
         $status = $data['bulk_status'] ?? 'published';
-        $default_price = (int)($data['bulk_chapter_price'] ?? 0);
+        $posted_default_price = (int)($data['bulk_chapter_price'] ?? 0);
+        $default_price = $posted_default_price > 0 ? $posted_default_price : (int)($story->chapter_price ?? 0);
         $scheduled_at = sanitize_text_field($data['bulk_scheduled_at'] ?? '');
         $is_scheduled = $scheduled_at && strtotime($scheduled_at) > time();
 
@@ -767,7 +772,7 @@ Nội dung chương thứ ba...</code>
                                 <th>Giá mỗi chương</th>
                                 <td>
                                     <input type="number" name="bulk_chapter_price" value="0" style="width:100px;" min="0"> hạt
-                                    <p class="description">Áp dụng cho tất cả chương. 0 = dùng giá mặc định của truyện. Có thể ghi đè từng chương bằng format <code>Chương1: Tên (5 hạt)</code></p>
+                                    <p class="description">0 = tự lấy giá mỗi chương đang đặt ở truyện. Có thể ghi đè từng chương bằng format <code>Chương1: Tên (5 hạt)</code>.</p>
                                 </td>
                             </tr>
                             <tr>
@@ -855,7 +860,7 @@ Nội dung chương 2 viết ở đây..."
                                     <th>Giá (hạt)</th>
                                     <td>
                                         <input type="number" name="chapter_price" value="<?php echo (int)($edit_chapter->price ?? 0); ?>" style="width:100px;" min="0"> hạt
-                                        <p class="description">0 = dùng giá mặc định của truyện. Để trống nếu chương miễn phí.</p>
+                                        <p class="description">0 = tự lấy giá mỗi chương đang đặt ở truyện. Muốn chương miễn phí thì đặt truyện miễn phí hoặc đưa chương vào vùng chương free.</p>
                                     </td>
                                 </tr>
                                 <tr>
@@ -873,7 +878,7 @@ Nội dung chương 2 viết ở đây..."
                                         wp_editor($content, 'chapter_content', [
                                             'textarea_name' => 'content',
                                             'textarea_rows' => 20,
-                                            'media_buttons' => false,
+                                            'media_buttons' => true,
                                             'teeny' => false,
                                         ]);
                                         ?>
