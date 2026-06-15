@@ -66,6 +66,93 @@
         }
     } catch (e) {}
 
+    // ===== Header UI =====
+    (function initHeader() {
+        var searchModal = document.getElementById('search-modal');
+        var mobileDrawer = document.getElementById('mobile-drawer');
+        var mainNav = document.getElementById('main-nav');
+        var mobileToggle = document.querySelector('.mobile-menu-toggle');
+
+        function updateMobileLayout() {
+            if (!mainNav || !mobileToggle) return;
+            if (window.innerWidth < 768) {
+                mobileToggle.style.display = 'flex';
+                mainNav.style.display = 'none';
+            } else {
+                mobileToggle.style.display = 'none';
+                mainNav.style.display = 'flex';
+                closeMobileDrawer();
+            }
+        }
+
+        function openSearch() {
+            if (!searchModal) return;
+            searchModal.classList.add('active');
+            var input = searchModal.querySelector('input[name="search"]');
+            if (input) setTimeout(function() { input.focus(); }, 10);
+        }
+
+        function closeSearch() {
+            if (searchModal) searchModal.classList.remove('active');
+        }
+
+        function openMobileDrawer() {
+            if (mobileDrawer) mobileDrawer.classList.add('open');
+        }
+
+        function closeMobileDrawer() {
+            if (mobileDrawer) mobileDrawer.classList.remove('open');
+        }
+
+        document.querySelectorAll('.search-toggle').forEach(function(el) {
+            el.addEventListener('click', function() {
+                if (searchModal && searchModal.classList.contains('active')) {
+                    closeSearch();
+                } else {
+                    openSearch();
+                }
+            });
+        });
+
+        var searchCloseBtn = document.querySelector('[data-close-search]');
+        if (searchCloseBtn) searchCloseBtn.addEventListener('click', closeSearch);
+
+        if (mobileToggle) {
+            mobileToggle.addEventListener('click', function() {
+                if (mobileDrawer && mobileDrawer.classList.contains('open')) {
+                    closeMobileDrawer();
+                } else {
+                    openMobileDrawer();
+                }
+            });
+        }
+
+        var mobileCloseBtn = document.querySelector('[data-close-mobile-drawer]');
+        if (mobileCloseBtn) mobileCloseBtn.addEventListener('click', closeMobileDrawer);
+
+        if (searchModal) {
+            searchModal.addEventListener('click', function(e) {
+                if (e.target === searchModal) closeSearch();
+            });
+        }
+
+        if (mobileDrawer) {
+            mobileDrawer.addEventListener('click', function(e) {
+                if (e.target === mobileDrawer) closeMobileDrawer();
+            });
+        }
+
+        document.addEventListener('keydown', function(e) {
+            if (e.key === 'Escape') {
+                closeSearch();
+                closeMobileDrawer();
+            }
+        });
+
+        window.addEventListener('resize', updateMobileLayout);
+        updateMobileLayout();
+    })();
+
     // ===== Hero Banner =====
     var bannerCards = document.querySelectorAll('.banner-card');
     var bannerCover = document.getElementById('banner-cover-img');

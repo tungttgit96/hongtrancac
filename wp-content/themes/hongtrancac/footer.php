@@ -26,9 +26,9 @@
             <div>
                 <h4 style="font-size:var(--font-size-base);margin-bottom:12px;">Hỗ trợ</h4>
                 <ul style="list-style:none;display:flex;flex-direction:column;gap:8px;">
-                    <li><a href="#" style="color:var(--color-footer-link);">Liên hệ</a></li>
-                    <li><a href="#" style="color:var(--color-footer-link);">Điều khoản</a></li>
-                    <li><a href="#" style="color:var(--color-footer-link);">Chính sách bảo mật</a></li>
+                    <li><a href="<?php echo home_url('/lien-he'); ?>" style="color:var(--color-footer-link);">Liên hệ</a></li>
+                    <li><a href="<?php echo home_url('/dieu-khoan'); ?>" style="color:var(--color-footer-link);">Điều khoản</a></li>
+                    <li><a href="<?php echo home_url('/chinh-sach-bao-mat'); ?>" style="color:var(--color-footer-link);">Chính sách bảo mật</a></li>
                 </ul>
             </div>
         </div>
@@ -40,42 +40,5 @@
 
 <?php wp_footer(); ?>
 
-<script>
-document.addEventListener('DOMContentLoaded', function() {
-    // Mobile menu
-    if (window.innerWidth < 768) {
-        document.querySelector('.mobile-menu-toggle').style.display = 'flex';
-        document.querySelector('.main-nav').style.display = 'none';
-    }
-    window.addEventListener('resize', function() {
-        var nav = document.querySelector('.main-nav');
-        var btn = document.querySelector('.mobile-menu-toggle');
-        if (window.innerWidth < 768) {
-            btn.style.display = 'flex';
-            nav.style.display = 'none';
-        } else {
-            btn.style.display = 'none';
-            nav.style.display = 'flex';
-        }
-    });
-
-    // Search modal toggle
-    document.querySelectorAll('.search-toggle').forEach(function(el) {
-        el.addEventListener('click', function() {
-            var modal = document.getElementById('search-modal');
-            modal.style.display = modal.style.display === 'block' ? 'none' : 'block';
-        });
-    });
-
-    // Mobile drawer toggle
-    document.querySelector('.mobile-menu-toggle').addEventListener('click', function() {
-        var drawer = document.getElementById('mobile-drawer');
-        drawer.style.display = drawer.style.display === 'block' ? 'none' : 'block';
-    });
-    document.getElementById('mobile-drawer').addEventListener('click', function(e) {
-        if (e.target === this) this.style.display = 'none';
-    });
-});
-</script>
 </body>
 </html>
