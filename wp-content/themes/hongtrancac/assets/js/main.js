@@ -6,6 +6,16 @@
 (function() {
     'use strict';
 
+    function restNonce() {
+        return window.hdkRestNonce || '';
+    }
+
+    function restHeaders(contentType) {
+        var headers = { 'X-WP-Nonce': restNonce() };
+        if (contentType) headers['Content-Type'] = contentType;
+        return headers;
+    }
+
     // ===== Theme Toggle =====
     var STORAGE_KEY = 'hdk-theme';
     var toggleBtn = document.getElementById('theme-toggle');
@@ -220,7 +230,10 @@
         var storyId = btn.dataset.storyId;
         if (!storyId) return;
 
-        fetch('/wp-json/hdk/v1/stories/' + storyId + '/favorite', { method: 'POST' })
+        fetch('/wp-json/hdk/v1/stories/' + storyId + '/favorite', {
+            method: 'POST',
+            headers: restHeaders()
+        })
             .then(function(r) { return r.json(); })
             .then(function(data) {
                 btn.dataset.favorited = data.favorited ? '1' : '0';
@@ -247,7 +260,7 @@
 
         fetch('/wp-json/hdk/v1/stories/' + storyId + '/rating', {
             method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
+            headers: restHeaders('application/json'),
             body: JSON.stringify({ rating: rating })
         })
             .then(function(r) { return r.json(); })
@@ -288,7 +301,7 @@
 
         fetch('/wp-json/hdk/v1/comments', {
             method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
+            headers: restHeaders('application/json'),
             body: JSON.stringify({ story_id: parseInt(storyId, 10), chapter_number: 0, content: content })
         })
             .then(function(r) { return r.json(); })
@@ -338,7 +351,10 @@
         btn.disabled = true;
         btn.textContent = 'Đang xử lý…';
 
-        fetch('/wp-json/hdk/v1/daily-claim', { method: 'POST' })
+        fetch('/wp-json/hdk/v1/daily-claim', {
+            method: 'POST',
+            headers: restHeaders()
+        })
             .then(function(r) { return r.json().then(function(d) { return {status: r.status, data: d}; }); })
             .then(function(result) {
                 if (result.status === 200 && result.data.success) {
@@ -378,7 +394,7 @@
             safeSetStorage(PREFS_KEY, JSON.stringify(prefs));
             fetch('/wp-json/hdk/v1/reader-prefs', {
                 method: 'PATCH',
-                headers: {'Content-Type': 'application/json'},
+                headers: restHeaders('application/json'),
                 body: JSON.stringify(prefs)
             }).catch(function(){});
         }
@@ -591,7 +607,11 @@
         }
 
         window.markAllRead = function() {
-            fetch('/wp-json/hdk/v1/notifications/read', { method: 'POST', body: '{}' })
+            fetch('/wp-json/hdk/v1/notifications/read', {
+                method: 'POST',
+                headers: restHeaders(),
+                body: '{}'
+            })
                 .then(function() {
                     updateUnreadCount();
                     var dd = document.getElementById('notif-dropdown');
@@ -622,7 +642,11 @@
         var btn = document.querySelector('#report-form button[type="submit"]');
         btn.disabled = true; btn.textContent = 'Đang gửi...';
 
-        fetch('/wp-json/hdk/v1/reports', { method: 'POST', body: data })
+        fetch('/wp-json/hdk/v1/reports', {
+            method: 'POST',
+            headers: restHeaders(),
+            body: data
+        })
             .then(function(r) { return r.json(); })
             .then(function(d) {
                 var msg = document.getElementById('report-msg');

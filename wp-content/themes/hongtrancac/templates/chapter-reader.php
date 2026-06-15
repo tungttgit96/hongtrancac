@@ -216,7 +216,7 @@ window.addEventListener('scroll', function() {
         if (typeof fetch !== 'undefined') {
             fetch('/wp-json/hdk/v1/reading-progress', {
                 method: 'PATCH',
-                headers: {'Content-Type': 'application/json'},
+                headers: {'Content-Type': 'application/json', 'X-WP-Nonce': window.hdkRestNonce || ''},
                 body: JSON.stringify({
                     story_id: <?php echo (int)$story->id; ?>,
                     chapter_number: <?php echo (int)$chapter->chapter_number; ?>,

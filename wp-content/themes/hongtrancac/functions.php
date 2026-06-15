@@ -30,6 +30,11 @@ function hdk_enqueue_assets() {
 }
 add_action('wp_enqueue_scripts', 'hdk_enqueue_assets');
 
+// Expose REST nonce early for inline scripts
+add_action('wp_head', function() {
+    echo '<script>window.hdkRestNonce = ' . wp_json_encode(wp_create_nonce('wp_rest')) . ';</script>' . "\n";
+}, 1);
+
 // Include template parts
 require_once get_template_directory() . '/inc/template-functions.php';
 require_once get_template_directory() . '/inc/design-tokens.php';

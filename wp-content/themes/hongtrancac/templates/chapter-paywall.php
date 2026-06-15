@@ -93,7 +93,7 @@ function purchaseChapter(sid, cnum) {
 
     fetch('/wp-json/hdk/v1/purchase/chapter', {
         method: 'POST',
-        headers: {'Content-Type': 'application/json'},
+        headers: {'Content-Type': 'application/json', 'X-WP-Nonce': window.hdkRestNonce || ''},
         body: JSON.stringify({story_id: sid, chapter_number: cnum})
     })
     .then(r => r.json())
@@ -121,7 +121,7 @@ function purchaseFull(sid) {
 
     fetch('/wp-json/hdk/v1/purchase/full', {
         method: 'POST',
-        headers: {'Content-Type': 'application/json'},
+        headers: {'Content-Type': 'application/json', 'X-WP-Nonce': window.hdkRestNonce || ''},
         body: JSON.stringify({story_id: sid})
     })
     .then(r => r.json())

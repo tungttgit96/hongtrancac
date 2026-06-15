@@ -192,7 +192,7 @@ function purchaseChapterInline(storyId, chapterNum, btn) {
     var msg = document.getElementById('purchase-msg');
     fetch('/wp-json/hdk/v1/purchase/chapter', {
         method: 'POST',
-        headers: {'Content-Type': 'application/json'},
+        headers: {'Content-Type': 'application/json', 'X-WP-Nonce': window.hdkRestNonce || ''},
         body: JSON.stringify({story_id: storyId, chapter_number: chapterNum})
     })
     .then(r => r.json())
@@ -222,7 +222,7 @@ function purchaseFullStory(storyId) {
     if (msg) msg.innerHTML = 'Đang xử lý…';
     fetch('/wp-json/hdk/v1/purchase/full', {
         method: 'POST',
-        headers: {'Content-Type': 'application/json'},
+        headers: {'Content-Type': 'application/json', 'X-WP-Nonce': window.hdkRestNonce || ''},
         body: JSON.stringify({story_id: storyId})
     })
     .then(r => r.json())

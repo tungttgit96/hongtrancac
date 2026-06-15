@@ -126,6 +126,14 @@ class HDK_REST_API {
         ]);
     }
 
+    private static function verify_nonce() {
+        $nonce = $_REQUEST['_wpnonce'] ?? $_SERVER['HTTP_X_WP_NONCE'] ?? '';
+        if (!wp_verify_nonce($nonce, 'wp_rest')) {
+            return new WP_Error('rest_forbidden', 'Nonce verification failed', ['status' => 403]);
+        }
+        return true;
+    }
+
     public static function search($request) {
         $q = sanitize_text_field($request->get_param('q') ?? '');
         $type = sanitize_text_field($request->get_param('type') ?? 'all');
@@ -167,6 +175,9 @@ class HDK_REST_API {
     }
 
     public static function toggle_favorite($request) {
+        $nonce_check = self::verify_nonce();
+        if (is_wp_error($nonce_check)) return $nonce_check;
+
         $story_id = (int)$request->get_param('id');
         $user_id = get_current_user_id();
         global $wpdb;
@@ -191,6 +202,9 @@ class HDK_REST_API {
     }
 
     public static function rate_story($request) {
+        $nonce_check = self::verify_nonce();
+        if (is_wp_error($nonce_check)) return $nonce_check;
+
         $story_id = (int)$request->get_param('id');
         $rating = (int)$request->get_param('rating');
         if ($rating < 1 || $rating > 5) return new WP_Error('invalid_rating', 'Rating must be 1-5', ['status' => 400]);
@@ -222,6 +236,9 @@ class HDK_REST_API {
     }
 
     public static function add_comment($request) {
+        $nonce_check = self::verify_nonce();
+        if (is_wp_error($nonce_check)) return $nonce_check;
+
         $story_id = (int)$request->get_param('story_id');
         $chapter_number = (int)$request->get_param('chapter_number');
         $content = sanitize_textarea_field($request->get_param('content') ?? '');
@@ -263,6 +280,9 @@ class HDK_REST_API {
     }
 
     public static function update_progress($request) {
+        $nonce_check = self::verify_nonce();
+        if (is_wp_error($nonce_check)) return $nonce_check;
+
         $story_id = (int)$request->get_param('story_id');
         $chapter_number = (int)$request->get_param('chapter_number');
         $scroll_percent = (float)($request->get_param('scroll_percent') ?? 0);
@@ -298,9 +318,9 @@ class HDK_REST_API {
     }
 
     public static function purchase_chapter($request) {
-        if (!wp_verify_nonce($_REQUEST['_wpnonce'] ?? $_SERVER['HTTP_X_WP_NONCE'] ?? '', 'wp_rest')) {
-            return new WP_Error('rest_forbidden', 'Nonce verification failed', ['status' => 403]);
-        }
+        $nonce_check = self::verify_nonce();
+        if (is_wp_error($nonce_check)) return $nonce_check;
+
         $story_id = (int)$request->get_param('story_id');
         $chapter_number = (int)$request->get_param('chapter_number');
         $user_id = get_current_user_id();
@@ -369,9 +389,9 @@ class HDK_REST_API {
     }
 
     public static function purchase_full_story($request) {
-        if (!wp_verify_nonce($_REQUEST['_wpnonce'] ?? $_SERVER['HTTP_X_WP_NONCE'] ?? '', 'wp_rest')) {
-            return new WP_Error('rest_forbidden', 'Nonce verification failed', ['status' => 403]);
-        }
+        $nonce_check = self::verify_nonce();
+        if (is_wp_error($nonce_check)) return $nonce_check;
+
         $story_id = (int)$request->get_param('story_id');
         $user_id = get_current_user_id();
         global $wpdb;
@@ -443,9 +463,9 @@ class HDK_REST_API {
     }
 
     public static function daily_claim($request) {
-        if (!wp_verify_nonce($_REQUEST['_wpnonce'] ?? $_SERVER['HTTP_X_WP_NONCE'] ?? '', 'wp_rest')) {
-            return new WP_Error('rest_forbidden', 'Nonce verification failed', ['status' => 403]);
-        }
+        $nonce_check = self::verify_nonce();
+        if (is_wp_error($nonce_check)) return $nonce_check;
+
         $user_id = get_current_user_id();
         $result = HDK_DB::claim_daily_credits($user_id);
         if (!$result['success']) {
@@ -510,6 +530,9 @@ class HDK_REST_API {
     }
 
     public static function save_reader_prefs($request) {
+        $nonce_check = self::verify_nonce();
+        if (is_wp_error($nonce_check)) return $nonce_check;
+
         $body = json_decode($request->get_body(), true) ?? [];
         $data = [];
         if (isset($body['font_size'])) $data['font_size'] = max(16, min(28, (int)$body['font_size']));
@@ -530,6 +553,9 @@ class HDK_REST_API {
     }
 
     public static function mark_read($request) {
+        $nonce_check = self::verify_nonce();
+        if (is_wp_error($nonce_check)) return $nonce_check;
+
         $user_id = get_current_user_id();
         $body = json_decode($request->get_body(), true) ?? [];
         $notification_id = (int)($body['id'] ?? 0);
@@ -543,6 +569,9 @@ class HDK_REST_API {
     }
 
     public static function create_report($request) {
+        $nonce_check = self::verify_nonce();
+        if (is_wp_error($nonce_check)) return $nonce_check;
+
         $story_id = (int)$request->get_param('story_id');
         $chapter_number = (int)$request->get_param('chapter_number');
         $type = sanitize_text_field($request->get_param('report_type') ?? 'other');
