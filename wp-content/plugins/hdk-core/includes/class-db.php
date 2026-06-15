@@ -215,7 +215,7 @@ class HDK_DB {
             }
         }
 
-        return ['stories' => $stories, 'total' => (int)$total, 'pages' => (int)ceil($total / $args['per_page'])];
+        return ['stories' => $stories, 'total' => (int)$total, 'pages' => (int)ceil($total / $per_page)];
     }
 
     public static function log_view($story_id, $chapter_number = 0) {
