@@ -180,12 +180,15 @@ function hdk_get_hero_section() {
     <?php
 }
 
-function hdk_get_pagination($total_pages, $current_page = 1) {
+function hdk_get_pagination($total_pages, $current_page = 1, $base_args = []) {
     if ($total_pages <= 1) return;
+    $base_args = array_filter($base_args, function($value) {
+        return $value !== '' && $value !== null && $value !== 0 && $value !== '0';
+    });
     ?>
     <nav class="pagination" style="display:flex;justify-content:center;align-items:center;gap:8px;padding:24px 0;flex-wrap:wrap;">
         <?php if ($current_page > 1): ?>
-            <a href="?page=<?php echo $current_page - 1; ?>" class="btn btn-ghost btn-sm">&laquo; Trước</a>
+            <a href="<?php echo esc_url(add_query_arg(array_merge($base_args, ['page' => $current_page - 1]))); ?>" class="btn btn-ghost btn-sm">&laquo; Trước</a>
         <?php endif; ?>
         <?php
         $start = max(1, $current_page - 2);
@@ -193,10 +196,10 @@ function hdk_get_pagination($total_pages, $current_page = 1) {
         for ($i = $start; $i <= $end; $i++):
             $active = $i === $current_page ? 'btn-primary' : 'btn-ghost';
         ?>
-            <a href="?page=<?php echo $i; ?>" class="btn <?php echo $active; ?> btn-sm"><?php echo $i; ?></a>
+            <a href="<?php echo esc_url(add_query_arg(array_merge($base_args, ['page' => $i]))); ?>" class="btn <?php echo $active; ?> btn-sm"><?php echo $i; ?></a>
         <?php endfor; ?>
         <?php if ($current_page < $total_pages): ?>
-            <a href="?page=<?php echo $current_page + 1; ?>" class="btn btn-ghost btn-sm">Sau &raquo;</a>
+            <a href="<?php echo esc_url(add_query_arg(array_merge($base_args, ['page' => $current_page + 1]))); ?>" class="btn btn-ghost btn-sm">Sau &raquo;</a>
         <?php endif; ?>
     </nav>
     <?php

@@ -93,7 +93,11 @@ get_header();
         <?php endforeach; ?>
     </div>
 
-    <?php hdk_get_pagination($result['pages'], $page); ?>
+    <?php hdk_get_pagination($result['pages'], $page, [
+        'metric' => $metric !== 'views' ? $metric : '',
+        'period' => $period !== 'all' ? $period : '',
+        'category' => $category,
+    ]); ?>
 </div>
 
 <?php get_footer(); ?>

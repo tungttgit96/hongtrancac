@@ -66,7 +66,12 @@ get_header();
                 <?php hdk_get_story_card($story, $i); ?>
             <?php endforeach; ?>
         </div>
-        <?php hdk_get_pagination($result['pages'], $page); ?>
+        <?php hdk_get_pagination($result['pages'], $page, [
+            's' => $search,
+            'status' => $status,
+            'category' => $category,
+            'orderby' => $orderby !== 'updated_at' ? $orderby : '',
+        ]); ?>
     <?php else: ?>
         <div style="text-align:center;padding:60px 0;">
             <p style="font-size:var(--font-size-2xl);margin-bottom:12px;">🔍</p>
