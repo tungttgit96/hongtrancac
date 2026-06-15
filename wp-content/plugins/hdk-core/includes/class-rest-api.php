@@ -469,7 +469,20 @@ class HDK_REST_API {
     public static function get_chapters($request) {
         $story_id = (int)$request->get_param('story_id');
         $chapters = HDK_DB::get_chapters_toc($story_id);
+        $story = HDK_DB::get_story($story_id);
+        $free_chapters = (int)($story->free_chapters ?? 0);
+        $full_price = (int)($story->full_price ?? 0);
+        $is_free_story = (int)($story->is_free ?? 0) === 1;
         $user_id = get_current_user_id();
+
+        foreach ($chapters as $ch) {
+            $chapter_number = (int)$ch->chapter_number;
+            $price = $story ? HDK_DB::get_chapter_price($story, $chapter_number) : 0;
+            $ch->chapter_number = $chapter_number;
+            $ch->price = $price;
+            $ch->is_locked = !$is_free_story && $chapter_number > $free_chapters && ($price > 0 || $full_price > 0);
+            $ch->is_purchased = false;
+        }
         
         if ($user_id) {
             global $wpdb;

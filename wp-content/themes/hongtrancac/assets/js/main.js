@@ -403,13 +403,15 @@
                     var currentChapter = parseInt(readerContent.dataset.chapterNumber);
                     var html = '';
                     chapters.forEach(function(ch) {
+                        var chapterNumber = parseInt(ch.chapter_number, 10);
                         var cls = 'toc-chapter';
-                        if (ch.chapter_number === currentChapter) cls += ' current';
+                        if (chapterNumber === currentChapter) cls += ' current';
                         var lockIcon = '🔓';
                         if (ch.is_purchased) lockIcon = '✅';
-                        var url = '/' + storySlug + '?chuong=' + ch.chapter_number;
+                        else if (ch.is_locked) lockIcon = '🔒';
+                        var url = '/' + storySlug + '?chuong=' + chapterNumber;
                         html += '<a href="' + url + '" class="' + cls + '">' +
-                            '<span class="toc-chapter-num">' + ch.chapter_number + '</span>' +
+                            '<span class="toc-chapter-num">' + chapterNumber + '</span>' +
                             '<span class="toc-chapter-title">' + escapeHtml(ch.title) + '</span>' +
                             '<span class="toc-chapter-lock">' + lockIcon + '</span>' +
                             '</a>';

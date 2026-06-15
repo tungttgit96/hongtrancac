@@ -99,7 +99,16 @@ get_header();
         $free_limit = (int)($story->free_chapters ?? 0);
         $chapter_def_price = (int)($story->chapter_price ?? 0);
         $full_price = (int)($story->full_price ?? 0);
-        $has_pricing = ($chapter_def_price > 0 || $full_price > 0);
+        $chapter_prices = [];
+        $has_priced_chapters = false;
+        foreach ($chapters as $chapter_for_price) {
+            $effective_price = HDK_DB::get_chapter_price($story, $chapter_for_price->chapter_number);
+            $chapter_prices[(int)$chapter_for_price->chapter_number] = $effective_price;
+            if ($effective_price > 0 && (int)$chapter_for_price->chapter_number > $free_limit) {
+                $has_priced_chapters = true;
+            }
+        }
+        $has_pricing = ($chapter_def_price > 0 || $full_price > 0 || $has_priced_chapters);
         $user_id = get_current_user_id();
         ?>
         <?php if ($has_pricing): ?>
@@ -116,8 +125,8 @@ get_header();
         <?php endif; ?>
         <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:8px;">
             <?php foreach ($chapters as $chap):
-                $locked = $has_pricing && $chap->chapter_number > $free_limit;
-                $chap_price = HDK_DB::get_chapter_price($story, $chap->chapter_number);
+                $chap_price = $chapter_prices[(int)$chap->chapter_number] ?? HDK_DB::get_chapter_price($story, $chap->chapter_number);
+                $locked = !$story->is_free && $chap->chapter_number > $free_limit && ($chap_price > 0 || $full_price > 0);
                 $purchased = $locked && $user_id ? HDK_Template_Loader::has_purchased_chapter($story->id, $chap->chapter_number) : false;
                 $icon = !$locked ? '🔓' : ($purchased ? '✅' : '🔒');
             ?>
