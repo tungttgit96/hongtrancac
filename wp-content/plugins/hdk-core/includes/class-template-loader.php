@@ -157,8 +157,12 @@ class HDK_Template_Loader {
         global $wpdb;
 
         $chapter_price = HDK_DB::get_chapter_price($story, $chapter_number);
+        $chapter_price_mode = HDK_DB::get_chapter_price_mode($story->id, $chapter_number);
 
         // Free story or chapter is within free range
+        if ($chapter_price_mode === 'free') {
+            return ['can_read' => true, 'reason' => 'free_chapter'];
+        }
         if ($chapter_price <= 0 && $full_price <= 0) {
             return ['can_read' => true, 'reason' => 'free'];
         }

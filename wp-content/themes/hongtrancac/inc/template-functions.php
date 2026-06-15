@@ -14,6 +14,15 @@ function hdk_get_story_status_badge($story) {
     return sprintf('<span class="badge %s">%s</span>', $label['class'], $label['text']);
 }
 
+function hdk_login_url($redirect_to = '') {
+    $redirect_to = $redirect_to ?: home_url(add_query_arg([]));
+    return add_query_arg('redirect_to', $redirect_to, home_url('/dang-nhap'));
+}
+
+function hdk_register_url($redirect_to = '') {
+    return wp_registration_url();
+}
+
 function hdk_get_story_card($story, $index = 0) {
     $url = home_url('/' . ($story->slug ?? ''));
     $title = esc_html($story->title ?? '');
@@ -21,10 +30,7 @@ function hdk_get_story_card($story, $index = 0) {
     $author = esc_html($story->author_name ?? '');
     $chapters = (int)($story->chapter_count ?? 0);
     $views = number_format((int)($story->total_views ?? 0));
-    $chapter_price = (int)($story->chapter_price ?? 0);
-    $full_price = (int)($story->full_price ?? 0);
-    $free_chapters = (int)($story->free_chapters ?? 0);
-    $has_pricing = ($chapter_price > 0 || $full_price > 0 || $free_chapters > 0);
+    $price_summary = class_exists('HDK_DB') ? HDK_DB::get_story_price_summary($story) : ['has_pricing' => false, 'label' => ''];
     $lazy = $index >= 8 ? ' loading="lazy"' : '';
     ?>
     <a href="<?php echo esc_url($url); ?>" class="card story-card" title="<?php echo $title; ?>">
@@ -34,9 +40,9 @@ function hdk_get_story_card($story, $index = 0) {
             <?php if ($author): ?>
                 <div class="card-meta"><?php echo $author; ?></div>
             <?php endif; ?>
-            <?php if ($has_pricing): ?>
+            <?php if (!empty($price_summary['has_pricing'])): ?>
                 <div class="card-meta" style="margin-top:4px;">
-                    <span style="color:var(--color-warning);">💎 <?php echo $free_chapters; ?> chương free · <?php echo $chapter_price; ?> hạt/chương<?php echo $full_price > 0 ? ' · Full ' . $full_price . ' hạt' : ''; ?></span>
+                    <span style="color:var(--color-warning);">💎 <?php echo esc_html($price_summary['label']); ?></span>
                 </div>
             <?php endif; ?>
             <div class="card-meta" style="display:flex;justify-content:space-between;margin-top:6px">

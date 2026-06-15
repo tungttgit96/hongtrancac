@@ -16,6 +16,11 @@
         return headers;
     }
 
+    function redirectToLogin() {
+        var fallback = '/dang-nhap?redirect_to=' + encodeURIComponent(window.location.href);
+        window.location.href = (window.hdkApi && window.hdkApi.loginUrl) || fallback;
+    }
+
     // ===== Theme Toggle =====
     var STORAGE_KEY = 'hdk-theme';
     var toggleBtn = document.getElementById('theme-toggle');
@@ -244,7 +249,7 @@
                 }
             })
             .catch(function() {
-                window.location.href = '/wp-login.php';
+                redirectToLogin();
             });
     });
 
@@ -276,7 +281,7 @@
                 }
             })
             .catch(function() {
-                window.location.href = '/wp-login.php';
+                redirectToLogin();
             });
 
         e.stopPropagation();
@@ -318,7 +323,7 @@
                     submitBtn.disabled = false;
                     submitBtn.textContent = 'Gửi bình luận';
                 }
-                window.location.href = '/wp-login.php';
+                redirectToLogin();
             });
     });
 
@@ -373,7 +378,7 @@
                 }
             })
             .catch(function() {
-                window.location.href = '/wp-login.php';
+                redirectToLogin();
             });
     };
 

@@ -498,9 +498,11 @@ class HDK_REST_API {
         foreach ($chapters as $ch) {
             $chapter_number = (int)$ch->chapter_number;
             $price = $story ? HDK_DB::get_chapter_price($story, $chapter_number) : 0;
+            $price_mode = $ch->price_mode ?: ((int)($ch->price ?? 0) > 0 ? 'custom' : 'inherit');
             $ch->chapter_number = $chapter_number;
             $ch->price = $price;
-            $ch->is_locked = !$is_free_story && $chapter_number > $free_chapters && ($price > 0 || $full_price > 0);
+            $ch->price_mode = $price_mode;
+            $ch->is_locked = !$is_free_story && $price_mode !== 'free' && $chapter_number > $free_chapters && ($price > 0 || $full_price > 0);
             $ch->is_purchased = false;
         }
         

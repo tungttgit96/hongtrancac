@@ -352,15 +352,20 @@ class HDK_Admin {
         $now = current_time('mysql');
         $story_id = (int)($data['story_id'] ?? 0);
         $story = HDK_DB::get_story($story_id);
-        $posted_price = (int)($data['chapter_price'] ?? 0);
-        $effective_price = $posted_price > 0 ? $posted_price : (int)($story->chapter_price ?? 0);
+        $price_mode = sanitize_key($data['chapter_price_mode'] ?? 'inherit');
+        if (!in_array($price_mode, ['inherit', 'custom', 'free'], true)) {
+            $price_mode = 'inherit';
+        }
+        $posted_price = max(0, (int)($data['chapter_price'] ?? 0));
+        $stored_price = $price_mode === 'custom' ? $posted_price : 0;
         $chap_data = [
             'story_id' => $story_id,
             'chapter_number' => (int)($data['chapter_number'] ?? 0),
             'title' => sanitize_text_field($data['title'] ?? ''),
             'content' => wp_kses_post($data['content'] ?? ''),
             'word_count' => str_word_count(strip_tags($data['content'] ?? '')),
-            'price' => $effective_price,
+            'price' => $stored_price,
+            'price_mode' => $price_mode,
             'status' => $data['status'] ?? 'draft',
             'updated_at' => $now,
         ];
@@ -410,8 +415,11 @@ class HDK_Admin {
         $story_id = (int)($data['story_id'] ?? 0);
         $story = HDK_DB::get_story($story_id);
         $status = $data['bulk_status'] ?? 'published';
-        $posted_default_price = (int)($data['bulk_chapter_price'] ?? 0);
-        $default_price = $posted_default_price > 0 ? $posted_default_price : (int)($story->chapter_price ?? 0);
+        $default_price_mode = sanitize_key($data['bulk_chapter_price_mode'] ?? 'inherit');
+        if (!in_array($default_price_mode, ['inherit', 'custom', 'free'], true)) {
+            $default_price_mode = 'inherit';
+        }
+        $default_price = $default_price_mode === 'custom' ? max(0, (int)($data['bulk_chapter_price'] ?? 0)) : 0;
         $scheduled_at = sanitize_text_field($data['bulk_scheduled_at'] ?? '');
         $is_scheduled = $scheduled_at && strtotime($scheduled_at) > time();
 
@@ -447,8 +455,10 @@ class HDK_Admin {
             $final_content = $content_raw;
 
             // Parse inline price: "Tên chương (5 hạt)" -> price = 5
+            $chap_price_mode = $default_price_mode;
             $chap_price = $default_price;
             if (preg_match('/\((\d+)\s*hạt\s*\)/ui', $title_line, $pm)) {
+                $chap_price_mode = 'custom';
                 $chap_price = (int)$pm[1];
                 $final_title = 'Chương ' . $chapter_number . ': ' . trim(preg_replace('/\s*\(\d+\s*hạt\s*\)/ui', '', $title_line));
             }
@@ -465,6 +475,7 @@ class HDK_Admin {
                 'content' => wp_kses_post('<p>' . nl2br(esc_html($final_content)) . '</p>'),
                 'word_count' => str_word_count($final_content),
                 'price' => $chap_price,
+                'price_mode' => $chap_price_mode,
                 'status' => $is_scheduled ? 'scheduled' : $status,
                 'scheduled_at' => $is_scheduled ? date('Y-m-d H:i:s', strtotime($scheduled_at)) : null,
                 'updated_at' => $now,
@@ -777,8 +788,13 @@ Nội dung chương thứ ba...</code>
                             <tr>
                                 <th>Giá mỗi chương</th>
                                 <td>
+                                    <select name="bulk_chapter_price_mode">
+                                        <option value="inherit">Theo giá truyện</option>
+                                        <option value="custom">Giá riêng</option>
+                                        <option value="free">Miễn phí</option>
+                                    </select>
                                     <input type="number" name="bulk_chapter_price" value="0" style="width:100px;" min="0"> hạt
-                                    <p class="description">0 = tự lấy giá mỗi chương đang đặt ở truyện. Có thể ghi đè từng chương bằng format <code>Chương1: Tên (5 hạt)</code>.</p>
+                                    <p class="description">Chọn “Theo giá truyện” để chương tự cập nhật khi đổi giá truyện. Có thể ghi đè từng chương bằng format <code>Chương1: Tên (100 hạt)</code>.</p>
                                 </td>
                             </tr>
                             <tr>
@@ -828,7 +844,12 @@ Nội dung chương 2 viết ở đây..."
                                         elseif ($c->status === 'scheduled') echo '⏰ ' . esc_html($c->scheduled_at ?? '');
                                         else echo '📝 Nháp';
                                     ?></td>
-                                    <td><?php echo (int)($c->price ?? 0) > 0 ? $c->price . ' 💎' : '-'; ?></td>
+                                    <td><?php
+                                        $mode = $c->price_mode ?? ((int)($c->price ?? 0) > 0 ? 'custom' : 'inherit');
+                                        if ($mode === 'custom') echo (int)$c->price . ' 💎';
+                                        elseif ($mode === 'free') echo 'Miễn phí';
+                                        else echo 'Theo giá truyện';
+                                    ?></td>
                                     <td><?php echo number_format($c->views); ?></td>
                                     <td><a href="?page=hdk-chapters&story_id=<?php echo $story_id; ?>&edit_chapter=<?php echo $c->id; ?>">Sửa</a></td>
                                 </tr>
@@ -865,8 +886,14 @@ Nội dung chương 2 viết ở đây..."
                                 <tr>
                                     <th>Giá (hạt)</th>
                                     <td>
+                                        <?php $edit_price_mode = $edit_chapter->price_mode ?? ((int)($edit_chapter->price ?? 0) > 0 ? 'custom' : 'inherit'); ?>
+                                        <select name="chapter_price_mode">
+                                            <option value="inherit" <?php selected($edit_price_mode, 'inherit'); ?>>Theo giá truyện</option>
+                                            <option value="custom" <?php selected($edit_price_mode, 'custom'); ?>>Giá riêng</option>
+                                            <option value="free" <?php selected($edit_price_mode, 'free'); ?>>Miễn phí</option>
+                                        </select>
                                         <input type="number" name="chapter_price" value="<?php echo (int)($edit_chapter->price ?? 0); ?>" style="width:100px;" min="0"> hạt
-                                        <p class="description">0 = tự lấy giá mỗi chương đang đặt ở truyện. Muốn chương miễn phí thì đặt truyện miễn phí hoặc đưa chương vào vùng chương free.</p>
+                                        <p class="description">“Theo giá truyện” sẽ tự cập nhật khi đổi giá truyện. Chọn “Giá riêng” để set tùy ý, ví dụ 100 hạt.</p>
                                     </td>
                                 </tr>
                                 <tr>

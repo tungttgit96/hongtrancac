@@ -23,7 +23,7 @@ if (is_user_logged_in()) {
 // Get chapters
 global $wpdb;
 $chapters = $wpdb->get_results($wpdb->prepare(
-    "SELECT id, chapter_number, title, price, views, updated_at FROM " . HDK_DB::table('hdk_chapters') . "
+    "SELECT id, chapter_number, title, price, price_mode, views, updated_at FROM " . HDK_DB::table('hdk_chapters') . "
      WHERE story_id = %d AND status = 'published' ORDER BY chapter_number ASC LIMIT 100",
     $story->id
 ));
@@ -97,8 +97,8 @@ get_header();
         <h2 style="font-size:var(--font-size-lg);font-weight:600;margin-bottom:12px;">Danh sách chương (<?php echo count($chapters); ?>)</h2>
         <?php
         $free_limit = (int)($story->free_chapters ?? 0);
-        $chapter_def_price = (int)($story->chapter_price ?? 0);
         $full_price = (int)($story->full_price ?? 0);
+        $price_summary = HDK_DB::get_story_price_summary($story);
         $chapter_prices = [];
         $has_priced_chapters = false;
         foreach ($chapters as $chapter_for_price) {
@@ -108,14 +108,13 @@ get_header();
                 $has_priced_chapters = true;
             }
         }
-        $has_pricing = ($chapter_def_price > 0 || $full_price > 0 || $has_priced_chapters);
+        $has_pricing = !empty($price_summary['has_pricing']) || $has_priced_chapters;
         $user_id = get_current_user_id();
         ?>
         <?php if ($has_pricing): ?>
         <div style="margin-bottom:12px;font-size:13px;color:var(--color-text-muted);">
-            🔓 <?php echo $free_limit; ?> chương đầu miễn phí
-            <?php if ($chapter_def_price > 0): ?> · 💎 <?php echo $chapter_def_price; ?> hạt / chương<?php endif; ?>
-            <?php if ($full_price > 0): ?> · 📚 Mở full: <?php echo $full_price; ?> hạt
+            <?php if (!empty($price_summary['label'])): ?>💎 <?php echo esc_html($price_summary['label']); ?><?php endif; ?>
+            <?php if ($full_price > 0): ?>
                 <?php if ($user_id): ?>
                 <button type="button" onclick="purchaseFullStory(<?php echo $story->id; ?>)" style="margin-left:8px;font-size:12px;padding:2px 10px;border-radius:12px;border:1px solid var(--color-primary);background:var(--color-primary);color:var(--color-on-primary);cursor:pointer;">Mua full</button>
                 <?php endif; ?>
@@ -126,7 +125,8 @@ get_header();
         <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:8px;">
             <?php foreach ($chapters as $chap):
                 $chap_price = $chapter_prices[(int)$chap->chapter_number] ?? HDK_DB::get_chapter_price($story, $chap->chapter_number);
-                $locked = !$story->is_free && $chap->chapter_number > $free_limit && ($chap_price > 0 || $full_price > 0);
+                $chap_price_mode = $chap->price_mode ?? ((int)($chap->price ?? 0) > 0 ? 'custom' : 'inherit');
+                $locked = !$story->is_free && $chap_price_mode !== 'free' && $chap->chapter_number > $free_limit && ($chap_price > 0 || $full_price > 0);
                 $purchased = $locked && $user_id ? HDK_Template_Loader::has_purchased_chapter($story->id, $chap->chapter_number) : false;
                 $icon = !$locked ? '🔓' : ($purchased ? '✅' : '🔒');
             ?>
@@ -146,7 +146,7 @@ get_header();
                     <?php elseif (!$locked || $purchased): ?>
                         <span style="font-size:var(--font-size-xs);color:var(--color-text-muted);white-space:nowrap;">👁 <?php echo number_format($chap->views); ?></span>
                     <?php else: ?>
-                        <a href="<?php echo wp_login_url('/' . $story->slug . '?chuong=' . $chap->chapter_number); ?>" style="font-size:11px;color:var(--color-text-muted);white-space:nowrap;text-decoration:none;">🔒 Đăng nhập</a>
+                        <a href="<?php echo esc_url(hdk_login_url(home_url('/' . $story->slug . '?chuong=' . $chap->chapter_number))); ?>" style="font-size:11px;color:var(--color-text-muted);white-space:nowrap;text-decoration:none;">🔒 Đăng nhập</a>
                     <?php endif; ?>
                 </div>
             <?php endforeach; ?>
@@ -162,7 +162,7 @@ get_header();
                 <button type="submit" class="btn btn-primary btn-sm" style="margin-top:8px;">Gửi bình luận</button>
             </form>
         <?php else: ?>
-            <p style="color:var(--color-text-muted);margin-bottom:16px;"><a href="<?php echo wp_login_url(); ?>">Đăng nhập</a> để bình luận.</p>
+            <p style="color:var(--color-text-muted);margin-bottom:16px;"><a href="<?php echo esc_url(hdk_login_url(home_url('/' . $story->slug))); ?>">Đăng nhập</a> để bình luận.</p>
         <?php endif; ?>
 
         <div class="comments-list">

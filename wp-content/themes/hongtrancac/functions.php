@@ -26,6 +26,7 @@ function hdk_enqueue_assets() {
     wp_enqueue_script('hdk-main', get_template_directory_uri() . '/assets/js/main.js', ['alpinejs'], wp_get_theme()->get('Version'), true);
     wp_localize_script('hdk-main', 'hdkApi', [
         'nonce' => wp_create_nonce('wp_rest'),
+        'loginUrl' => function_exists('hdk_login_url') ? hdk_login_url(home_url(add_query_arg([]))) : wp_login_url(home_url(add_query_arg([]))),
     ]);
 }
 add_action('wp_enqueue_scripts', 'hdk_enqueue_assets');
@@ -37,4 +38,3 @@ add_action('wp_head', function() {
 
 // Include template parts
 require_once get_template_directory() . '/inc/template-functions.php';
-

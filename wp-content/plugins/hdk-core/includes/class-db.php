@@ -66,14 +66,103 @@ class HDK_DB {
         $story_id = is_object($story) ? (int)$story->id : (int)$story;
         $story_default = is_object($story) ? (int)($story->chapter_price ?? 0) : 0;
 
-        $chapter_price = $wpdb->get_var($wpdb->prepare(
-            "SELECT price FROM " . self::table('hdk_chapters') . " WHERE story_id = %d AND chapter_number = %d",
+        $chapter = $wpdb->get_row($wpdb->prepare(
+            "SELECT price, price_mode FROM " . self::table('hdk_chapters') . " WHERE story_id = %d AND chapter_number = %d",
             $story_id,
             (int)$chapter_number
         ));
 
-        $chapter_price = $chapter_price === null ? 0 : (int)$chapter_price;
-        return $chapter_price > 0 ? $chapter_price : $story_default;
+        if (!$chapter) {
+            return $story_default;
+        }
+
+        $mode = $chapter->price_mode ?: ((int)$chapter->price > 0 ? 'custom' : 'inherit');
+        if ($mode === 'free') {
+            return 0;
+        }
+        if ($mode === 'custom') {
+            return max(0, (int)$chapter->price);
+        }
+
+        return $story_default;
+    }
+
+    public static function get_chapter_price_mode($story_id, $chapter_number) {
+        global $wpdb;
+
+        $chapter = $wpdb->get_row($wpdb->prepare(
+            "SELECT price, price_mode FROM " . self::table('hdk_chapters') . " WHERE story_id = %d AND chapter_number = %d",
+            (int)$story_id,
+            (int)$chapter_number
+        ));
+
+        if (!$chapter) {
+            return 'inherit';
+        }
+
+        return $chapter->price_mode ?: ((int)$chapter->price > 0 ? 'custom' : 'inherit');
+    }
+
+    public static function get_story_price_summary($story) {
+        global $wpdb;
+
+        if (!$story || !is_object($story)) {
+            return ['has_pricing' => false, 'label' => ''];
+        }
+
+        if ((int)($story->is_free ?? 0) === 1) {
+            return ['has_pricing' => true, 'label' => 'Miễn phí'];
+        }
+
+        $story_id = (int)$story->id;
+        $story_default = (int)($story->chapter_price ?? 0);
+        $free_chapters = (int)($story->free_chapters ?? 0);
+        $full_price = (int)($story->full_price ?? 0);
+        $chapters_table = self::table('hdk_chapters');
+
+        $rows = $wpdb->get_results($wpdb->prepare(
+            "SELECT chapter_number, price, price_mode FROM $chapters_table
+             WHERE story_id = %d AND status = 'published' AND chapter_number > %d",
+            $story_id,
+            $free_chapters
+        ));
+
+        $paid_prices = [];
+        foreach ($rows as $row) {
+            $mode = $row->price_mode ?: ((int)$row->price > 0 ? 'custom' : 'inherit');
+            if ($mode === 'free') {
+                continue;
+            }
+
+            $price = $mode === 'custom' ? (int)$row->price : $story_default;
+            if ($price > 0) {
+                $paid_prices[] = $price;
+            }
+        }
+
+        if (!$paid_prices && $story_default > 0) {
+            $paid_prices[] = $story_default;
+        }
+
+        $parts = [];
+        if ($free_chapters > 0) {
+            $parts[] = $free_chapters . ' chương free';
+        }
+
+        if ($paid_prices) {
+            $min = min($paid_prices);
+            $max = max($paid_prices);
+            $parts[] = $min === $max ? $min . ' hạt/chương' : 'Từ ' . $min . '-' . $max . ' hạt/chương';
+        }
+
+        if ($full_price > 0) {
+            $parts[] = 'Full ' . $full_price . ' hạt';
+        }
+
+        return [
+            'has_pricing' => !empty($parts),
+            'label' => implode(' · ', $parts),
+        ];
     }
 
     public static function get_story_max_chapter_prices(array $story_ids) {
@@ -148,18 +237,6 @@ class HDK_DB {
             $story->chapter_count = (int)$story->total_chapters;
         }
 
-        if (!empty($stories)) {
-            $price_map = self::get_story_max_chapter_prices(array_map(function($story) {
-                return (int)$story->id;
-            }, $stories));
-
-            foreach ($stories as $story) {
-                if (empty($story->chapter_price) && !empty($price_map[(int)$story->id])) {
-                    $story->chapter_price = $price_map[(int)$story->id];
-                }
-            }
-        }
-
         return ['stories' => $stories, 'total' => (int)$total, 'pages' => (int)ceil($total / $args['per_page'])];
     }
 
@@ -207,18 +284,6 @@ class HDK_DB {
         foreach ($stories as $story) {
             $story->author_name = self::get_author_name($story->author_id);
             $story->chapter_count = (int)$story->total_chapters;
-        }
-
-        if (!empty($stories)) {
-            $price_map = self::get_story_max_chapter_prices(array_map(function($story) {
-                return (int)$story->id;
-            }, $stories));
-
-            foreach ($stories as $story) {
-                if (empty($story->chapter_price) && !empty($price_map[(int)$story->id])) {
-                    $story->chapter_price = $price_map[(int)$story->id];
-                }
-            }
         }
 
         return ['stories' => $stories, 'total' => (int)$total, 'pages' => (int)ceil($total / $per_page)];
@@ -662,7 +727,7 @@ class HDK_DB {
         global $wpdb;
         $table = self::table('hdk_chapters');
         return $wpdb->get_results($wpdb->prepare(
-            "SELECT id, chapter_number, title, status, word_count FROM $table
+            "SELECT id, chapter_number, title, status, word_count, price, price_mode FROM $table
              WHERE story_id = %d AND status IN ('published','scheduled') ORDER BY chapter_number ASC",
             $story_id
         ));

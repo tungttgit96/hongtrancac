@@ -94,6 +94,7 @@ class HDK_Schema {
             content LONGTEXT,
             word_count INT UNSIGNED DEFAULT 0,
             price INT UNSIGNED DEFAULT 0,
+            price_mode VARCHAR(20) DEFAULT 'inherit',
             views BIGINT UNSIGNED DEFAULT 0,
             status ENUM('draft','published','scheduled') DEFAULT 'draft',
             scheduled_at DATETIME NULL,
@@ -292,15 +293,17 @@ class HDK_Schema {
         self::add_column_if_not_exists("{$wpdb->prefix}hdk_stories", 'chapter_price', "INT UNSIGNED DEFAULT 0 AFTER free_chapters");
         self::add_column_if_not_exists("{$wpdb->prefix}hdk_stories", 'full_price', "INT UNSIGNED DEFAULT 0 AFTER chapter_price");
         self::add_column_if_not_exists("{$wpdb->prefix}hdk_chapters", 'price', "INT UNSIGNED DEFAULT 0 AFTER word_count");
+        self::add_column_if_not_exists("{$wpdb->prefix}hdk_chapters", 'price_mode', "VARCHAR(20) DEFAULT 'inherit' AFTER price");
         self::add_column_if_not_exists("{$wpdb->prefix}hdk_chapters", 'scheduled_at', "DATETIME NULL AFTER price");
         self::add_column_if_not_exists("{$wpdb->prefix}hdk_user_credits", 'last_daily_at', "DATETIME NULL AFTER total_spent");
 
         // Add 'scheduled' to chapters status ENUM for existing installs
         $wpdb->query("ALTER TABLE {$wpdb->prefix}hdk_chapters MODIFY COLUMN status ENUM('draft','published','scheduled') DEFAULT 'draft'");
+        $wpdb->query("UPDATE {$wpdb->prefix}hdk_chapters SET price_mode = 'custom' WHERE price > 0 AND (price_mode IS NULL OR price_mode = '' OR price_mode = 'inherit')");
     }
 
     public static function maybe_upgrade() {
-        $target_version = '2026.06.15.2';
+        $target_version = '2026.06.15.3';
         $current_version = get_option('hdk_schema_version', '0');
 
         if (version_compare($current_version, $target_version, '>=')) {

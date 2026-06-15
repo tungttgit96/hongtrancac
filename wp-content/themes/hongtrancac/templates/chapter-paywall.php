@@ -31,8 +31,8 @@ get_header();
                 <?php echo $free_chapters; ?> chương đầu miễn phí. Từ chương <?php echo $free_chapters + 1; ?> cần đăng nhập.
             </p>
             <div style="display:flex;gap:12px;justify-content:center;margin-top:20px;">
-                <a href="<?php echo wp_login_url($_SERVER['REQUEST_URI']); ?>" class="btn btn-primary">Đăng nhập</a>
-                <a href="<?php echo wp_registration_url(); ?>" class="btn btn-outline">Đăng ký</a>
+                <a href="<?php echo esc_url(hdk_login_url(home_url($_SERVER['REQUEST_URI'] ?? '/'))); ?>" class="btn btn-primary">Đăng nhập</a>
+                <a href="<?php echo esc_url(hdk_register_url(home_url($_SERVER['REQUEST_URI'] ?? '/'))); ?>" class="btn btn-outline">Đăng ký</a>
             </div>
         </div>
     <?php else: ?>
@@ -53,9 +53,11 @@ get_header();
             </div>
 
             <div style="display:flex;gap:12px;justify-content:center;flex-wrap:wrap;align-items:center;" id="purchase-buttons">
+                <?php if ($chapter_price > 0): ?>
                 <button type="button" class="btn btn-primary" onclick="purchaseChapter(<?php echo $story->id; ?>, <?php echo $chapter_number; ?>)">
                     🔑 Mua chương này (<?php echo $chapter_price; ?> hạt)
                 </button>
+                <?php endif; ?>
                 <?php if ($full_price > 0): ?>
                 <button type="button" class="btn btn-outline" onclick="purchaseFull(<?php echo $story->id; ?>)">
                     📚 Mở toàn bộ (<?php echo $full_price; ?> hạt)
@@ -71,6 +73,7 @@ get_header();
     <?php endif; ?>
 </div>
 
+<?php if ($access['reason'] !== 'login_required'): ?>
 <script>
 var storyId = <?php echo $story->id; ?>;
 var chapterNum = <?php echo $chapter_number; ?>;
@@ -142,5 +145,6 @@ function purchaseFull(sid) {
     });
 }
 </script>
+<?php endif; ?>
 
 <?php get_footer(); ?>
