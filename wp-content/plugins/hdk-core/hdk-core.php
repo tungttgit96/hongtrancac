@@ -10,6 +10,58 @@
 
 defined('ABSPATH') || exit;
 
+/**
+ * Let local development run from 127.0.0.1/localhost even if the DB was
+ * installed with a .test domain. This keeps home_url(), site_url(), assets,
+ * redirects, canonical URLs and REST links on the current loopback host.
+ */
+function hdk_local_request_origin() {
+    $host_header = $_SERVER['HTTP_HOST'] ?? '';
+    if ($host_header === '') {
+        return '';
+    }
+
+    $host = strtolower($host_header);
+    if (str_starts_with($host, '[')) {
+        $host_only = trim(strstr($host, ']', true) ?: $host, '[]');
+    } else {
+        $host_only = preg_replace('/:\d+$/', '', $host);
+    }
+
+    if (!in_array($host_only, ['127.0.0.1', 'localhost', '::1'], true)) {
+        return '';
+    }
+
+    $scheme = is_ssl() ? 'https' : 'http';
+    return $scheme . '://' . $host_header;
+}
+
+function hdk_filter_local_site_url($value) {
+    return hdk_local_request_origin() ?: $value;
+}
+
+function hdk_filter_local_absolute_url($url) {
+    $origin = hdk_local_request_origin();
+    if ($origin === '' || !is_string($url) || $url === '') {
+        return $url;
+    }
+
+    return str_replace(
+        [
+            'https://hongtrancac.test',
+            'http://hongtrancac.test',
+            'http://localhost/hongtrancac',
+            'https://localhost/hongtrancac',
+        ],
+        $origin,
+        $url
+    );
+}
+
+add_filter('option_home', 'hdk_filter_local_site_url', 1);
+add_filter('option_siteurl', 'hdk_filter_local_site_url', 1);
+add_filter('clean_url', 'hdk_filter_local_absolute_url', 1);
+
 define('HDK_VERSION', '1.0.0');
 define('HDK_PLUGIN_DIR', plugin_dir_path(__FILE__));
 define('HDK_PLUGIN_URL', plugin_dir_url(__FILE__));

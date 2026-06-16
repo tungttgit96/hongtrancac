@@ -2,19 +2,18 @@
 # ============================================
 # Hồng Trần Các - WordPress Setup Script
 # ============================================
-# Usage: bash setup.sh [domain]
-# Example: bash setup.sh hongtrancac.test
+# Usage: bash setup.sh [url]
+# Example: bash setup.sh http://127.0.0.1:8000
 #
 # Prerequisites:
-#   - Herd installed and running
 #   - MySQL 8+ available
-#   - WP-CLI installed (comes with Herd)
-#   - PHP 8.3+ (comes with Herd)
+#   - WP-CLI installed
+#   - PHP 8.0+
 
 set -e
 
-SITE_DOMAIN="${1:-hongtrancac.test}"
-SITE_DIR="$HOME/Herd/$SITE_DOMAIN"
+SITE_URL="${1:-http://127.0.0.1:8000}"
+SITE_DIR="$(cd "$(dirname "$0")" && pwd)"
 DB_NAME="hongtrancac"
 DB_USER="root"
 DB_PASS=""
@@ -27,17 +26,12 @@ echo "====================================="
 echo "  Hồng Trần Các - WordPress Setup"
 echo "====================================="
 echo ""
-echo "Site: $SITE_DOMAIN"
+echo "Site: $SITE_URL"
 echo "Dir:  $SITE_DIR"
 echo ""
 
-# Step 1: Create site directory
-if [ ! -d "$SITE_DIR" ]; then
-    echo "[1/8] Creating site directory..."
-    mkdir -p "$SITE_DIR"
-else
-    echo "[1/8] Site directory exists: $SITE_DIR"
-fi
+# Step 1: Use repo as site directory
+echo "[1/8] Using repo as site directory: $SITE_DIR"
 
 # Step 2: Download WordPress
 if [ ! -f "$SITE_DIR/wp-config.php" ]; then
@@ -75,29 +69,18 @@ fi
 echo "[5/8] Installing WordPress..."
 cd "$SITE_DIR"
 wp core install \
-    --url="https://$SITE_DOMAIN" \
+    --url="$SITE_URL" \
     --title="$SITE_TITLE" \
     --admin_user="$ADMIN_USER" \
     --admin_password="$ADMIN_PASS" \
     --admin_email="$ADMIN_EMAIL" \
     --skip-email 2>/dev/null || echo "WordPress already installed"
 
-# Step 6: Copy theme and plugin
-echo "[6/8] Copying theme and plugin..."
-THEME_SRC="$(dirname "$0")/wp-content/themes/hongtrancac"
-PLUGIN_SRC="$(dirname "$0")/wp-content/plugins/hdk-core"
+wp option update home "$SITE_URL" 2>/dev/null || true
+wp option update siteurl "$SITE_URL" 2>/dev/null || true
 
-if [ -d "$THEME_SRC" ]; then
-    mkdir -p "$SITE_DIR/wp-content/themes/hongtrancac"
-    cp -r "$THEME_SRC"/* "$SITE_DIR/wp-content/themes/hongtrancac/"
-    echo "  Theme copied"
-fi
-
-if [ -d "$PLUGIN_SRC" ]; then
-    mkdir -p "$SITE_DIR/wp-content/plugins/hdk-core"
-    cp -r "$PLUGIN_SRC"/* "$SITE_DIR/wp-content/plugins/hdk-core/"
-    echo "  Plugin copied"
-fi
+# Step 6: Theme and plugin already live in this repo
+echo "[6/8] Theme and plugin already available in repo wp-content/"
 
 # Step 7: Activate theme and plugin
 echo "[7/8] Activating theme and plugin..."
@@ -147,25 +130,22 @@ wp rewrite flush 2>/dev/null
 # Update permalink structure
 wp rewrite structure '/%postname%/' 2>/dev/null
 
-# Link with Herd when available
-if command -v herd >/dev/null 2>&1; then
-    herd link "$SITE_DIR" >/dev/null 2>&1 || true
-    herd secure "$SITE_DOMAIN" >/dev/null 2>&1 || true
-fi
-
 echo ""
 echo "====================================="
 echo "  Setup Complete!"
 echo "====================================="
 echo ""
-echo "Site URL:     https://$SITE_DOMAIN"
-echo "Admin URL:    https://$SITE_DOMAIN/wp-admin"
+echo "Site URL:     $SITE_URL"
+echo "Admin URL:    $SITE_URL/wp-admin"
 echo "Username:     $ADMIN_USER"
 echo "Password:     $ADMIN_PASS"
 echo ""
 echo "To seed demo data:"
-echo "  1. Go to https://$SITE_DOMAIN/wp-admin"
+echo "  1. Go to $SITE_URL/wp-admin"
 echo "  2. Navigate to HDK Truyện > Seed Demo"
 echo "  3. Or run: wp --path=$SITE_DIR hdk seed"
 echo ""
-echo "Enjoy! 📚"
+echo "Start local server:"
+echo "  bash start-local.sh"
+echo ""
+echo "Enjoy!"

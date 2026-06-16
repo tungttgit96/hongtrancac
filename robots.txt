@@ -5,4 +5,4 @@ Disallow: /wp-login.php
 Disallow: /wp-content/plugins/
 Disallow: /wp-includes/
 
-Sitemap: https://hongtrancac.test/sitemap.xml
+Sitemap: http://127.0.0.1:8000/sitemap.xml

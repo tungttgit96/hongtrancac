@@ -61,17 +61,17 @@ Nền tảng đọc truyện chữ online xây dựng trên **WordPress** + cust
 
 ---
 
-## Chạy local nhanh nhất trên macOS (Laravel Herd)
+## Chạy local nhanh nhất bằng 127.0.0.1
 
-Đây là cách khuyến nghị để start site local dễ nhất.
+Đây là cách khuyến nghị hiện tại. Không cần domain `.test`; site chạy trực tiếp ở `http://127.0.0.1:8000`.
 
 ### Cần có
 
-- [Laravel Herd](https://herd.laravel.com) đang chạy
 - MySQL local
 - WP-CLI
+- PHP 8.0+
 
-Herd thường đã có PHP/WP-CLI. Nếu thiếu MySQL:
+Nếu thiếu MySQL:
 
 ```bash
 brew install mysql@8.0
@@ -83,26 +83,31 @@ brew services start mysql@8.0
 Chạy từ thư mục repo:
 
 ```bash
-bash setup.sh hongtrancac.test
+bash setup.sh
 ```
 
 Script sẽ:
 
-- Tạo site trong `~/Herd/hongtrancac.test`
+- Dùng chính thư mục repo làm WordPress root
 - Tải WordPress tiếng Việt
 - Tạo database `hongtrancac`
 - Tạo `wp-config.php`
-- Cài WordPress
-- Copy theme `hongtrancac` và plugin `hdk-core`
+- Cài WordPress với URL `http://127.0.0.1:8000`
 - Active theme/plugin
 - Tạo các page cần thiết: `/dang-nhap`, `/dang-ky`, `/tai-khoan`, `/danh-sach-truyen`, `/bang-xep-hang`, `/the-loai`, `/hoan-thanh`, `/truyen-free`
 - Flush permalink
 
-Sau khi xong:
+Start web:
+
+```bash
+bash start-local.sh
+```
+
+Sau khi server chạy:
 
 ```text
-Site:  https://hongtrancac.test
-Admin: https://hongtrancac.test/wp-admin
+Site:  http://127.0.0.1:8000
+Admin: http://127.0.0.1:8000/wp-admin
 User:  admin
 Pass:  admin123
 ```
@@ -110,22 +115,23 @@ Pass:  admin123
 Seed dữ liệu mẫu:
 
 ```bash
-wp --path="$HOME/Herd/hongtrancac.test" hdk seed
+wp --path="$(pwd)" hdk seed
 ```
 
 Nếu đổi code trong repo sau khi đã setup, chạy lại:
 
 ```bash
-bash setup.sh hongtrancac.test
+bash setup.sh
 ```
 
-Script sẽ copy lại theme/plugin sang thư mục Herd.
+Script sẽ giữ nguyên theme/plugin trong repo và cập nhật lại cấu hình cần thiết.
 
 ### Lỗi thường gặp
 
 - `mysql: command not found`: cài MySQL bằng Homebrew hoặc dùng MySQL đi kèm app khác.
-- `wp: command not found`: cài WP-CLI hoặc mở terminal do Herd cung cấp.
-- `hongtrancac.test` không mở được: kiểm tra Herd đang chạy, rồi chạy `herd link ~/Herd/hongtrancac.test` và `herd secure hongtrancac.test`.
+- `wp: command not found`: cài WP-CLI.
+- `http://127.0.0.1:8000` không mở được: kiểm tra terminal đang chạy `bash start-local.sh`.
+- Link vẫn nhảy về domain cũ: plugin `hdk-core` đã override local URL theo request host. Nếu vẫn gặp, flush cache trình duyệt và chạy `wp option update home http://127.0.0.1:8000 && wp option update siteurl http://127.0.0.1:8000`.
 - CSS không đổi sau khi sửa: theme đã dùng `filemtime()` để cache-bust CSS/JS, chỉ cần refresh browser.
 
 ---
@@ -175,7 +181,7 @@ wp config create \
 
 # 7. Cài WordPress
 wp core install \
-  --url="https://hongtrancac.test" \
+  --url="http://127.0.0.1:8000" \
   --title="Hồng Trần Các" \
   --admin_user="admin" \
   --admin_password="your-password" \
@@ -214,7 +220,7 @@ herd secure hongtrancac
 wp hdk seed
 ```
 
-Truy cập: `https://hongtrancac.test` | Admin: `https://hongtrancac.test/wp-admin`
+Truy cập: `http://127.0.0.1:8000` | Admin: `http://127.0.0.1:8000/wp-admin`
 
 ---
 
@@ -255,10 +261,10 @@ cp -r wp-content/plugins/hdk-core C:\laragon\www\hongtrancac\wp-content\plugins\
 wp config create --dbname=hongtrancac --dbuser=root --dbpass= --dbhost=localhost
 
 # 6-12. Chạy tương tự như macOS (bước 6-12 ở trên)
-# Lưu ý: URL sẽ là http://hongtrancac.test (Laragon dùng .test mặc định)
+# URL local khuyến nghị: http://127.0.0.1:8000
 ```
 
-Truy cập: `http://hongtrancac.test` | Admin: `http://hongtrancac.test/wp-admin`
+Truy cập: `http://127.0.0.1:8000` | Admin: `http://127.0.0.1:8000/wp-admin`
 
 ---
 
