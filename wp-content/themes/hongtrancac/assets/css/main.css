@@ -452,13 +452,14 @@ html[data-theme="dark"] select {
     opacity: 1;
     transform: none;
 }
-.motion-enabled .motion-stagger {
+.motion-enabled .motion-reveal .motion-stagger {
     opacity: 0;
     transform: translateY(16px);
     transition:
         opacity var(--motion-duration-fast) var(--motion-ease-out),
         transform var(--motion-duration-fast) var(--motion-ease-out);
 }
+.motion-enabled .motion-reveal .motion-stagger.motion-visible,
 .motion-enabled .motion-stagger.motion-visible {
     opacity: 1;
     transform: none;
