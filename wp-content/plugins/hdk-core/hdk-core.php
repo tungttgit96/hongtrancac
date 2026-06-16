@@ -46,7 +46,7 @@ function hdk_filter_local_absolute_url($url) {
         return $url;
     }
 
-    return str_replace(
+    $url = str_replace(
         [
             'https://hongtrancac.test',
             'http://hongtrancac.test',
@@ -56,11 +56,19 @@ function hdk_filter_local_absolute_url($url) {
         $origin,
         $url
     );
+
+    return preg_replace('#https?://(?:127\.0\.0\.1|localhost|\[::1\])(?::\d+)?#i', $origin, $url);
 }
 
 add_filter('option_home', 'hdk_filter_local_site_url', 1);
 add_filter('option_siteurl', 'hdk_filter_local_site_url', 1);
 add_filter('clean_url', 'hdk_filter_local_absolute_url', 1);
+add_filter('content_url', 'hdk_filter_local_absolute_url', 1);
+add_filter('plugins_url', 'hdk_filter_local_absolute_url', 1);
+add_filter('script_loader_src', 'hdk_filter_local_absolute_url', 1);
+add_filter('style_loader_src', 'hdk_filter_local_absolute_url', 1);
+add_filter('stylesheet_directory_uri', 'hdk_filter_local_absolute_url', 1);
+add_filter('template_directory_uri', 'hdk_filter_local_absolute_url', 1);
 
 define('HDK_VERSION', '1.0.0');
 define('HDK_PLUGIN_DIR', plugin_dir_path(__FILE__));
