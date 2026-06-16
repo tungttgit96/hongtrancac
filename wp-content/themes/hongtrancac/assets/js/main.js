@@ -6,6 +6,8 @@
 (function() {
     'use strict';
 
+    document.documentElement.classList.add('motion-enabled');
+
     function restNonce() {
         return window.hdkRestNonce || '';
     }
@@ -168,6 +170,36 @@
         updateMobileLayout();
     })();
 
+    // ===== Motion Observer =====
+    (function initMotion() {
+        if (!window.IntersectionObserver) {
+            document.querySelectorAll('.motion-reveal, .motion-stagger').forEach(function(el) {
+                el.classList.add('motion-visible');
+            });
+            return;
+        }
+        var reveals = document.querySelectorAll('.motion-reveal');
+        if (!reveals.length) return;
+
+        var observer = new IntersectionObserver(function(entries) {
+            entries.forEach(function(entry) {
+                if (!entry.isIntersecting) return;
+                var el = entry.target;
+                el.classList.add('motion-visible');
+
+                var staggers = el.querySelectorAll('.motion-stagger');
+                staggers.forEach(function(child, i) {
+                    child.style.transitionDelay = (i * 80) + 'ms';
+                    child.classList.add('motion-visible');
+                });
+
+                observer.unobserve(el);
+            });
+        }, { rootMargin: '0px 0px -60px 0px', threshold: 0.1 });
+
+        reveals.forEach(function(el) { observer.observe(el); });
+    })();
+
     // ===== Hero Banner =====
     var bannerCards = document.querySelectorAll('.banner-card');
     var bannerCover = document.getElementById('banner-cover-img');
@@ -200,12 +232,15 @@
         bannerCards.forEach(function(c) { c.classList.remove('active'); });
         card.classList.add('active');
 
-        bannerCover.style.opacity = '0';
+        var cover = bannerCover;
+        cover.style.opacity = '0';
+        cover.style.transform = 'translateX(10px)';
         setTimeout(function() {
-            bannerCover.src = card.dataset.cover;
-            bannerCover.alt = card.dataset.title;
-            bannerCover.style.opacity = '1';
-        }, 200);
+            cover.src = card.dataset.cover;
+            cover.alt = card.dataset.title;
+            cover.style.opacity = '1';
+            cover.style.transform = 'translateX(0)';
+        }, 350);
 
         if (bannerTitle) bannerTitle.textContent = card.dataset.title;
         if (bannerSummary) bannerSummary.textContent = card.dataset.summary;
@@ -226,6 +261,21 @@
     }
 
     initBanner();
+
+    // Pause auto-rotate when user hovers/focuses the banner
+    var heroBanner = document.querySelector('.hero-banner');
+    if (heroBanner) {
+        heroBanner.addEventListener('mouseenter', function() {
+            if (bannerInterval) clearInterval(bannerInterval);
+            bannerInterval = null;
+        });
+        heroBanner.addEventListener('mouseleave', resetBannerInterval);
+        heroBanner.addEventListener('focusin', function() {
+            if (bannerInterval) clearInterval(bannerInterval);
+            bannerInterval = null;
+        });
+        heroBanner.addEventListener('focusout', resetBannerInterval);
+    }
 
     // Favorite toggle
     document.addEventListener('click', function(e) {

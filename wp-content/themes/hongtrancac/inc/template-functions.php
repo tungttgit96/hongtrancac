@@ -24,6 +24,34 @@ function hdk_register_url($redirect_to = '') {
     return add_query_arg('redirect_to', $redirect_to, home_url('/dang-ky'));
 }
 
+/**
+ * Validate a username for the themed registration/login flow.
+ * Restricts to lowercase letters, numbers, underscores and hyphens.
+ * Spaces, dots, @ symbols and other special characters are rejected
+ * so usernames are easy to type and login stays predictable.
+ */
+function hdk_validate_username_format($username) {
+    return (bool) preg_match('/^[a-z0-9_-]+$/', $username);
+}
+
+/**
+ * Perform a strict, consistent sanitize of the username used across
+ * registration and login so both endpoints agree on the final value.
+ */
+function hdk_sanitize_username_input($username) {
+    return sanitize_user((string) $username, true);
+}
+
+/**
+ * Safe redirect wrapper that only allows redirects to the local site.
+ * Falls back to the site home URL if the provided URL is external.
+ */
+function hdk_safe_redirect($location, $status = 302) {
+    $safe = wp_validate_redirect($location, home_url('/'));
+    wp_safe_redirect($safe, $status);
+    exit;
+}
+
 function hdk_get_story_card($story, $index = 0) {
     $url = home_url('/' . ($story->slug ?? ''));
     $title = esc_html($story->title ?? '');
@@ -34,7 +62,7 @@ function hdk_get_story_card($story, $index = 0) {
     $price_summary = class_exists('HDK_DB') ? HDK_DB::get_story_price_summary($story) : ['has_pricing' => false, 'label' => ''];
     $lazy = $index >= 8 ? ' loading="lazy"' : '';
     ?>
-    <a href="<?php echo esc_url($url); ?>" class="card story-card" title="<?php echo $title; ?>">
+    <a href="<?php echo esc_url($url); ?>" class="card story-card motion-stagger" title="<?php echo $title; ?>">
         <img src="<?php echo esc_url($cover); ?>" alt="<?php echo $title; ?>" class="card-img"<?php echo $lazy; ?>>
         <div class="card-body">
             <h3 class="card-title"><?php echo $title; ?></h3>

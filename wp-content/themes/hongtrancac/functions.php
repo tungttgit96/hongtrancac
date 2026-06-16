@@ -46,6 +46,14 @@ require_once get_template_directory() . '/inc/template-functions.php';
 
 add_action('template_redirect', function() {
     $path = trim(parse_url($_SERVER['REQUEST_URI'] ?? '', PHP_URL_PATH), '/');
+    if ($path === 'danh-sach-truyen' && isset($_GET['s'])) {
+        $args = $_GET;
+        $args['keyword'] = sanitize_text_field(wp_unslash($args['s']));
+        unset($args['s']);
+        wp_safe_redirect(add_query_arg($args, home_url('/danh-sach-truyen/')), 301);
+        exit;
+    }
+
     if ($path === 'dang-ky') {
         include get_template_directory() . '/page-dang-ky.php';
         exit;

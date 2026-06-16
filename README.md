@@ -131,8 +131,10 @@ Script sẽ giữ nguyên theme/plugin trong repo và cập nhật lại cấu h
 - `mysql: command not found`: cài MySQL bằng Homebrew hoặc dùng MySQL đi kèm app khác.
 - `wp: command not found`: cài WP-CLI.
 - `http://127.0.0.1:8000` không mở được: kiểm tra terminal đang chạy `bash start-local.sh`.
+- Nếu dùng `localhost`, truy cập `http://localhost:8000`. Asset sẽ tự dùng đúng host bạn mở.
 - Link vẫn nhảy về domain cũ: plugin `hdk-core` đã override local URL theo request host. Nếu vẫn gặp, flush cache trình duyệt và chạy `wp option update home http://127.0.0.1:8000 && wp option update siteurl http://127.0.0.1:8000`.
 - CSS không đổi sau khi sửa: theme đã dùng `filemtime()` để cache-bust CSS/JS, chỉ cần refresh browser.
+- Trang danh sách truyện dùng `keyword` để tìm kiếm, ví dụ `http://localhost:8000/danh-sach-truyen/?keyword=mat`. Không dùng `?s=` vì đó là query search mặc định của WordPress.
 
 ---
 

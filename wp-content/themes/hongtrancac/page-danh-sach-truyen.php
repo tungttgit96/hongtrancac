@@ -8,7 +8,7 @@ $page = isset($_GET['page']) ? max(1, (int)$_GET['page']) : 1;
 $status = $_GET['status'] ?? '';
 $category = (int)($_GET['category'] ?? 0);
 $is_free = isset($_GET['free']) ? 1 : null;
-$search = sanitize_text_field($_GET['s'] ?? '');
+$search = sanitize_text_field($_GET['keyword'] ?? '');
 $orderby = sanitize_text_field($_GET['orderby'] ?? 'updated_at');
 $per_page = 20;
 
@@ -34,8 +34,8 @@ get_header();
     </div>
 
     <!-- Filters -->
-    <div class="panel toolbar" style="padding:16px;margin-bottom:20px;">
-        <input type="text" id="search-input" name="search" aria-label="Tìm truyện" autocomplete="off" placeholder="Tìm truyện…" value="<?php echo esc_attr($search); ?>"
+    <form class="panel toolbar" method="get" action="<?php echo esc_url(home_url('/danh-sach-truyen/')); ?>" style="padding:16px;margin-bottom:20px;">
+        <input type="search" id="search-input" name="keyword" aria-label="Tìm truyện" autocomplete="off" placeholder="Tìm truyện…" value="<?php echo esc_attr($search); ?>"
                style="flex:1;min-width:200px;padding:8px 16px;border:2px solid var(--color-input-border);background:var(--color-input-bg);color:var(--color-text-primary);border-radius:var(--radius-pill);font-family:var(--font-family);min-height:var(--touch-target);">
         <select id="status-filter" name="status" aria-label="Lọc theo trạng thái" style="padding:8px 16px;border:2px solid var(--color-input-border);background:var(--color-input-bg);color:var(--color-text-primary);border-radius:var(--radius-pill);font-family:var(--font-family);min-height:var(--touch-target);">
             <option value="">Tất cả trạng thái</option>
@@ -57,8 +57,8 @@ get_header();
             <option value="published_at" <?php selected($orderby, 'published_at'); ?>>Mới xuất bản</option>
             <option value="title" <?php selected($orderby, 'title'); ?>>Tên A-Z</option>
         </select>
-        <button type="button" class="btn btn-primary btn-sm" onclick="applyFilters()">Lọc</button>
-    </div>
+        <button type="submit" class="btn btn-primary btn-sm">Lọc</button>
+    </form>
 
     <?php if (!empty($result['stories'])): ?>
         <div class="grid grid-4">
@@ -67,7 +67,7 @@ get_header();
             <?php endforeach; ?>
         </div>
         <?php hdk_get_pagination($result['pages'], $page, [
-            's' => $search,
+            'keyword' => $search,
             'status' => $status,
             'category' => $category,
             'orderby' => $orderby !== 'updated_at' ? $orderby : '',
@@ -79,20 +79,5 @@ get_header();
         </div>
     <?php endif; ?>
 </div>
-
-<script>
-function applyFilters() {
-    var params = new URLSearchParams();
-    var s = document.getElementById('search-input').value;
-    var status = document.getElementById('status-filter').value;
-    var cat = document.getElementById('category-filter').value;
-    var order = document.getElementById('orderby-filter').value;
-    if (s) params.set('s', s);
-    if (status) params.set('status', status);
-    if (cat && cat !== '0') params.set('category', cat);
-    if (order && order !== 'updated_at') params.set('orderby', order);
-    window.location.href = '?' + params.toString();
-}
-</script>
 
 <?php get_footer(); ?>

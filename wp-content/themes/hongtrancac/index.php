@@ -25,7 +25,7 @@ $free_stories = HDK_Cache::get_home_stories(['per_page' => 12, 'is_free' => 1, '
 <?php hdk_get_hero_section(); ?>
 
 <!-- New Stories -->
-<section class="section">
+<section class="section motion-reveal">
     <div class="container">
         <div class="section-header">
             <h2 class="section-title">🆕 Truyện mới cập nhật</h2>
@@ -40,7 +40,7 @@ $free_stories = HDK_Cache::get_home_stories(['per_page' => 12, 'is_free' => 1, '
 </section>
 
 <!-- Hot Stories -->
-<section class="section" style="background:var(--color-bg);">
+<section class="section motion-reveal" style="background:var(--color-bg);">
     <div class="container">
         <div class="section-header">
             <h2 class="section-title">🔥 Truyện hot nhất</h2>
@@ -55,7 +55,7 @@ $free_stories = HDK_Cache::get_home_stories(['per_page' => 12, 'is_free' => 1, '
 </section>
 
 <!-- Completed Stories -->
-<section class="section" style="background:var(--color-bg);">
+<section class="section motion-reveal" style="background:var(--color-bg);">
     <div class="container">
         <div class="section-header">
             <h2 class="section-title">✅ Truyện hoàn thành</h2>
@@ -70,7 +70,7 @@ $free_stories = HDK_Cache::get_home_stories(['per_page' => 12, 'is_free' => 1, '
 </section>
 
 <!-- Free Stories -->
-<section class="section">
+<section class="section motion-reveal">
     <div class="container">
         <div class="section-header">
             <h2 class="section-title">🎁 Truyện miễn phí</h2>
@@ -88,7 +88,7 @@ $free_stories = HDK_Cache::get_home_stories(['per_page' => 12, 'is_free' => 1, '
 <?php
 $editor_picks = HDK_Cache::get_home_stories(['orderby' => 'average_rating', 'order' => 'DESC', 'per_page' => 6, 'exclude_hidden' => true], 'home_editor');
 if (!empty($editor_picks['stories'])): ?>
-<section class="section">
+<section class="section motion-reveal">
     <div class="container">
         <div class="section-header">
             <h2 class="section-title">⭐ Đề cử biên tập</h2>
@@ -106,7 +106,7 @@ if (!empty($editor_picks['stories'])): ?>
 <?php
 $weekly_hot = HDK_Cache::get_home_ranking('views', 'week', 0, 1, 6, 'home_weekly');
 if (!empty($weekly_hot['stories'])): ?>
-<section class="section" style="background:var(--color-bg);">
+<section class="section motion-reveal" style="background:var(--color-bg);">
     <div class="container">
         <div class="section-header">
             <h2 class="section-title">🔥 Hot tuần này</h2>
