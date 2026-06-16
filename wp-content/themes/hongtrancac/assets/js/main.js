@@ -86,9 +86,15 @@
     // ===== Header UI =====
     (function initHeader() {
         var searchModal = document.getElementById('search-modal');
+        var searchInput = document.getElementById('site-search-input');
+        var searchForm = document.getElementById('site-search-form');
+        var searchResults = document.getElementById('site-search-results');
+        var searchStatus = document.getElementById('site-search-status');
         var mobileDrawer = document.getElementById('mobile-drawer');
         var mainNav = document.getElementById('main-nav');
         var mobileToggle = document.querySelector('.mobile-menu-toggle');
+        var searchTimer = null;
+        var lastSearch = '';
 
         function updateMobileLayout() {
             if (!mainNav || !mobileToggle) return;
@@ -105,12 +111,22 @@
         function openSearch() {
             if (!searchModal) return;
             searchModal.classList.add('active');
-            var input = searchModal.querySelector('input[name="search"]');
-            if (input) setTimeout(function() { input.focus(); }, 10);
+            searchModal.setAttribute('aria-hidden', 'false');
+            document.body.classList.add('search-open');
+            document.querySelectorAll('.search-toggle').forEach(function(el) {
+                el.setAttribute('aria-expanded', 'true');
+            });
+            if (searchInput) setTimeout(function() { searchInput.focus(); }, 10);
         }
 
         function closeSearch() {
-            if (searchModal) searchModal.classList.remove('active');
+            if (!searchModal) return;
+            searchModal.classList.remove('active');
+            searchModal.setAttribute('aria-hidden', 'true');
+            document.body.classList.remove('search-open');
+            document.querySelectorAll('.search-toggle').forEach(function(el) {
+                el.setAttribute('aria-expanded', 'false');
+            });
         }
 
         function openMobileDrawer() {
@@ -119,6 +135,71 @@
 
         function closeMobileDrawer() {
             if (mobileDrawer) mobileDrawer.classList.remove('open');
+        }
+
+        function escapeHtml(value) {
+            return String(value || '').replace(/[&<>"']/g, function(ch) {
+                return {
+                    '&': '&amp;',
+                    '<': '&lt;',
+                    '>': '&gt;',
+                    '"': '&quot;',
+                    "'": '&#039;'
+                }[ch];
+            });
+        }
+
+        function storyStatusLabel(status) {
+            if (status === 'completed') return 'Hoàn thành';
+            if (status === 'dropped') return 'Ngừng';
+            return 'Đang ra';
+        }
+
+        function renderSearchResults(data) {
+            if (!searchResults) return;
+            var stories = data && Array.isArray(data.stories) ? data.stories : [];
+            if (!stories.length) {
+                searchResults.innerHTML = '<div class="search-empty">Không tìm thấy truyện phù hợp.</div>';
+                return;
+            }
+
+            searchResults.innerHTML = '<div class="search-results-title">Truyện</div>' + stories.map(function(story) {
+                var slug = encodeURIComponent(story.slug || '');
+                var cover = story.cover_url || '';
+                return '<a class="search-result-card" href="/' + slug + '">' +
+                    '<img src="' + escapeHtml(cover) + '" alt="' + escapeHtml(story.title) + '">' +
+                    '<span class="search-result-copy">' +
+                        '<strong>' + escapeHtml(story.title) + '</strong>' +
+                        '<small>' + storyStatusLabel(story.status) + '</small>' +
+                    '</span>' +
+                '</a>';
+            }).join('');
+        }
+
+        function runSearch(query) {
+            if (!searchStatus || !searchResults) return;
+            var q = (query || '').trim();
+            if (q.length < 2) {
+                lastSearch = '';
+                searchStatus.textContent = 'Nhập ít nhất 2 ký tự để tìm truyện.';
+                searchResults.innerHTML = '';
+                return;
+            }
+            if (q === lastSearch) return;
+            lastSearch = q;
+            searchStatus.textContent = 'Đang tìm...';
+            fetch('/wp-json/hdk/v1/search?q=' + encodeURIComponent(q), {
+                headers: restHeaders()
+            })
+                .then(function(r) { return r.json(); })
+                .then(function(data) {
+                    searchStatus.textContent = 'Kết quả nhanh';
+                    renderSearchResults(data);
+                })
+                .catch(function() {
+                    searchStatus.textContent = 'Không thể tải kết quả tìm kiếm.';
+                    searchResults.innerHTML = '';
+                });
         }
 
         document.querySelectorAll('.search-toggle').forEach(function(el) {
@@ -133,6 +214,25 @@
 
         var searchCloseBtn = document.querySelector('[data-close-search]');
         if (searchCloseBtn) searchCloseBtn.addEventListener('click', closeSearch);
+
+        if (searchInput) {
+            searchInput.addEventListener('input', function() {
+                if (searchTimer) clearTimeout(searchTimer);
+                searchTimer = setTimeout(function() {
+                    runSearch(searchInput.value);
+                }, 250);
+            });
+        }
+
+        if (searchForm) {
+            searchForm.addEventListener('submit', function(e) {
+                var q = searchInput ? searchInput.value.trim() : '';
+                if (!q) {
+                    e.preventDefault();
+                    if (searchInput) searchInput.focus();
+                }
+            });
+        }
 
         if (mobileToggle) {
             mobileToggle.addEventListener('click', function() {
@@ -207,6 +307,7 @@
     var bannerSummary = document.querySelector('.banner-summary');
     var bannerLink = document.querySelector('.banner-read-link');
     var bannerViews = document.querySelector('.banner-views');
+    var bannerInfo = document.querySelector('.banner-info');
     var bannerActiveIndex = 0;
     var bannerTotal = bannerCards.length;
     var bannerInterval = null;
@@ -248,6 +349,11 @@
         if (bannerViews) {
             var views = parseInt(card.dataset.views, 10) || 0;
             bannerViews.textContent = views.toLocaleString('vi-VN') + ' lượt xem';
+        }
+        if (bannerInfo) {
+            bannerInfo.classList.remove('is-changing');
+            void bannerInfo.offsetWidth;
+            bannerInfo.classList.add('is-changing');
         }
     }
 

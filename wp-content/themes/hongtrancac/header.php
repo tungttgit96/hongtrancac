@@ -31,7 +31,7 @@
 
         <div class="header-actions" style="display:flex;align-items:center;gap:8px;">
             <button type="button" class="btn btn-ghost btn-sm theme-toggle" id="theme-toggle" aria-label="Chuyển chế độ sáng/tối" aria-pressed="false" style="min-height:var(--touch-target);min-width:var(--touch-target);font-size:1.15rem;">☀</button>
-            <button type="button" class="btn btn-ghost btn-sm search-toggle" aria-label="Tìm kiếm" style="min-height:var(--touch-target);min-width:var(--touch-target);">
+            <button type="button" class="btn btn-ghost btn-sm search-toggle" aria-label="Tìm kiếm" aria-controls="search-modal" aria-expanded="false" style="min-height:var(--touch-target);min-width:var(--touch-target);">
                 🔍
             </button>
             <?php if (is_user_logged_in()): ?>
@@ -93,26 +93,15 @@
 </header>
 
 <!-- Search Modal -->
-<div id="search-modal" class="search-modal" style="display:none;position:fixed;top:0;left:0;right:0;bottom:0;background:var(--color-overlay);z-index:200;" x-data="{q:'',results:{},loading:false}">
-    <div style="max-width:600px;margin:80px auto 0;background:var(--color-bg);border-radius:var(--radius-lg);padding:24px;">
-        <div style="display:flex;gap:8px;margin-bottom:16px;">
-            <input type="text" x-model="q" name="search" aria-label="Tìm truyện" autocomplete="off" placeholder="Tìm truyện, tác giả, thể loại…" style="flex:1;padding:10px 16px;border:2px solid var(--color-input-border);background:var(--color-input-bg);color:var(--color-text-primary);border-radius:var(--radius-pill);font-family:var(--font-family);font-size:var(--font-size-base);min-height:var(--touch-target);"
-                @input.debounce.300ms="if(q.length>=2){loading=true;fetch('/wp-json/hdk/v1/search?q='+encodeURIComponent(q)).then(r=>r.json()).then(d=>{results=d;loading=false})}">
-            <button type="button" class="btn btn-ghost btn-sm" data-close-search aria-label="Đóng tìm kiếm" style="min-height:var(--touch-target);">✕</button>
-        </div>
-        <div x-show="loading" aria-live="polite" style="text-align:center;padding:20px;">Đang tìm…</div>
-        <div x-show="!loading && results.stories && results.stories.length">
-            <div style="font-weight:600;margin-bottom:8px;">Truyện</div>
-            <template x-for="s in results.stories">
-                <a :href="'/' + s.slug" style="display:flex;align-items:center;gap:12px;padding:8px 0;border-bottom:1px solid var(--color-border-light);text-decoration:none;">
-                    <img :src="s.cover_url" style="width:40px;height:56px;object-fit:cover;border-radius:4px;" :alt="s.title">
-                    <div>
-                        <div style="font-weight:600;color:var(--color-text-primary);" x-text="s.title"></div>
-                        <div style="font-size:var(--font-size-xs);color:var(--color-text-muted);" x-text="s.status"></div>
-                    </div>
-                </a>
-            </template>
-        </div>
+<div id="search-modal" class="search-modal" aria-hidden="true" style="display:none;position:fixed;top:0;left:0;right:0;bottom:0;background:var(--color-overlay);">
+    <div class="search-dialog" role="dialog" aria-modal="true" aria-label="Tìm kiếm truyện">
+        <form id="site-search-form" class="search-form" action="<?php echo esc_url(home_url('/danh-sach-truyen/')); ?>" method="get">
+            <input type="search" id="site-search-input" name="keyword" aria-label="Tìm truyện" autocomplete="off" placeholder="Tìm truyện, tác giả, thể loại…">
+            <button type="submit" class="btn btn-primary btn-sm">Tìm</button>
+            <button type="button" class="btn btn-ghost btn-sm" data-close-search aria-label="Đóng tìm kiếm">✕</button>
+        </form>
+        <div id="site-search-status" class="search-status" aria-live="polite">Nhập ít nhất 2 ký tự để tìm truyện.</div>
+        <div id="site-search-results" class="search-results"></div>
     </div>
 </div>
 
