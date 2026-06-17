@@ -16,7 +16,7 @@ class HDK_Admin {
         add_submenu_page('hdk-stories', 'Import', 'Import', 'manage_options', 'hdk-import', [__CLASS__, 'import_page']);
         add_submenu_page('hdk-stories', 'Banner', 'Banner', 'edit_stories', 'hdk-banner', [__CLASS__, 'banner_page']);
         add_submenu_page('hdk-stories', 'Seed Demo', 'Seed Demo', 'manage_options', 'hdk-seed', [__CLASS__, 'seed_page']);
-        add_submenu_page('hdk-stories', 'Quản lý hạt', 'Quản lý hạt', 'manage_options', 'hdk-credits', [__CLASS__, 'credits_page']);
+        add_submenu_page('hdk-stories', 'Quản lý Linh Thạch', 'Quản lý Linh Thạch', 'manage_options', 'hdk-credits', [__CLASS__, 'credits_page']);
         add_submenu_page('hdk-stories', 'Gói nạp', 'Gói nạp', 'manage_options', 'hdk-packages', [__CLASS__, 'packages_page']);
         add_submenu_page('hdk-stories', 'Lịch sử giao dịch', 'Lịch sử GD', 'manage_options', 'hdk-transactions', [__CLASS__, 'transactions_page']);
         add_submenu_page('hdk-stories', 'Bình luận', 'Bình luận', 'moderate_comments', 'hdk-comments', [__CLASS__, 'comments_page']);
@@ -220,6 +220,9 @@ class HDK_Admin {
             'slug' => sanitize_title($data['slug'] ?: $data['title']),
             'author_id' => (int)($data['author_id'] ?? 0),
             'cover_url' => esc_url_raw($data['cover_url'] ?? ''),
+            'audio_url' => esc_url_raw($data['audio_url'] ?? ''),
+            'audio_title' => sanitize_text_field($data['audio_title'] ?? ''),
+            'audio_duration' => sanitize_text_field($data['audio_duration'] ?? ''),
             'summary' => wp_kses_post($data['summary'] ?? ''),
             'status' => in_array($data['status'] ?? '', ['ongoing','completed','dropped']) ? $data['status'] : 'ongoing',
             'is_free' => isset($data['is_free']) ? 1 : 0,
@@ -454,13 +457,13 @@ class HDK_Admin {
             $final_title = 'Chương ' . $chapter_number . ': ' . $title_line;
             $final_content = $content_raw;
 
-            // Parse inline price: "Tên chương (5 hạt)" -> price = 5
+            // Parse inline price: "Tên chương (5 Linh Thạch)" -> price = 5
             $chap_price_mode = $default_price_mode;
             $chap_price = $default_price;
-            if (preg_match('/\((\d+)\s*hạt\s*\)/ui', $title_line, $pm)) {
+            if (preg_match('/\((\d+)\s*(?:hạt|Linh Thạch)\s*\)/ui', $title_line, $pm)) {
                 $chap_price_mode = 'custom';
                 $chap_price = (int)$pm[1];
-                $final_title = 'Chương ' . $chapter_number . ': ' . trim(preg_replace('/\s*\(\d+\s*hạt\s*\)/ui', '', $title_line));
+                $final_title = 'Chương ' . $chapter_number . ': ' . trim(preg_replace('/\s*\(\d+\s*(?:hạt|Linh Thạch)\s*\)/ui', '', $title_line));
             }
 
             // Check if chapter number already exists
@@ -653,6 +656,26 @@ class HDK_Admin {
                         </td>
                     </tr>
                     <tr>
+                        <th><label for="audio_url">Audio truyện</label></th>
+                        <td>
+                            <div style="display:flex;align-items:center;gap:12px;flex-wrap:wrap;">
+                                <input type="url" name="audio_url" id="audio_url" class="regular-text" value="<?php echo esc_attr($story->audio_url ?? ''); ?>" placeholder="URL file mp3/m4a hoặc stream">
+                                <button type="button" class="button hdk-upload-btn" data-target="audio_url">Chọn audio</button>
+                            </div>
+                            <p class="description">Nếu có URL audio, frontend sẽ hiện nút “Nghe truyện” và truyện được đưa vào khu Truyện audio.</p>
+                            <p>
+                                <label>Tiêu đề audio:
+                                    <input type="text" name="audio_title" class="regular-text" value="<?php echo esc_attr($story->audio_title ?? ''); ?>" placeholder="Mặc định dùng tên truyện">
+                                </label>
+                            </p>
+                            <p>
+                                <label>Thời lượng:
+                                    <input type="text" name="audio_duration" value="<?php echo esc_attr($story->audio_duration ?? ''); ?>" placeholder="VD: 03:25 / 12 tập" style="width:180px;">
+                                </label>
+                            </p>
+                        </td>
+                    </tr>
+                    <tr>
                         <th><label for="summary">Tóm tắt</label></th>
                         <td><textarea name="summary" id="summary" rows="6" class="large-text"><?php echo esc_textarea($story->summary ?? ''); ?></textarea></td>
                     </tr>
@@ -677,12 +700,12 @@ class HDK_Admin {
                             <p class="description">Truyện vẫn hiển thị qua link trực tiếp. Tùy chọn này chỉ áp dụng cho các khu vực tự động; banner thủ công vẫn theo cấu hình banner.</p></td>
                     </tr>
                     <tr>
-                        <th>Thu phí hạt</th>
+                        <th>Thu phí Linh Thạch</th>
                         <td style="display:flex;gap:16px;flex-wrap:wrap;align-items:center;">
                             <label>Số chương miễn phí: <input type="number" name="free_chapters" value="<?php echo (int)($story->free_chapters ?? 0); ?>" style="width:80px;" min="0"></label>
-                            <label>Giá mỗi chương: <input type="number" name="chapter_price" value="<?php echo (int)($story->chapter_price ?? 0); ?>" style="width:80px;" min="0"> hạt</label>
-                            <label>Giá mở full: <input type="number" name="full_price" value="<?php echo (int)($story->full_price ?? 0); ?>" style="width:80px;" min="0"> hạt</label>
-                            <p class="description" style="width:100%;margin-top:4px;">Ví dụ: 2 chương free, mỗi chương sau 3 hạt, mở full 15 hạt. Để 0 nếu miễn phí.</p>
+                            <label>Giá mỗi chương: <input type="number" name="chapter_price" value="<?php echo (int)($story->chapter_price ?? 0); ?>" style="width:80px;" min="0"> Linh Thạch</label>
+                            <label>Giá mở full: <input type="number" name="full_price" value="<?php echo (int)($story->full_price ?? 0); ?>" style="width:80px;" min="0"> Linh Thạch</label>
+                            <p class="description" style="width:100%;margin-top:4px;">Ví dụ: 2 chương free, mỗi chương sau 3 Linh Thạch, mở full 15 Linh Thạch. Để 0 nếu miễn phí.</p>
                         </td>
                     </tr>
                 </table>
@@ -694,18 +717,20 @@ class HDK_Admin {
             $('.hdk-upload-btn').click(function(e){
                 e.preventDefault();
                 var target = $(this).data('target');
-                var frame = wp.media({title:'Chọn ảnh bìa', button:{text:'Chọn ảnh'}, multiple:false});
+                var frame = wp.media({title:'Chọn media', button:{text:'Chọn'}, multiple:false});
                 frame.on('select', function(){
                     var attachment = frame.state().get('selection').first().toJSON();
                     var imageUrl = attachment.url;
-                    if (attachment.sizes) {
+                    if (target === 'cover_url' && attachment.sizes) {
                         imageUrl = (attachment.sizes.large && attachment.sizes.large.url) ||
                             (attachment.sizes.medium_large && attachment.sizes.medium_large.url) ||
                             (attachment.sizes.full && attachment.sizes.full.url) ||
                             imageUrl;
                     }
                     $('#'+target).val(imageUrl);
-                    $('#cover_preview').attr('src', imageUrl).show();
+                    if (target === 'cover_url') {
+                        $('#cover_preview').attr('src', imageUrl).show();
+                    }
                 });
                 frame.open();
             });
@@ -801,8 +826,8 @@ Nội dung chương thứ ba...</code>
                                         <option value="custom">Giá riêng</option>
                                         <option value="free">Miễn phí</option>
                                     </select>
-                                    <input type="number" name="bulk_chapter_price" value="0" style="width:100px;" min="0"> hạt
-                                    <p class="description">Chọn “Theo giá truyện” để chương tự cập nhật khi đổi giá truyện. Có thể ghi đè từng chương bằng format <code>Chương1: Tên (100 hạt)</code>.</p>
+                                    <input type="number" name="bulk_chapter_price" value="0" style="width:100px;" min="0"> Linh Thạch
+                                    <p class="description">Chọn “Theo giá truyện” để chương tự cập nhật khi đổi giá truyện. Có thể ghi đè từng chương bằng format <code>Chương1: Tên (100 Linh Thạch)</code>.</p>
                                 </td>
                             </tr>
                             <tr>
@@ -892,7 +917,7 @@ Nội dung chương 2 viết ở đây..."
                                     </td>
                                 </tr>
                                 <tr>
-                                    <th>Giá (hạt)</th>
+                                    <th>Giá (Linh Thạch)</th>
                                     <td>
                                         <?php $edit_price_mode = $edit_chapter->price_mode ?? ((int)($edit_chapter->price ?? 0) > 0 ? 'custom' : 'inherit'); ?>
                                         <select name="chapter_price_mode">
@@ -900,8 +925,8 @@ Nội dung chương 2 viết ở đây..."
                                             <option value="custom" <?php selected($edit_price_mode, 'custom'); ?>>Giá riêng</option>
                                             <option value="free" <?php selected($edit_price_mode, 'free'); ?>>Miễn phí</option>
                                         </select>
-                                        <input type="number" name="chapter_price" value="<?php echo (int)($edit_chapter->price ?? 0); ?>" style="width:100px;" min="0"> hạt
-                                        <p class="description">“Theo giá truyện” sẽ tự cập nhật khi đổi giá truyện. Chọn “Giá riêng” để set tùy ý, ví dụ 100 hạt.</p>
+                                        <input type="number" name="chapter_price" value="<?php echo (int)($edit_chapter->price ?? 0); ?>" style="width:100px;" min="0"> Linh Thạch
+                                        <p class="description">“Theo giá truyện” sẽ tự cập nhật khi đổi giá truyện. Chọn “Giá riêng” để set tùy ý, ví dụ 100 Linh Thạch.</p>
                                     </td>
                                 </tr>
                                 <tr>
@@ -1315,7 +1340,7 @@ Nội dung chương 2 viết ở đây..."
         $data = HDK_DB::get_all_user_credits($search, $page);
         ?>
         <div class="wrap">
-            <h1 class="wp-heading-inline">Quản lý hạt</h1>
+            <h1 class="wp-heading-inline">Quản lý Linh Thạch</h1>
             <hr class="wp-header-end">
 
             <form method="get" style="margin-bottom:16px;">
@@ -1331,7 +1356,7 @@ Nội dung chương 2 viết ở đây..."
                         <th>Số dư</th>
                         <th>Tổng nạp</th>
                         <th>Tổng tiêu</th>
-                        <th>Điều chỉnh hạt</th>
+                        <th>Điều chỉnh Linh Thạch</th>
                     </tr>
                 </thead>
                 <tbody>
@@ -1345,7 +1370,7 @@ Nội dung chương 2 viết ở đây..."
                             <form method="post" style="display:inline-flex;gap:8px;align-items:center;">
                                 <?php wp_nonce_field('hdk_adjust_credits'); ?>
                                 <input type="hidden" name="user_id" value="<?php echo (int)$row->user_id; ?>">
-                                <input type="number" name="credit_amount" value="" placeholder="+/- hạt" style="width:80px;" required>
+                                <input type="number" name="credit_amount" value="" placeholder="+/- Linh Thạch" style="width:80px;" required>
                                 <input type="text" name="adjust_note" value="" placeholder="Ghi chú" style="width:120px;" required>
                                 <button type="submit" name="hdk_adjust_credits" class="button button-small">Cập nhật</button>
                             </form>
@@ -1378,7 +1403,7 @@ Nội dung chương 2 viết ở đây..."
         $packages = HDK_DB::get_credit_packages(false);
         ?>
         <div class="wrap">
-            <h1 class="wp-heading-inline">Gói nạp hạt</h1>
+            <h1 class="wp-heading-inline">Gói nạp Linh Thạch</h1>
             <?php if (!$edit_id): ?>
                 <a href="?page=hdk-packages&edit=new" class="page-title-action">Thêm gói mới</a>
             <?php endif; ?>
@@ -1396,7 +1421,7 @@ Nội dung chương 2 viết ở đây..."
                                 <td><input type="text" name="package_name" value="<?php echo esc_attr($edit_package->name ?? ''); ?>" required class="regular-text"></td>
                             </tr>
                             <tr>
-                                <th>Số hạt</th>
+                                <th>Số Linh Thạch</th>
                                 <td><input type="number" name="package_credits" value="<?php echo (int)($edit_package->credits ?? 0); ?>" required style="width:100px;"></td>
                             </tr>
                             <tr>
@@ -1495,7 +1520,7 @@ Nội dung chương 2 viết ở đây..."
                     <tr>
                         <th>User</th>
                         <th>Loại</th>
-                        <th>Số hạt</th>
+                        <th>Số Linh Thạch</th>
                         <th>Ghi chú</th>
                         <th>Thời gian</th>
                     </tr>

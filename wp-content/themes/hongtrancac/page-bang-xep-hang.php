@@ -66,12 +66,12 @@ get_header();
         ?>
         <div class="story-list-row">
             <div style="font-size:var(--font-size-xl);font-weight:700;min-width:50px;text-align:center;"><?php echo $medal; ?></div>
-            <a href="/<?php echo $story->slug; ?>" style="flex:0 0 60px;">
+            <a href="<?php echo esc_url(hdk_story_url($story->slug)); ?>" style="flex:0 0 60px;">
                 <img src="<?php echo esc_url($story->cover_url); ?>" alt="<?php echo esc_attr($story->title); ?>"
                      style="width:60px;height:80px;object-fit:cover;border-radius:4px;">
             </a>
             <div style="flex:1;min-width:0;">
-                <a href="/<?php echo $story->slug; ?>" style="font-weight:600;color:var(--color-text-primary);display:block;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">
+                <a href="<?php echo esc_url(hdk_story_url($story->slug)); ?>" style="font-weight:600;color:var(--color-text-primary);display:block;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">
                     <?php echo esc_html($story->title); ?>
                 </a>
                 <div style="font-size:var(--font-size-xs);color:var(--color-text-muted);"><?php echo esc_html($story->author_name); ?></div>

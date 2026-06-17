@@ -52,8 +52,26 @@ function hdk_safe_redirect($location, $status = 302) {
     exit;
 }
 
+function hdk_story_url($slug, $args = []) {
+    $url = home_url('/' . ltrim((string)$slug, '/'));
+    return $args ? add_query_arg($args, $url) : $url;
+}
+
+function hdk_page_url($path = '', $args = []) {
+    $url = home_url('/' . ltrim((string)$path, '/'));
+    return $args ? add_query_arg($args, $url) : $url;
+}
+
+function hdk_category_url($slug) {
+    return hdk_page_url('the-loai/' . ltrim((string)$slug, '/'));
+}
+
+function hdk_story_has_audio($story) {
+    return !empty($story->audio_url);
+}
+
 function hdk_get_story_card($story, $index = 0) {
-    $url = home_url('/' . ($story->slug ?? ''));
+    $url = hdk_story_url($story->slug ?? '');
     $title = esc_html($story->title ?? '');
     $cover = $story->cover_url ?? get_template_directory_uri() . '/assets/img/placeholder.svg';
     $author = esc_html($story->author_name ?? '');
@@ -78,6 +96,9 @@ function hdk_get_story_card($story, $index = 0) {
                 <span><?php echo hdk_get_story_status_badge($story); ?></span>
                 <span><?php echo $chapters; ?> chương</span>
             </div>
+            <?php if (hdk_story_has_audio($story)): ?>
+                <div class="card-meta" style="margin-top:6px;color:var(--color-primary);">🎧 Có audio</div>
+            <?php endif; ?>
             <div class="card-meta" style="text-align:right">👁 <?php echo $views; ?></div>
         </div>
     </a>
@@ -153,8 +174,8 @@ function hdk_get_hero_section() {
                             Nền tảng đọc truyện chữ online. Hàng ngàn truyện hay, cập nhật liên tục mỗi ngày.
                         </p>
                         <div style="display:flex;gap:12px;flex-wrap:wrap;">
-                            <a href="/danh-sach-truyen" class="btn btn-primary">Khám phá truyện</a>
-                            <a href="/bang-xep-hang" class="btn btn-outline" style="border-color:var(--color-banner-text);color:var(--color-banner-text)">Bảng xếp hạng</a>
+                            <a href="<?php echo esc_url(hdk_page_url('danh-sach-truyen')); ?>" class="btn btn-primary">Khám phá truyện</a>
+                            <a href="<?php echo esc_url(hdk_page_url('bang-xep-hang')); ?>" class="btn btn-outline" style="border-color:var(--color-banner-text);color:var(--color-banner-text)">Bảng xếp hạng</a>
                         </div>
                     </div>
                     <div class="hero-visual" style="flex:0 0 240px;text-align:center;">

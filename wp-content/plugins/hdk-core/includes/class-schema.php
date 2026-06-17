@@ -60,6 +60,9 @@ class HDK_Schema {
             slug VARCHAR(255) NOT NULL UNIQUE,
             author_id BIGINT UNSIGNED,
             cover_url VARCHAR(500),
+            audio_url VARCHAR(500),
+            audio_title VARCHAR(500),
+            audio_duration VARCHAR(50),
             summary TEXT,
             status ENUM('ongoing','completed','dropped') DEFAULT 'ongoing',
             is_free TINYINT(1) DEFAULT 0,
@@ -195,7 +198,7 @@ class HDK_Schema {
             updated_at DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
         ) $charset;";
 
-        // User Credits (hạt)
+        // User Credits (Linh Thạch)
         $sql[] = "CREATE TABLE IF NOT EXISTS {$wpdb->prefix}hdk_user_credits (
             user_id BIGINT UNSIGNED PRIMARY KEY,
             credits INT UNSIGNED DEFAULT 0,
@@ -289,6 +292,9 @@ class HDK_Schema {
 
         // Migration: add pricing columns to existing stories table
         self::add_column_if_not_exists("{$wpdb->prefix}hdk_stories", 'is_featured_hidden', "TINYINT(1) DEFAULT 0 AFTER is_free");
+        self::add_column_if_not_exists("{$wpdb->prefix}hdk_stories", 'audio_url', "VARCHAR(500) NULL AFTER cover_url");
+        self::add_column_if_not_exists("{$wpdb->prefix}hdk_stories", 'audio_title', "VARCHAR(500) NULL AFTER audio_url");
+        self::add_column_if_not_exists("{$wpdb->prefix}hdk_stories", 'audio_duration', "VARCHAR(50) NULL AFTER audio_title");
         self::add_column_if_not_exists("{$wpdb->prefix}hdk_stories", 'free_chapters', "INT UNSIGNED DEFAULT 0 AFTER total_chapters");
         self::add_column_if_not_exists("{$wpdb->prefix}hdk_stories", 'chapter_price', "INT UNSIGNED DEFAULT 0 AFTER free_chapters");
         self::add_column_if_not_exists("{$wpdb->prefix}hdk_stories", 'full_price', "INT UNSIGNED DEFAULT 0 AFTER chapter_price");
@@ -303,7 +309,7 @@ class HDK_Schema {
     }
 
     public static function maybe_upgrade() {
-        $target_version = '2026.06.15.3';
+        $target_version = '2026.06.17.1';
         $current_version = get_option('hdk_schema_version', '0');
 
         if (version_compare($current_version, $target_version, '>=')) {

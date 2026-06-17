@@ -15,6 +15,7 @@ Nền tảng đọc truyện chữ online xây dựng trên **WordPress** + cust
 - 📚 Đọc truyện theo chương (`/ten-truyen?chuong=1`)
 - 🎛 Tùy chỉnh trải nghiệm đọc: cỡ chữ, font, giãn dòng, theme (sáng/tối/sepia), chiều rộng
 - 📋 Danh sách chương nổi (floating TOC) ngay trong reader
+- 🎧 Mini audio player cho truyện có audio
 - 🚫 Anti-scraping (mã hóa nội dung, chống copy/click phải/in)
 
 ### Khám phá
@@ -24,24 +25,26 @@ Nền tảng đọc truyện chữ online xây dựng trên **WordPress** + cust
 - ⭐ Đề cử biên tập + 🔥 Hot tuần trên trang chủ
 
 ### Người dùng
-- 👤 Trang tài khoản độc giả (`/tai-khoan`): tủ truyện, đang đọc, đã mua, lịch sử đọc
+- 👤 Trang tài khoản độc giả (`/tai-khoan`): hồ sơ, tủ truyện, đang đọc, đã mua, lịch sử đọc/nghe, bình luận, cài đặt tài khoản
 - 🔐 Trang đăng nhập có theme (`/dang-nhap`) thay vì `wp-login.php` gốc
 - 🧾 Trang đăng ký (`/dang-ky`) bằng tên đăng nhập, tên hiển thị và mật khẩu
+- ⚙️ Đổi tên hiển thị, email, avatar URL và mật khẩu từ trang cá nhân
 - ❤️ Yêu thích, đánh giá sao, bình luận
 - 🔔 Thông báo (chương mới, trả lời bình luận, mua thành công)
 - 📖 Auto-save tiến độ đọc
 
-### Ví hạt & Thanh toán
-- 💎 Hệ thống mua chương bằng "hạt" (coin)
-- 💳 Ví hạt: số dư, lịch sử giao dịch, nạp hạt
-- 📅 Điểm danh hàng ngày nhận hạt
+### Ví Linh Thạch & Thanh toán
+- 💎 Hệ thống mua chương bằng "Linh Thạch" (coin)
+- 💳 Ví Linh Thạch: số dư, lịch sử giao dịch, nạp Linh Thạch
+- 📅 Điểm danh hàng ngày nhận Linh Thạch
 - 🔒 Paywall cho chương trả phí (giá từng chương + giá full truyện)
 
 ### Admin CMS
 - 📝 CRUD truyện, chương, tác giả, thể loại, nhân vật
+- 🎧 Nhập audio URL, tiêu đề audio và thời lượng cho từng truyện
 - 📤 Đăng nhiều chương (paste text hoặc upload file .txt)
 - 📥 Import CSV/JSON (truyện, chương, tác giả, thể loại) + preview + chống trùng
-- 💎 Quản lý hạt (cộng/trừ thủ công, gói nạp, lịch sử giao dịch)
+- 💎 Quản lý Linh Thạch (cộng/trừ thủ công, gói nạp, lịch sử giao dịch)
 - 💬 Quản lý bình luận (duyệt/xóa)
 - 🚩 Xử lý báo lỗi chương từ người dùng
 - 📊 Thống kê vận hành (views, top truyện, biểu đồ 7 ngày)
@@ -359,6 +362,7 @@ wp hdk create_account_page    # Tạo trang /tai-khoan nếu chưa có
 |-----|-------|
 | `/` | Trang chủ (hero, đề cử, hot tuần, danh mục) |
 | `/danh-sach-truyen` | Danh sách truyện + filter |
+| `/danh-sach-truyen?audio=1` | Danh sách truyện có audio |
 | `/bang-xep-hang` | Bảng xếp hạng |
 | `/the-loai` | Tất cả thể loại |
 | `/the-loai/{slug}` | Truyện theo thể loại |
@@ -367,7 +371,7 @@ wp hdk create_account_page    # Tạo trang /tai-khoan nếu chưa có
 | `/hoan-thanh` | Truyện hoàn thành |
 | `/truyen-free` | Truyện miễn phí |
 | `/tin-tuc` | Tin tức (WP posts) |
-| `/tai-khoan` | Trang tài khoản độc giả (tủ truyện, ví hạt, thông báo...) |
+| `/tai-khoan` | Trang tài khoản độc giả (hồ sơ, lịch sử đọc/nghe, ví Linh Thạch, thông báo, cài đặt...) |
 | `/dang-nhap` | Trang đăng nhập có theme |
 | `/dang-ky` | Trang đăng ký tài khoản |
 | `/{story-slug}` | Chi tiết truyện + danh sách chương |

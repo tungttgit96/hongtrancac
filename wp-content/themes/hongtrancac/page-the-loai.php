@@ -1,37 +1,56 @@
 <?php
 /**
  * Template Name: Thể Loại
- * Page: All categories listing
+ * Page: All categories listing - MotionSites card style
  */
 
 global $wpdb;
 $categories = $wpdb->get_results("SELECT * FROM " . HDK_DB::table('hdk_categories') . " ORDER BY sort_order");
 
+// Category icon mapping based on common Vietnamese genre names
+function hdk_get_category_icon($name) {
+    $name_lower = mb_strtolower($name);
+    $icons = [
+        'tiên hiệp' => '⚔️', 'huyền huyễn' => '🔮', 'kiếm hiệp' => '🗡️',
+        'đô thị' => '🏙️', 'dị giới' => '🌌', 'trọng sinh' => '🔄',
+        'xuyên không' => '🚀', 'linh dị' => '👻', 'mạt thế' => '💀',
+        'ngôn tình' => '💕', 'sắc' => '🌶️', 'quân sự' => '🎖️',
+        'lịch sử' => '📜', 'hài hước' => '😂', 'trinh thám' => '🔍',
+        'võng du' => '🎮', 'khoa huyễn' => '🤖', 'đam mỹ' => '💝',
+        'bách hợp' => '🌺', 'cung đấu' => '👑', 'hệ thống' => '⚙️',
+        'điền văn' => '🌾', 'phương tây' => '🏰', 'dị năng' => '⚡',
+        'huyền nghi' => '🧩', 'viễn tưởng' => '🛸', 'light novel' => '📘',
+        'truyện teen' => '💫', 'ngược' => '💔', 'sủng' => '🌟',
+        'nữ cường' => '💪', 'nam chính' => '🦸',
+    ];
+    foreach ($icons as $key => $icon) {
+        if (mb_strpos($name_lower, $key) !== false) return $icon;
+    }
+    return '📚';
+}
+
 get_header();
 ?>
 
-<div class="container" style="padding-top:24px;">
+<div class="container page-shell">
     <div class="section-header">
-        <h1 class="section-title">📂 Tất cả thể loại</h1>
-        <span style="color:var(--color-text-muted);"><?php echo count($categories); ?> thể loại</span>
+        <h1 class="section-title">Tất cả thể loại</h1>
+        <span class="badge badge-primary"><?php echo count($categories); ?> thể loại</span>
     </div>
 
-    <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(250px,1fr));gap:16px;">
-        <?php foreach ($categories as $cat): ?>
-            <a href="/the-loai/<?php echo $cat->slug; ?>"
-               style="background:var(--color-bg);border-radius:var(--radius-md);padding:20px;border:1px solid var(--color-border);
-                      text-decoration:none;transition:box-shadow 0.2s;"
-               onmouseover="this.style.boxShadow='var(--shadow-md)'"
-               onmouseout="this.style.boxShadow='none'">
-                <div style="font-size:var(--font-size-lg);font-weight:600;color:var(--color-text-primary);margin-bottom:8px;">
-                    <?php echo esc_html($cat->name); ?>
+    <div class="category-grid">
+        <?php foreach ($categories as $i => $cat):
+            $icon = hdk_get_category_icon($cat->name);
+        ?>
+            <a href="<?php echo esc_url(hdk_category_url($cat->slug)); ?>" class="category-card">
+                <div class="category-card-icon"><?php echo $icon; ?></div>
+                <div class="category-card-content">
+                    <h3 class="category-card-title"><?php echo esc_html($cat->name); ?></h3>
+                    <?php if (!empty($cat->description)): ?>
+                        <p class="category-card-desc"><?php echo esc_html($cat->description); ?></p>
+                    <?php endif; ?>
+                    <span class="category-card-count"><?php echo $cat->story_count; ?> truyện</span>
                 </div>
-                <?php if (!empty($cat->description)): ?>
-                    <p style="font-size:var(--font-size-sm);color:var(--color-text-muted);margin-bottom:8px;">
-                        <?php echo esc_html($cat->description); ?>
-                    </p>
-                <?php endif; ?>
-                <span class="badge badge-primary"><?php echo $cat->story_count; ?> truyện</span>
             </a>
         <?php endforeach; ?>
     </div>

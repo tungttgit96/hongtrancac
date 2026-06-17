@@ -43,7 +43,7 @@ get_header();
     <nav style="font-size:var(--font-size-sm);color:var(--color-text-muted);margin-bottom:20px;">
         <a href="<?php echo home_url('/'); ?>">Trang chủ</a> &raquo;
         <?php if (!empty($story->categories)): ?>
-            <a href="/the-loai/<?php echo $story->categories[0]->slug; ?>"><?php echo esc_html($story->categories[0]->name); ?></a> &raquo;
+            <a href="<?php echo esc_url(hdk_category_url($story->categories[0]->slug)); ?>"><?php echo esc_html($story->categories[0]->name); ?></a> &raquo;
         <?php endif; ?>
         <span><?php echo esc_html($story->title); ?></span>
     </nav>
@@ -61,12 +61,12 @@ get_header();
                     <span class="badge badge-success">Free</span>
                 <?php endif; ?>
                 <?php foreach ($story->categories as $cat): ?>
-                    <a href="/the-loai/<?php echo $cat->slug; ?>" class="badge badge-primary" style="text-decoration:none;"><?php echo esc_html($cat->name); ?></a>
+                    <a href="<?php echo esc_url(hdk_category_url($cat->slug)); ?>" class="badge badge-primary" style="text-decoration:none;"><?php echo esc_html($cat->name); ?></a>
                 <?php endforeach; ?>
             </div>
 
             <div style="display:flex;gap:24px;flex-wrap:wrap;margin-bottom:16px;font-size:var(--font-size-sm);">
-                <div><strong>Tác giả:</strong> <a href="/tac-gia/<?php echo sanitize_title($story->author_name); ?>"><?php echo esc_html($story->author_name); ?></a></div>
+                <div><strong>Tác giả:</strong> <a href="<?php echo esc_url(hdk_page_url('tac-gia/' . sanitize_title($story->author_name))); ?>"><?php echo esc_html($story->author_name); ?></a></div>
                 <div><strong>Chương:</strong> <?php echo $story->total_chapters; ?></div>
                 <div><strong>Lượt xem:</strong> <?php echo number_format($story->total_views); ?></div>
                 <div><strong>Yêu thích:</strong> <?php echo number_format($story->total_favorites); ?></div>
@@ -75,9 +75,18 @@ get_header();
             <?php hdk_get_rating_widget($story->id, $story->average_rating * $story->total_ratings, $story->total_ratings); ?>
 
             <div style="margin-top:16px;display:flex;gap:12px;flex-wrap:wrap;">
-                <a href="/<?php echo $story->slug; ?>?chuong=1" class="btn btn-primary">📖 Đọc từ đầu</a>
+                <a href="<?php echo esc_url(hdk_story_url($story->slug, ['chuong' => 1])); ?>" class="btn btn-primary">📖 Đọc từ đầu</a>
                 <?php if ($chapters): ?>
-                    <a href="/<?php echo $story->slug; ?>?chuong=<?php echo $chapters[count($chapters)-1]->chapter_number; ?>" class="btn btn-outline">📄 Chương mới nhất</a>
+                    <a href="<?php echo esc_url(hdk_story_url($story->slug, ['chuong' => $chapters[count($chapters)-1]->chapter_number])); ?>" class="btn btn-outline">📄 Chương mới nhất</a>
+                <?php endif; ?>
+                <?php if (hdk_story_has_audio($story)): ?>
+                    <button type="button" class="btn btn-outline hdk-audio-play"
+                            data-audio-src="<?php echo esc_url($story->audio_url); ?>"
+                            data-audio-title="<?php echo esc_attr(($story->audio_title ?? '') ?: $story->title); ?>"
+                            data-story-title="<?php echo esc_attr($story->title); ?>"
+                            data-story-url="<?php echo esc_url(hdk_story_url($story->slug)); ?>">
+                        🎧 Nghe truyện
+                    </button>
                 <?php endif; ?>
                 <button type="button" class="btn btn-outline favorite-btn" data-story-id="<?php echo $story->id; ?>" data-favorited="<?php echo $is_favorited ? '1' : '0'; ?>">
                     <?php echo $is_favorited ? '❤️ Bỏ yêu thích' : '🤍 Yêu thích'; ?>
@@ -133,7 +142,7 @@ get_header();
                 <div style="display:flex;justify-content:space-between;align-items:center;padding:8px 12px;
                            border-radius:var(--radius-sm);border:1px solid var(--color-border-light);
                            <?php echo $locked && !$purchased ? 'background:var(--color-bg-tertiary);' : ''; ?>">
-                    <a href="/<?php echo $story->slug; ?>?chuong=<?php echo $chap->chapter_number; ?>"
+                    <a href="<?php echo esc_url(hdk_story_url($story->slug, ['chuong' => $chap->chapter_number])); ?>"
                        style="color:var(--color-text-primary);text-decoration:none;font-size:14px;flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">
                         <span style="margin-right:6px;"><?php echo $icon; ?></span>
                         <?php echo esc_html($chap->title); ?>
@@ -146,7 +155,7 @@ get_header();
                     <?php elseif (!$locked || $purchased): ?>
                         <span style="font-size:var(--font-size-xs);color:var(--color-text-muted);white-space:nowrap;">👁 <?php echo number_format($chap->views); ?></span>
                     <?php else: ?>
-                        <a href="<?php echo esc_url(hdk_login_url(home_url('/' . $story->slug . '?chuong=' . $chap->chapter_number))); ?>" style="font-size:11px;color:var(--color-text-muted);white-space:nowrap;text-decoration:none;">🔒 Đăng nhập</a>
+                        <a href="<?php echo esc_url(hdk_login_url(hdk_story_url($story->slug, ['chuong' => $chap->chapter_number]))); ?>" style="font-size:11px;color:var(--color-text-muted);white-space:nowrap;text-decoration:none;">🔒 Đăng nhập</a>
                     <?php endif; ?>
                 </div>
             <?php endforeach; ?>
@@ -186,11 +195,12 @@ get_header();
 <?php get_footer(); ?>
 
 <script>
+var apiBase = (window.hdkApi && window.hdkApi.restBase) || <?php echo wp_json_encode(rest_url('hdk/v1')); ?>;
 function purchaseChapterInline(storyId, chapterNum, btn) {
     btn.disabled = true;
     btn.textContent = '…';
     var msg = document.getElementById('purchase-msg');
-    fetch('/wp-json/hdk/v1/purchase/chapter', {
+    fetch(apiBase + '/purchase/chapter', {
         method: 'POST',
         headers: {'Content-Type': 'application/json', 'X-WP-Nonce': window.hdkRestNonce || ''},
         body: JSON.stringify({story_id: storyId, chapter_number: chapterNum})
@@ -217,10 +227,10 @@ function purchaseChapterInline(storyId, chapterNum, btn) {
 }
 
 function purchaseFullStory(storyId) {
-    if (!confirm('Mở toàn bộ truyện với giá <?php echo $full_price; ?> hạt?')) return;
+    if (!confirm('Mở toàn bộ truyện với giá <?php echo $full_price; ?> Linh Thạch?')) return;
     var msg = document.getElementById('purchase-msg');
     if (msg) msg.innerHTML = 'Đang xử lý…';
-    fetch('/wp-json/hdk/v1/purchase/full', {
+    fetch(apiBase + '/purchase/full', {
         method: 'POST',
         headers: {'Content-Type': 'application/json', 'X-WP-Nonce': window.hdkRestNonce || ''},
         body: JSON.stringify({story_id: storyId})

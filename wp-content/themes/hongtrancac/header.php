@@ -48,7 +48,7 @@
                     <div id="notif-list" style="padding:8px 0;">
                         <div style="padding:16px;text-align:center;color:var(--color-text-muted);">Đang tải…</div>
                     </div>
-                    <a href="/tai-khoan?tab=notifications" style="display:block;padding:10px 16px;text-align:center;border-top:1px solid var(--color-border-light);text-decoration:none;color:var(--color-primary);font-size:var(--font-size-sm);">Xem tất cả</a>
+                    <a href="<?php echo esc_url(hdk_page_url('tai-khoan', ['tab' => 'notifications'])); ?>" style="display:block;padding:10px 16px;text-align:center;border-top:1px solid var(--color-border-light);text-decoration:none;color:var(--color-primary);font-size:var(--font-size-sm);">Xem tất cả</a>
                 </div>
                 <?php
                 $current_user = wp_get_current_user();
@@ -66,7 +66,7 @@
                     <div class="user-dropdown-menu" id="user-dropdown-menu"
                          style="display:none;position:absolute;top:100%;right:0;min-width:200px;background:var(--color-bg);border:1px solid var(--color-border);border-radius:var(--radius-md);box-shadow:0 4px 16px rgba(0,0,0,0.12);z-index:150;padding:8px 0;margin-top:4px;">
                         <div class="dropdown-item" style="padding:8px 16px;color:var(--color-text-muted);font-size:var(--font-size-sm);border-bottom:1px solid var(--color-border-light);">
-                            💎 <strong style="color:var(--color-primary);"><?php echo number_format($credits); ?></strong> hạt
+                            💎 <strong style="color:var(--color-primary);"><?php echo number_format($credits); ?></strong> Linh Thạch
                         </div>
                         <a href="<?php echo home_url('/tai-khoan'); ?>" class="dropdown-item" style="display:block;padding:10px 16px;text-decoration:none;color:var(--color-text-primary);">
                             📖 Tài khoản
@@ -132,5 +132,41 @@
         </nav>
     </div>
 </div>
+
+<!-- Mobile Bottom Navigation -->
+<?php $hdk_account_tab = isset($_GET['tab']) ? sanitize_key($_GET['tab']) : ''; ?>
+<nav class="mobile-bottom-nav" id="mobile-bottom-nav" aria-label="Điều hướng chính">
+    <a href="<?php echo home_url('/'); ?>" class="bottom-nav-item <?php echo is_front_page() ? 'active' : ''; ?>" aria-label="Trang chủ">
+        <span class="bottom-nav-icon">🏠</span>
+        <span class="bottom-nav-label">Trang chủ</span>
+    </a>
+    <a href="<?php echo home_url('/the-loai'); ?>" class="bottom-nav-item <?php echo is_page('the-loai') ? 'active' : ''; ?>" aria-label="Thể loại">
+        <span class="bottom-nav-icon">📂</span>
+        <span class="bottom-nav-label">Thể loại</span>
+    </a>
+    <button type="button" class="bottom-nav-item bottom-nav-search" aria-label="Tìm kiếm" data-bottom-nav-action="search">
+        <span class="bottom-nav-icon">🔍</span>
+        <span class="bottom-nav-label">Tìm kiếm</span>
+    </button>
+    <?php if (is_user_logged_in()): ?>
+    <a href="<?php echo esc_url(hdk_page_url('tai-khoan', ['tab' => 'favorites'])); ?>" class="bottom-nav-item <?php echo is_page('tai-khoan') && $hdk_account_tab === 'favorites' ? 'active' : ''; ?>" aria-label="Yêu thích">
+        <span class="bottom-nav-icon">❤️</span>
+        <span class="bottom-nav-label">Yêu thích</span>
+    </a>
+    <a href="<?php echo esc_url(hdk_page_url('tai-khoan')); ?>" class="bottom-nav-item <?php echo is_page('tai-khoan') && $hdk_account_tab === '' ? 'active' : ''; ?>" aria-label="Cá nhân">
+        <span class="bottom-nav-icon">👤</span>
+        <span class="bottom-nav-label">Cá nhân</span>
+    </a>
+    <?php else: ?>
+    <a href="<?php echo esc_url(hdk_login_url(home_url(add_query_arg([])))); ?>" class="bottom-nav-item" aria-label="Yêu thích">
+        <span class="bottom-nav-icon">❤️</span>
+        <span class="bottom-nav-label">Yêu thích</span>
+    </a>
+    <a href="<?php echo esc_url(hdk_login_url(home_url(add_query_arg([])))); ?>" class="bottom-nav-item" aria-label="Cá nhân">
+        <span class="bottom-nav-icon">👤</span>
+        <span class="bottom-nav-label">Cá nhân</span>
+    </a>
+    <?php endif; ?>
+</nav>
 
 <main class="site-main">

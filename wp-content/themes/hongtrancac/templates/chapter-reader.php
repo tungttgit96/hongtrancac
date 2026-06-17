@@ -54,7 +54,7 @@ get_header();
     <!-- Breadcrumb -->
     <nav style="font-size:var(--font-size-sm);color:var(--color-text-muted);margin-bottom:16px;">
         <a href="<?php echo home_url('/'); ?>">Trang chủ</a> &raquo;
-        <a href="/<?php echo $story->slug; ?>"><?php echo esc_html($story->title); ?></a> &raquo;
+        <a href="<?php echo esc_url(hdk_story_url($story->slug)); ?>"><?php echo esc_html($story->title); ?></a> &raquo;
         <span>Chương <?php echo $chapter->chapter_number; ?></span>
     </nav>
 
@@ -136,7 +136,7 @@ get_header();
     <!-- Chapter Navigation -->
     <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:12px;margin-bottom:20px;background:var(--color-bg);border-radius:var(--radius-md);padding:16px;border:1px solid var(--color-border);">
         <?php if ($prev): ?>
-            <a href="/<?php echo $story->slug; ?>?chuong=<?php echo $prev; ?>" class="btn btn-ghost btn-sm">&laquo; Chương trước</a>
+            <a href="<?php echo esc_url(hdk_story_url($story->slug, ['chuong' => $prev])); ?>" class="btn btn-ghost btn-sm">&laquo; Chương trước</a>
         <?php else: ?>
             <span></span>
         <?php endif; ?>
@@ -147,7 +147,7 @@ get_header();
         </div>
 
         <?php if ($next): ?>
-            <a href="/<?php echo $story->slug; ?>?chuong=<?php echo $next; ?>" class="btn btn-primary btn-sm">Chương sau &raquo;</a>
+            <a href="<?php echo esc_url(hdk_story_url($story->slug, ['chuong' => $next])); ?>" class="btn btn-primary btn-sm">Chương sau &raquo;</a>
         <?php else: ?>
             <span></span>
         <?php endif; ?>
@@ -163,13 +163,13 @@ get_header();
     <!-- Bottom Navigation -->
     <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:12px;margin-top:20px;background:var(--color-bg);border-radius:var(--radius-md);padding:16px;border:1px solid var(--color-border);">
         <?php if ($prev): ?>
-            <a href="/<?php echo $story->slug; ?>?chuong=<?php echo $prev; ?>" class="btn btn-outline btn-sm">&laquo; Chương trước</a>
+            <a href="<?php echo esc_url(hdk_story_url($story->slug, ['chuong' => $prev])); ?>" class="btn btn-outline btn-sm">&laquo; Chương trước</a>
         <?php else: ?>
             <span></span>
         <?php endif; ?>
         <button type="button" class="btn btn-ghost btn-sm" onclick="toggleTOC()" style="min-height:var(--touch-target);">📋 Mục lục</button>
         <?php if ($next): ?>
-            <a href="/<?php echo $story->slug; ?>?chuong=<?php echo $next; ?>" class="btn btn-primary">Chương sau &raquo;</a>
+            <a href="<?php echo esc_url(hdk_story_url($story->slug, ['chuong' => $next])); ?>" class="btn btn-primary">Chương sau &raquo;</a>
         <?php else: ?>
             <span></span>
         <?php endif; ?>
@@ -177,6 +177,10 @@ get_header();
 </div>
 
 <script>
+var HDK_READER_STORY_URL = <?php echo wp_json_encode(hdk_story_url($story->slug)); ?>;
+var HDK_READER_PREV_URL = <?php echo wp_json_encode($prev ? hdk_story_url($story->slug, ['chuong' => $prev]) : ''); ?>;
+var HDK_READER_NEXT_URL = <?php echo wp_json_encode($next ? hdk_story_url($story->slug, ['chuong' => $next]) : ''); ?>;
+var HDK_READER_API_BASE = (window.hdkApi && window.hdkApi.restBase) || <?php echo wp_json_encode(rest_url('hdk/v1')); ?>;
 // Decode and render chapter content (anti-scraping)
 (function() {
     var dataEl = document.getElementById('chapter-data');
@@ -214,7 +218,7 @@ window.addEventListener('scroll', function() {
     scrollTimer = setTimeout(function() {
         var scrollPercent = Math.round((window.scrollY + window.innerHeight) / document.documentElement.scrollHeight * 100);
         if (typeof fetch !== 'undefined') {
-            fetch('/wp-json/hdk/v1/reading-progress', {
+            fetch(HDK_READER_API_BASE.replace(/\/$/, '') + '/reading-progress', {
                 method: 'PATCH',
                 headers: {'Content-Type': 'application/json', 'X-WP-Nonce': window.hdkRestNonce || ''},
                 body: JSON.stringify({
@@ -231,11 +235,11 @@ window.addEventListener('scroll', function() {
 document.addEventListener('keydown', function(e) {
     if (e.key === 'ArrowLeft') {
         <?php if ($prev): ?>
-        window.location.href = '/<?php echo $story->slug; ?>?chuong=<?php echo $prev; ?>';
+        window.location.href = HDK_READER_PREV_URL;
         <?php endif; ?>
     } else if (e.key === 'ArrowRight') {
         <?php if ($next): ?>
-        window.location.href = '/<?php echo $story->slug; ?>?chuong=<?php echo $next; ?>';
+        window.location.href = HDK_READER_NEXT_URL;
         <?php endif; ?>
     }
 });

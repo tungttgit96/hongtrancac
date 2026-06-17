@@ -124,6 +124,12 @@ class HDK_REST_API {
             'callback' => [__CLASS__, 'create_report'],
             'permission_callback' => function() { return is_user_logged_in(); },
         ]);
+
+        register_rest_route('hdk/v1', '/listening-history', [
+            'methods' => 'POST',
+            'callback' => [__CLASS__, 'save_listening_history'],
+            'permission_callback' => function() { return is_user_logged_in(); },
+        ]);
     }
 
     private static function verify_nonce() {
@@ -147,8 +153,13 @@ class HDK_REST_API {
         if ($type === 'all' || $type === 'stories') {
             $search = '%' . $wpdb->esc_like($q) . '%';
             $results['stories'] = $wpdb->get_results($wpdb->prepare(
-                "SELECT id, title, slug, cover_url, status FROM " . HDK_DB::table('hdk_stories') . "
-                 WHERE title LIKE %s ORDER BY total_views DESC LIMIT 10",
+                "SELECT s.id, s.title, s.slug, s.cover_url, s.status, s.total_chapters, s.average_rating, a.name AS author_name
+                 FROM " . HDK_DB::table('hdk_stories') . " s
+                 LEFT JOIN " . HDK_DB::table('hdk_authors') . " a ON a.id = s.author_id
+                 WHERE s.title LIKE %s OR s.summary LIKE %s OR a.name LIKE %s
+                 ORDER BY s.total_views DESC LIMIT 10",
+                $search,
+                $search,
                 $search
             ));
         }
@@ -172,6 +183,35 @@ class HDK_REST_API {
         }
 
         return rest_ensure_response($results);
+    }
+
+    public static function save_listening_history($request) {
+        $nonce_check = self::verify_nonce();
+        if (is_wp_error($nonce_check)) return $nonce_check;
+
+        $body = json_decode($request->get_body(), true);
+        if (!is_array($body)) {
+            $body = [];
+        }
+
+        $item = [
+            'title' => sanitize_text_field($body['title'] ?? 'Truyện audio'),
+            'url' => esc_url_raw($body['url'] ?? home_url('/')),
+            'position' => sanitize_text_field($body['position'] ?? 'Đang nghe'),
+            'time' => current_time('d/m/Y H:i'),
+        ];
+
+        $user_id = get_current_user_id();
+        $history = get_user_meta($user_id, 'hdk_listening_history', true);
+        if (!is_array($history)) {
+            $history = [];
+        }
+
+        array_unshift($history, $item);
+        $history = array_slice($history, 0, 50);
+        update_user_meta($user_id, 'hdk_listening_history', $history);
+
+        return rest_ensure_response(['success' => true, 'history' => $history]);
     }
 
     public static function toggle_favorite($request) {
@@ -354,7 +394,7 @@ class HDK_REST_API {
         $credits = (int)$wpdb->get_var($wpdb->prepare(
             "SELECT credits FROM " . HDK_DB::table('hdk_user_credits') . " WHERE user_id = %d", $user_id
         ));
-        if ($credits < $price) return new WP_Error('insufficient_credits', 'Không đủ hạt. Cần ' . $price . ' hạt, bạn có ' . $credits . ' hạt.', ['status' => 402]);
+        if ($credits < $price) return new WP_Error('insufficient_credits', 'Không đủ Linh Thạch. Cần ' . $price . ' Linh Thạch, bạn có ' . $credits . ' Linh Thạch.', ['status' => 402]);
 
         // Deduct credits and update stats
         $wpdb->query($wpdb->prepare(
@@ -413,7 +453,7 @@ class HDK_REST_API {
         $credits = (int)$wpdb->get_var($wpdb->prepare(
             "SELECT credits FROM " . HDK_DB::table('hdk_user_credits') . " WHERE user_id = %d", $user_id
         ));
-        if ($credits < $price) return new WP_Error('insufficient_credits', 'Không đủ hạt. Cần ' . $price . ' hạt, bạn có ' . $credits . ' hạt.', ['status' => 402]);
+        if ($credits < $price) return new WP_Error('insufficient_credits', 'Không đủ Linh Thạch. Cần ' . $price . ' Linh Thạch, bạn có ' . $credits . ' Linh Thạch.', ['status' => 402]);
 
         // Deduct credits and update stats
         $wpdb->query($wpdb->prepare(

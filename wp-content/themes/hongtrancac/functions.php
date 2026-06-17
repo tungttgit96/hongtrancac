@@ -32,6 +32,9 @@ function hdk_enqueue_assets() {
     wp_localize_script('hdk-main', 'hdkApi', [
         'nonce' => wp_create_nonce('wp_rest'),
         'loginUrl' => function_exists('hdk_login_url') ? hdk_login_url(home_url(add_query_arg([]))) : wp_login_url(home_url(add_query_arg([]))),
+        'restBase' => rest_url('hdk/v1'),
+        'homeUrl' => home_url('/'),
+        'currencyLabel' => 'Linh Thạch',
     ]);
 }
 add_action('wp_enqueue_scripts', 'hdk_enqueue_assets');

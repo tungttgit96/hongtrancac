@@ -152,11 +152,11 @@ class HDK_DB {
         if ($paid_prices) {
             $min = min($paid_prices);
             $max = max($paid_prices);
-            $parts[] = $min === $max ? $min . ' hạt/chương' : 'Từ ' . $min . '-' . $max . ' hạt/chương';
+            $parts[] = $min === $max ? $min . ' Linh Thạch/chương' : 'Từ ' . $min . '-' . $max . ' Linh Thạch/chương';
         }
 
         if ($full_price > 0) {
-            $parts[] = 'Full ' . $full_price . ' hạt';
+            $parts[] = 'Full ' . $full_price . ' Linh Thạch';
         }
 
         return [
@@ -197,6 +197,7 @@ class HDK_DB {
             'category_id' => 0,
             'author_id' => 0,
             'is_free' => null,
+            'has_audio' => null,
             'search' => '',
             'orderby' => 'updated_at',
             'order' => 'DESC',
@@ -207,12 +208,12 @@ class HDK_DB {
         $where = ["1=1", "s.title <> ''", "LENGTH(s.title) >= 3"];
         if ($args['exclude_hidden']) $where[] = "s.is_featured_hidden = 0";
         if ($args['status']) $where[] = $wpdb->prepare("s.status = %s", $args['status']);
-        if ($args['status']) $where[] = $wpdb->prepare("s.status = %s", $args['status']);
         if ($args['category_id']) {
             $where[] = $wpdb->prepare("s.id IN (SELECT story_id FROM " . self::table('hdk_story_categories') . " WHERE category_id = %d)", $args['category_id']);
         }
         if ($args['author_id']) $where[] = $wpdb->prepare("s.author_id = %d", $args['author_id']);
         if ($args['is_free'] !== null) $where[] = $wpdb->prepare("s.is_free = %d", (int)$args['is_free']);
+        if ($args['has_audio'] !== null) $where[] = $args['has_audio'] ? "(s.audio_url IS NOT NULL AND s.audio_url <> '')" : "(s.audio_url IS NULL OR s.audio_url = '')";
         if ($args['search']) {
             $search = '%' . $wpdb->esc_like($args['search']) . '%';
             $where[] = $wpdb->prepare("(s.title LIKE %s OR s.summary LIKE %s)", $search, $search);
@@ -670,7 +671,7 @@ class HDK_DB {
             ]);
         }
 
-        self::log_credit_transaction($user_id, 'daily', $daily_amount, 'daily_login', 0, 'Điểm danh hàng ngày +' . $daily_amount . ' hạt');
+        self::log_credit_transaction($user_id, 'daily', $daily_amount, 'daily_login', 0, 'Điểm danh hàng ngày +' . $daily_amount . ' Linh Thạch');
 
         return ['success' => true, 'credits_earned' => $daily_amount, 'balance' => $new_balance];
     }

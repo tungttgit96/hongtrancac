@@ -4,10 +4,9 @@
  * Page: Themed reader login
  */
 
-$redirect_to = sanitize_url($_GET['redirect_to'] ?? home_url('/tai-khoan'));
+$redirect_to = wp_validate_redirect(sanitize_url($_GET['redirect_to'] ?? home_url('/tai-khoan')), home_url('/tai-khoan'));
 if (is_user_logged_in()) {
-    wp_redirect($redirect_to);
-    exit;
+    hdk_safe_redirect($redirect_to);
 }
 
 $login_error = '';
@@ -15,9 +14,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['hdk_site_login'])) {
     if (!isset($_POST['_wpnonce']) || !wp_verify_nonce($_POST['_wpnonce'], 'hdk_site_login')) {
         $login_error = 'Phiên đăng nhập hết hạn, vui lòng thử lại.';
     } else {
-        $redirect_to = sanitize_url($_POST['redirect_to'] ?? $redirect_to);
+        $redirect_to = wp_validate_redirect(sanitize_url($_POST['redirect_to'] ?? $redirect_to), $redirect_to);
         $user = wp_signon([
-            'user_login' => sanitize_user($_POST['log'] ?? ''),
+            'user_login' => hdk_sanitize_username_input(strtolower(trim($_POST['log'] ?? ''))),
             'user_password' => $_POST['pwd'] ?? '',
             'remember' => !empty($_POST['rememberme']),
         ], is_ssl());
@@ -25,8 +24,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['hdk_site_login'])) {
         if (is_wp_error($user)) {
             $login_error = 'Tên đăng nhập hoặc mật khẩu không đúng.';
         } else {
-            wp_redirect($redirect_to);
-            exit;
+            hdk_safe_redirect($redirect_to);
         }
     }
 }

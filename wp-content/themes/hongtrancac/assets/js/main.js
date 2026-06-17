@@ -8,6 +8,17 @@
 
     document.documentElement.classList.add('motion-enabled');
 
+    function siteUrl(path) {
+        var base = (window.hdkApi && window.hdkApi.homeUrl) || '/';
+        if (path) return base.replace(/\/$/, '') + '/' + path.replace(/^\//, '');
+        return base;
+    }
+
+    function apiUrl(path) {
+        var base = (window.hdkApi && window.hdkApi.restBase) || siteUrl('wp-json/hdk/v1');
+        return base.replace(/\/$/, '') + path;
+    }
+
     function restNonce() {
         return window.hdkRestNonce || '';
     }
@@ -19,7 +30,7 @@
     }
 
     function redirectToLogin() {
-        var fallback = '/dang-nhap?redirect_to=' + encodeURIComponent(window.location.href);
+        var fallback = siteUrl('dang-nhap?redirect_to=' + encodeURIComponent(window.location.href));
         window.location.href = (window.hdkApi && window.hdkApi.loginUrl) || fallback;
     }
 
@@ -166,11 +177,16 @@
             searchResults.innerHTML = '<div class="search-results-title">Truyện</div>' + stories.map(function(story) {
                 var slug = encodeURIComponent(story.slug || '');
                 var cover = story.cover_url || '';
-                return '<a class="search-result-card" href="/' + slug + '">' +
+                var meta = [
+                    story.author_name || '',
+                    story.total_chapters ? (story.total_chapters + ' chương') : '',
+                    story.average_rating ? ('★ ' + parseFloat(story.average_rating).toFixed(1)) : ''
+                ].filter(Boolean).join(' · ');
+                return '<a class="search-result-card" href="' + siteUrl(slug) + '">' +
                     '<img src="' + escapeHtml(cover) + '" alt="' + escapeHtml(story.title) + '">' +
                     '<span class="search-result-copy">' +
                         '<strong>' + escapeHtml(story.title) + '</strong>' +
-                        '<small>' + storyStatusLabel(story.status) + '</small>' +
+                        '<small>' + escapeHtml(meta || storyStatusLabel(story.status)) + '</small>' +
                     '</span>' +
                 '</a>';
             }).join('');
@@ -188,7 +204,7 @@
             if (q === lastSearch) return;
             lastSearch = q;
             searchStatus.textContent = 'Đang tìm...';
-            fetch('/wp-json/hdk/v1/search?q=' + encodeURIComponent(q), {
+            fetch(apiUrl('/search?q=') + encodeURIComponent(q), {
                 headers: restHeaders()
             })
                 .then(function(r) { return r.json(); })
@@ -268,10 +284,60 @@
 
         window.addEventListener('resize', updateMobileLayout);
         updateMobileLayout();
+
+        // Bottom nav search button
+        var bottomSearchBtn = document.querySelector('[data-bottom-nav-action="search"]');
+        if (bottomSearchBtn) {
+            bottomSearchBtn.addEventListener('click', function() {
+                var searchToggle = document.querySelector('.search-toggle');
+                if (searchToggle) searchToggle.click();
+            });
+        }
+
+        // Bottom nav active state
+        (function initBottomNavActive() {
+            var items = document.querySelectorAll('.mobile-bottom-nav .bottom-nav-item[href]');
+            if (!items.length) return;
+            var currentPath = window.location.pathname.replace(/\/$/, '');
+            var currentTab = new URLSearchParams(window.location.search).get('tab') || '';
+            items.forEach(function(item) {
+                var href = item.getAttribute('href');
+                if (!href) return;
+                var itemUrl;
+                try {
+                    itemUrl = new URL(href, window.location.origin);
+                } catch (e) {
+                    return;
+                }
+                var itemPath = itemUrl.pathname.replace(/\/$/, '');
+                var itemTab = itemUrl.searchParams.get('tab') || '';
+                var isAccount = itemPath.endsWith('/tai-khoan');
+                if (isAccount && itemTab) {
+                    item.classList.toggle('active', currentPath === itemPath && currentTab === itemTab);
+                    return;
+                }
+                if (isAccount) {
+                    item.classList.toggle('active', currentPath === itemPath && !currentTab);
+                    return;
+                }
+                if (itemPath && (currentPath === itemPath || (itemPath.length > 1 && currentPath.indexOf(itemPath) === 0))) {
+                    item.classList.add('active');
+                }
+            });
+        })();
     })();
 
     // ===== Motion Observer =====
     (function initMotion() {
+        try {
+            var prefersReduced = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+        } catch (e) {
+            var prefersReduced = false;
+        }
+        if (prefersReduced) {
+            document.documentElement.classList.remove('motion-enabled');
+            return;
+        }
         if (!window.IntersectionObserver) {
             document.querySelectorAll('.motion-reveal, .motion-stagger').forEach(function(el) {
                 el.classList.add('motion-visible');
@@ -391,7 +457,7 @@
         var storyId = btn.dataset.storyId;
         if (!storyId) return;
 
-        fetch('/wp-json/hdk/v1/stories/' + storyId + '/favorite', {
+        fetch(apiUrl('/stories/' + storyId + '/favorite'), {
             method: 'POST',
             headers: restHeaders()
         })
@@ -419,7 +485,7 @@
         var storyId = widget ? widget.dataset.storyId : 0;
         if (!storyId) return;
 
-        fetch('/wp-json/hdk/v1/stories/' + storyId + '/rating', {
+        fetch(apiUrl('/stories/' + storyId + '/rating'), {
             method: 'POST',
             headers: restHeaders('application/json'),
             body: JSON.stringify({ rating: rating })
@@ -460,7 +526,7 @@
             submitBtn.textContent = 'Đang gửi…';
         }
 
-        fetch('/wp-json/hdk/v1/comments', {
+        fetch(apiUrl('/comments'), {
             method: 'POST',
             headers: restHeaders('application/json'),
             body: JSON.stringify({ story_id: parseInt(storyId, 10), chapter_number: 0, content: content })
@@ -512,14 +578,14 @@
         btn.disabled = true;
         btn.textContent = 'Đang xử lý…';
 
-        fetch('/wp-json/hdk/v1/daily-claim', {
+        fetch(apiUrl('/daily-claim'), {
             method: 'POST',
             headers: restHeaders()
         })
             .then(function(r) { return r.json().then(function(d) { return {status: r.status, data: d}; }); })
             .then(function(result) {
                 if (result.status === 200 && result.data.success) {
-                    btn.textContent = 'Đã nhận +' + result.data.credits_earned + ' hạt!';
+                    btn.textContent = 'Đã nhận +' + result.data.credits_earned + ' Linh Thạch!';
                     btn.style.background = 'var(--color-success)';
                     btn.style.color = 'var(--color-on-success)';
                     btn.style.borderColor = 'var(--color-success)';
@@ -553,7 +619,7 @@
 
         function savePrefs(prefs) {
             safeSetStorage(PREFS_KEY, JSON.stringify(prefs));
-            fetch('/wp-json/hdk/v1/reader-prefs', {
+            fetch(apiUrl('/reader-prefs'), {
                 method: 'PATCH',
                 headers: restHeaders('application/json'),
                 body: JSON.stringify(prefs)
@@ -621,7 +687,7 @@
         };
 
         // Fetch server prefs for logged-in users
-        fetch('/wp-json/hdk/v1/reader-prefs')
+        fetch(apiUrl('/reader-prefs'))
             .then(function(r) { return r.json(); })
             .then(function(data) {
                 if (data.prefs && data.prefs.user_id) {
@@ -660,7 +726,7 @@
             var storySlug = window.location.pathname.replace(/\/$/, '').split('/').pop();
             if (storySlug.includes('?')) storySlug = storySlug.split('?')[0];
             
-            fetch('/wp-json/hdk/v1/chapters/' + STORY_ID)
+            fetch(apiUrl('/chapters/') + STORY_ID)
                 .then(function(r) { return r.json(); })
                 .then(function(data) {
                     var chapters = data.chapters || [];
@@ -673,7 +739,7 @@
                         var lockIcon = '🔓';
                         if (ch.is_purchased) lockIcon = '✅';
                         else if (ch.is_locked) lockIcon = '🔒';
-                        var url = '/' + storySlug + '?chuong=' + chapterNumber;
+                        var url = siteUrl(storySlug + '?chuong=' + chapterNumber);
                         html += '<a href="' + url + '" class="' + cls + '">' +
                             '<span class="toc-chapter-num">' + chapterNumber + '</span>' +
                             '<span class="toc-chapter-title">' + escapeHtml(ch.title) + '</span>' +
@@ -698,11 +764,105 @@
         }
     }
 
+    // ===== Audio Mini Player =====
+    (function initAudioPlayer() {
+        var audio = null;
+        var player = null;
+        var titleEl = null;
+        var metaEl = null;
+        var playBtn = null;
+        var progressEl = null;
+        var currentItem = null;
+
+        function ensurePlayer() {
+            if (player) return;
+            player = document.createElement('div');
+            player.className = 'hdk-audio-player';
+            player.innerHTML =
+                '<div class="hdk-audio-copy">' +
+                    '<strong></strong>' +
+                    '<span></span>' +
+                '</div>' +
+                '<button type="button" class="hdk-audio-control" aria-label="Phát hoặc tạm dừng">▶</button>' +
+                '<div class="hdk-audio-progress"><span></span></div>' +
+                '<button type="button" class="hdk-audio-close" aria-label="Đóng player">×</button>';
+            document.body.appendChild(player);
+            titleEl = player.querySelector('strong');
+            metaEl = player.querySelector('span');
+            playBtn = player.querySelector('.hdk-audio-control');
+            progressEl = player.querySelector('.hdk-audio-progress span');
+            audio = new Audio();
+
+            playBtn.addEventListener('click', function() {
+                if (!audio.src) return;
+                if (audio.paused) audio.play();
+                else audio.pause();
+            });
+            player.querySelector('.hdk-audio-close').addEventListener('click', function() {
+                audio.pause();
+                player.classList.remove('active');
+            });
+            audio.addEventListener('play', function() {
+                playBtn.textContent = '⏸';
+                if (currentItem) saveListeningHistory(currentItem);
+            });
+            audio.addEventListener('pause', function() {
+                playBtn.textContent = '▶';
+            });
+            audio.addEventListener('timeupdate', function() {
+                if (!audio.duration || !progressEl) return;
+                progressEl.style.width = Math.min(100, (audio.currentTime / audio.duration) * 100) + '%';
+            });
+            audio.addEventListener('ended', function() {
+                playBtn.textContent = '▶';
+                if (progressEl) progressEl.style.width = '0%';
+            });
+        }
+
+        function saveListeningHistory(item) {
+            if (!window.hdkRestNonce || item.saved) return;
+            item.saved = true;
+            fetch(apiUrl('/listening-history'), {
+                method: 'POST',
+                headers: restHeaders('application/json'),
+                body: JSON.stringify({
+                    title: item.storyTitle || item.audioTitle,
+                    url: item.storyUrl || window.location.href,
+                    position: item.audioTitle || 'Đang nghe'
+                })
+            }).catch(function(){});
+        }
+
+        document.addEventListener('click', function(e) {
+            var btn = e.target.closest('.hdk-audio-play');
+            if (!btn) return;
+            var src = btn.dataset.audioSrc || '';
+            if (!src) return;
+            ensurePlayer();
+            currentItem = {
+                audioTitle: btn.dataset.audioTitle || 'Audio truyện',
+                storyTitle: btn.dataset.storyTitle || '',
+                storyUrl: btn.dataset.storyUrl || window.location.href,
+                saved: false
+            };
+            titleEl.textContent = currentItem.audioTitle;
+            metaEl.textContent = currentItem.storyTitle || 'Hồng Trần Các';
+            if (audio.src !== src) {
+                audio.src = src;
+                if (progressEl) progressEl.style.width = '0%';
+            }
+            player.classList.add('active');
+            audio.play().catch(function() {
+                playBtn.textContent = '▶';
+            });
+        });
+    })();
+
     // ===== Notifications =====
     var notifBell = document.getElementById('notif-bell');
     if (notifBell) {
         function updateUnreadCount() {
-            fetch('/wp-json/hdk/v1/notifications/unread-count')
+            fetch(apiUrl('/notifications/unread-count'))
                 .then(function(r) { return r.json(); })
                 .then(function(d) {
                     var badge = document.getElementById('notif-badge');
@@ -739,7 +899,7 @@
         function loadNotifDropdown() {
             var dd = document.getElementById('notif-dropdown');
             var list = document.getElementById('notif-list');
-            fetch('/wp-json/hdk/v1/notifications?page=1')
+            fetch(apiUrl('/notifications?page=1'))
                 .then(function(r) { return r.json(); })
                 .then(function(d) {
                     var notifs = d.rows || [];
@@ -768,7 +928,7 @@
         }
 
         window.markAllRead = function() {
-            fetch('/wp-json/hdk/v1/notifications/read', {
+            fetch(apiUrl('/notifications/read'), {
                 method: 'POST',
                 headers: restHeaders(),
                 body: '{}'
@@ -803,7 +963,7 @@
         var btn = document.querySelector('#report-form button[type="submit"]');
         btn.disabled = true; btn.textContent = 'Đang gửi...';
 
-        fetch('/wp-json/hdk/v1/reports', {
+        fetch(apiUrl('/reports'), {
             method: 'POST',
             headers: restHeaders(),
             body: data

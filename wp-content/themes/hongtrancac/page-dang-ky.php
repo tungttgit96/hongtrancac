@@ -6,9 +6,9 @@
 
 $redirect_to = sanitize_url($_GET['redirect_to'] ?? ($_POST['redirect_to'] ?? home_url('/tai-khoan')));
 if (is_user_logged_in()) {
-    wp_redirect($redirect_to);
-    exit;
+    hdk_safe_redirect($redirect_to);
 }
+
 
 $errors = [];
 $user_login = '';
@@ -18,16 +18,17 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['hdk_register_account'
     if (!isset($_POST['_wpnonce']) || !wp_verify_nonce($_POST['_wpnonce'], 'hdk_register_account')) {
         $errors[] = 'Phiên đăng ký hết hạn, vui lòng thử lại.';
     } else {
-        $redirect_to = sanitize_url($_POST['redirect_to'] ?? $redirect_to);
-        $user_login = sanitize_user($_POST['user_login'] ?? '', true);
+        $redirect_to = wp_validate_redirect(sanitize_url($_POST['redirect_to'] ?? $redirect_to), home_url('/tai-khoan'));
+        $raw_user_login = strtolower(trim($_POST['user_login'] ?? ''));
+        $user_login = hdk_sanitize_username_input($raw_user_login);
         $display_name = sanitize_text_field($_POST['display_name'] ?? '');
         $password = $_POST['password'] ?? '';
         $password_confirm = $_POST['password_confirm'] ?? '';
 
-        if ($user_login === '') {
+        if ($raw_user_login === '') {
             $errors[] = 'Vui lòng nhập tên đăng nhập.';
-        } elseif (!validate_username($user_login)) {
-            $errors[] = 'Tên đăng nhập chỉ nên dùng chữ, số, dấu gạch dưới hoặc gạch ngang.';
+        } elseif (!hdk_validate_username_format($raw_user_login)) {
+            $errors[] = 'Tên đăng nhập chỉ được dùng chữ thường, số, dấu gạch dưới hoặc gạch ngang, không có khoảng trắng hay dấu.';
         } elseif (username_exists($user_login)) {
             $errors[] = 'Tên đăng nhập này đã tồn tại.';
         }
@@ -57,8 +58,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['hdk_register_account'
             } else {
                 wp_set_current_user($user_id);
                 wp_set_auth_cookie($user_id, true, is_ssl());
-                wp_redirect($redirect_to);
-                exit;
+                hdk_safe_redirect($redirect_to);
             }
         }
     }
