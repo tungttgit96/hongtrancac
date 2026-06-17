@@ -721,20 +721,20 @@ body.admin-bar .site-header {
 }
 .hero-banner .banner-cover {
     align-items: center;
+    aspect-ratio: 2 / 3;
     display: flex;
     justify-content: center;
     min-width: 0;
-    width: 100%;
+    width: min(100%, clamp(260px, 24vw, 340px));
 }
 .hero-banner .banner-cover-img {
-    aspect-ratio: 2 / 3;
     border: 1px solid var(--color-banner-cover-border);
     border-radius: 12px;
     box-shadow: var(--color-banner-cover-shadow);
     display: block;
-    height: auto;
-    max-height: 460px;
-    max-width: 340px;
+    height: 100%;
+    max-height: none;
+    max-width: none;
     object-fit: cover;
     object-position: center;
     transition: opacity 0.35s var(--motion-ease-out), transform 0.35s var(--motion-ease-out);
@@ -837,6 +837,7 @@ body.admin-bar .site-header {
     }
     .hero-banner .banner-cover {
         order: 0;
+        width: min(40vw, 300px);
     }
     .hero-banner .banner-cards {
         grid-column: 1 / -1;
@@ -877,11 +878,12 @@ body.admin-bar .site-header {
     }
     .hero-banner .banner-cover {
         justify-self: center;
-        max-width: min(68vw, 260px);
+        max-width: none;
         order: 0;
+        width: min(72vw, 300px);
     }
     .hero-banner .banner-cover-img {
-        max-height: 390px;
+        max-height: none;
     }
     .hero-banner .banner-cards {
         display: flex;
@@ -912,6 +914,9 @@ body.admin-bar .site-header {
     .hero-banner .banner-shell {
         border-radius: 16px;
         padding: 12px;
+    }
+    .hero-banner .banner-cover {
+        width: min(78vw, 260px);
     }
     .hero-banner .banner-card {
         flex-basis: 104px;
