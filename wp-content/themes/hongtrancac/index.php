@@ -40,7 +40,7 @@ foreach ($audio_stories as $audio_story) {
 <section class="section motion-reveal">
     <div class="container">
         <div class="section-header">
-            <h2 class="section-title">🆕 Truyện mới cập nhật</h2>
+            <h2 class="section-title"><?php echo hdk_icon('sparkles'); ?> Truyện mới cập nhật</h2>
             <a href="<?php echo esc_url(hdk_page_url('danh-sach-truyen')); ?>" class="btn btn-outline btn-sm">Xem tất cả</a>
         </div>
         <div class="grid grid-6 home-story-grid">
@@ -55,7 +55,7 @@ foreach ($audio_stories as $audio_story) {
 <section class="section motion-reveal" style="background:var(--color-bg);">
     <div class="container">
         <div class="section-header">
-            <h2 class="section-title">🔥 Truyện hot nhất</h2>
+            <h2 class="section-title"><?php echo hdk_icon('flame'); ?> Truyện hot nhất</h2>
             <a href="<?php echo esc_url(hdk_page_url('bang-xep-hang')); ?>" class="btn btn-outline btn-sm">Bảng xếp hạng</a>
         </div>
         <div class="grid grid-6 home-story-grid">
@@ -70,7 +70,7 @@ foreach ($audio_stories as $audio_story) {
 <section class="section motion-reveal" style="background:var(--color-bg);">
     <div class="container">
         <div class="section-header">
-            <h2 class="section-title">✅ Truyện hoàn thành</h2>
+            <h2 class="section-title"><?php echo hdk_icon('check-circle'); ?> Truyện hoàn thành</h2>
             <a href="<?php echo esc_url(hdk_page_url('hoan-thanh')); ?>" class="btn btn-outline btn-sm">Xem tất cả</a>
         </div>
         <div class="grid grid-6 home-story-grid">
@@ -85,7 +85,7 @@ foreach ($audio_stories as $audio_story) {
 <section class="section motion-reveal">
     <div class="container">
         <div class="section-header">
-            <h2 class="section-title">🎁 Truyện miễn phí</h2>
+            <h2 class="section-title"><?php echo hdk_icon('gift'); ?> Truyện miễn phí</h2>
             <a href="<?php echo esc_url(hdk_page_url('truyen-free')); ?>" class="btn btn-outline btn-sm">Xem tất cả</a>
         </div>
         <div class="grid grid-6 home-story-grid">
@@ -101,7 +101,7 @@ foreach ($audio_stories as $audio_story) {
 <section class="section motion-reveal audio-section">
     <div class="container">
         <div class="section-header">
-            <h2 class="section-title">🎧 Truyện audio</h2>
+            <h2 class="section-title"><?php echo hdk_icon('headphones'); ?> Truyện audio</h2>
             <a href="<?php echo esc_url(hdk_page_url('danh-sach-truyen', ['audio' => '1'])); ?>" class="btn btn-outline btn-sm">Nghe thêm</a>
         </div>
         <div class="audio-story-strip">
@@ -117,7 +117,7 @@ foreach ($audio_stories as $audio_story) {
                             data-audio-title="<?php echo esc_attr(($story->audio_title ?? '') ?: $story->title); ?>"
                             data-story-title="<?php echo esc_attr($story->title); ?>"
                             data-story-url="<?php echo esc_url(hdk_story_url($story->slug)); ?>">
-                        ▶
+                        <?php echo hdk_icon('play'); ?>
                     </button>
                 </article>
             <?php endforeach; ?>
@@ -133,7 +133,7 @@ if (!empty($editor_picks['stories'])): ?>
 <section class="section motion-reveal">
     <div class="container">
         <div class="section-header">
-            <h2 class="section-title">⭐ Đề cử biên tập</h2>
+            <h2 class="section-title"><?php echo hdk_icon('star'); ?> Đề cử biên tập</h2>
         </div>
         <div class="grid grid-6 home-story-grid">
             <?php foreach ($editor_picks['stories'] as $i => $story): ?>
@@ -151,8 +151,8 @@ if (!empty($weekly_hot['stories'])): ?>
 <section class="section motion-reveal" style="background:var(--color-bg);">
     <div class="container">
         <div class="section-header">
-            <h2 class="section-title">🔥 Hot tuần này</h2>
-            <a href="<?php echo esc_url(hdk_page_url('bang-xep-hang')); ?>" class="btn btn-outline btn-sm">Xem thêm →</a>
+            <h2 class="section-title"><?php echo hdk_icon('flame'); ?> Hot tuần này</h2>
+            <a href="<?php echo esc_url(hdk_page_url('bang-xep-hang')); ?>" class="btn btn-outline btn-sm">Xem thêm <?php echo hdk_icon('arrow-right'); ?></a>
         </div>
         <div class="grid grid-6 home-story-grid">
             <?php foreach ($weekly_hot['stories'] as $i => $story): ?>

@@ -43,7 +43,7 @@ get_header();
     </div>
     <?php elseif ($has_audio): ?>
     <div class="section-header">
-        <h1 class="section-title">🎧 Truyện audio</h1>
+        <h1 class="section-title"><?php echo hdk_icon('headphones'); ?> Truyện audio</h1>
         <span style="color:var(--color-text-muted);"><?php echo $result['total']; ?> truyện</span>
     </div>
     <?php else: ?>
@@ -99,14 +99,14 @@ get_header();
     <?php else: ?>
         <?php if ($search): ?>
         <div class="search-empty-state">
-            <div class="search-empty-icon">🔍</div>
+            <div class="search-empty-icon"><?php echo hdk_icon('search'); ?></div>
             <h3>Không tìm thấy truyện nào</h3>
             <p>Không tìm thấy kết quả cho <strong>"<?php echo esc_html($search); ?>"</strong>. Hãy thử từ khóa khác.</p>
             <a href="<?php echo esc_url(hdk_page_url('danh-sach-truyen')); ?>" class="btn btn-outline">Xem tất cả truyện</a>
         </div>
         <?php else: ?>
         <div style="text-align:center;padding:60px 0;">
-            <p style="font-size:var(--font-size-2xl);margin-bottom:12px;">🔍</p>
+            <p style="font-size:var(--font-size-2xl);margin-bottom:12px;"><?php echo hdk_icon('search', ['size' => '2em']); ?></p>
             <p style="font-size:var(--font-size-lg);color:var(--color-text-muted);">Không tìm thấy truyện nào.</p>
         </div>
         <?php endif; ?>

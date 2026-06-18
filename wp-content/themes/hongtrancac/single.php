@@ -9,8 +9,8 @@ while (have_posts()): the_post();
 ?>
 <div class="container" style="padding-top:24px;">
     <nav style="font-size:var(--font-size-sm);color:var(--color-text-muted);margin-bottom:20px;">
-        <a href="<?php echo home_url('/'); ?>">Trang chủ</a> &raquo;
-        <a href="<?php echo home_url('/tin-tuc'); ?>">Tin tức</a> &raquo;
+        <a href="<?php echo home_url('/'); ?>">Trang chủ</a> <?php echo hdk_icon('chevron-right'); ?>
+        <a href="<?php echo home_url('/tin-tuc'); ?>">Tin tức</a> <?php echo hdk_icon('chevron-right'); ?>
         <span><?php the_title(); ?></span>
     </nav>
 
@@ -21,9 +21,9 @@ while (have_posts()): the_post();
             <?php endif; ?>
             <h1 style="font-size:var(--font-size-3xl);font-weight:700;margin-bottom:12px;"><?php the_title(); ?></h1>
             <div style="display:flex;align-items:center;gap:16px;color:var(--color-text-muted);font-size:var(--font-size-sm);">
-                <span>✍️ <?php the_author(); ?></span>
-                <span>📅 <?php echo get_the_date(); ?></span>
-                <span>📂 <?php the_category(', '); ?></span>
+                <span><?php echo hdk_icon('pen-tool'); ?> <?php the_author(); ?></span>
+                <span><?php echo hdk_icon('calendar'); ?> <?php echo get_the_date(); ?></span>
+                <span><?php echo hdk_icon('folder'); ?> <?php the_category(', '); ?></span>
             </div>
         </header>
 
@@ -40,8 +40,8 @@ while (have_posts()): the_post();
 
         <!-- Prev/Next -->
         <div style="margin-top:32px;padding-top:24px;border-top:1px solid var(--color-border);display:flex;justify-content:space-between;">
-            <div><?php previous_post_link('%link', '&laquo; %title'); ?></div>
-            <div><?php next_post_link('%link', '%title &raquo;'); ?></div>
+            <div><?php previous_post_link('%link', hdk_icon('chevron-left') . ' %title'); ?></div>
+            <div><?php next_post_link('%link', '%title ' . hdk_icon('chevron-right')); ?></div>
         </div>
     </article>
 </div>

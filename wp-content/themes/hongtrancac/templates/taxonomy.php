@@ -41,7 +41,7 @@ get_header();
 
 <div class="container" style="padding-top:24px;">
     <nav style="font-size:var(--font-size-sm);color:var(--color-text-muted);margin-bottom:20px;">
-        <a href="<?php echo home_url('/'); ?>">Trang chủ</a> &raquo;
+        <a href="<?php echo home_url('/'); ?>">Trang chủ</a> <?php echo hdk_icon('chevron-right'); ?>
         <span><?php echo esc_html($page_title); ?></span>
     </nav>
 

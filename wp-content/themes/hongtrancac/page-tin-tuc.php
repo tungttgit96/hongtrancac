@@ -16,7 +16,7 @@ $posts_query = new WP_Query([
 
 <div class="container" style="padding-top:24px;">
     <div class="section-header">
-        <h1 class="section-title">📰 Tin tức</h1>
+        <h1 class="section-title"><?php echo hdk_icon('newspaper'); ?> Tin tức</h1>
     </div>
 
     <?php if ($posts_query->have_posts()): ?>
@@ -47,13 +47,13 @@ $posts_query = new WP_Query([
             if ($total > 1): ?>
                 <nav class="pagination" style="display:flex;gap:8px;">
                     <?php if ($paged > 1): ?>
-                        <a href="?page=<?php echo $paged - 1; ?>" class="btn btn-ghost btn-sm">&laquo; Trước</a>
+                        <a href="?page=<?php echo $paged - 1; ?>" class="btn btn-ghost btn-sm"><?php echo hdk_icon('chevron-left'); ?> Trước</a>
                     <?php endif; ?>
                     <?php for ($i = 1; $i <= $total; $i++): ?>
                         <a href="?page=<?php echo $i; ?>" class="btn <?php echo $i === $paged ? 'btn-primary' : 'btn-ghost'; ?> btn-sm"><?php echo $i; ?></a>
                     <?php endfor; ?>
                     <?php if ($paged < $total): ?>
-                        <a href="?page=<?php echo $paged + 1; ?>" class="btn btn-ghost btn-sm">Sau &raquo;</a>
+                        <a href="?page=<?php echo $paged + 1; ?>" class="btn btn-ghost btn-sm">Sau <?php echo hdk_icon('chevron-right'); ?></a>
                     <?php endif; ?>
                 </nav>
             <?php endif; ?>

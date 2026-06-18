@@ -12,7 +12,7 @@ get_header();
 
 <div class="container" style="padding-top:24px;">
     <div class="section-header">
-        <h1 class="section-title">🎁 Truyện miễn phí</h1>
+        <h1 class="section-title"><?php echo hdk_icon('gift'); ?> Truyện miễn phí</h1>
         <span style="color:var(--color-text-muted);"><?php echo $result['total']; ?> truyện</span>
     </div>
     <p style="color:var(--color-text-muted);margin-bottom:24px;">

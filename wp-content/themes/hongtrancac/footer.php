@@ -9,7 +9,7 @@
     <div class="container">
         <div class="grid grid-3" style="margin-bottom:24px;">
             <div>
-                <h4 style="font-size:var(--font-size-lg);margin-bottom:12px;">🏯 Hồng Trần Các</h4>
+                <h4 style="font-size:var(--font-size-lg);margin-bottom:12px;"><?php echo hdk_icon('castle'); ?> Hồng Trần Các</h4>
                 <p style="font-size:var(--font-size-sm);opacity:0.8;line-height:1.6;">
                     Nền tảng đọc truyện chữ online miễn phí, cập nhật liên tục hàng ngày với hàng ngàn truyện hay.
                 </p>

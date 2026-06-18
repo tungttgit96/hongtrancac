@@ -12,7 +12,7 @@ get_header();
 
 <div class="container" style="padding-top:24px;">
     <div class="section-header">
-        <h1 class="section-title">✅ Truyện hoàn thành</h1>
+        <h1 class="section-title"><?php echo hdk_icon('check-circle'); ?> Truyện hoàn thành</h1>
         <span style="color:var(--color-text-muted);"><?php echo $result['total']; ?> truyện</span>
     </div>
     <p style="color:var(--color-text-muted);margin-bottom:24px;">

@@ -143,15 +143,15 @@ $avatar_html = $custom_avatar
 
     <?php
     $account_menu = [
-        'favorites' => '📖 Tủ truyện',
-        'reading' => '📌 Đang đọc',
-        'purchased' => '💎 Đã mua',
-        'history' => '🕐 Lịch sử đọc truyện',
-        'listening' => '🎧 Lịch sử nghe truyện',
-        'comments' => '💬 Bình luận của tôi',
-        'wallet' => '💎 Ví Linh Thạch',
-        'notifications' => '🔔 Thông báo',
-        'settings' => '⚙️ Cài đặt tài khoản',
+        'favorites' => hdk_icon('book-open') . ' Tủ truyện',
+        'reading' => hdk_icon('bookmark') . ' Đang đọc',
+        'purchased' => hdk_icon('gem') . ' Đã mua',
+        'history' => hdk_icon('clock') . ' Lịch sử đọc truyện',
+        'listening' => hdk_icon('headphones') . ' Lịch sử nghe truyện',
+        'comments' => hdk_icon('message-square') . ' Bình luận của tôi',
+        'wallet' => hdk_icon('gem') . ' Ví Linh Thạch',
+        'notifications' => hdk_icon('bell') . ' Thông báo',
+        'settings' => hdk_icon('settings') . ' Cài đặt tài khoản',
     ];
     ?>
     <div class="account-layout">
@@ -172,7 +172,7 @@ $avatar_html = $custom_avatar
             ?>
             <?php if (empty($stories)): ?>
                 <div class="empty-state">
-                    <div style="font-size:48px;margin-bottom:16px;">📖</div>
+                    <div style="font-size:48px;margin-bottom:16px;"><?php echo hdk_icon('book-open', ['size' => '48px']); ?></div>
                     <p style="margin-bottom:16px;">Bạn chưa yêu thích truyện nào.</p>
                     <a href="<?php echo home_url('/danh-sach-truyen'); ?>" class="btn btn-primary">Khám phá truyện ngay!</a>
                 </div>
@@ -191,7 +191,7 @@ $avatar_html = $custom_avatar
             ?>
             <?php if (empty($stories)): ?>
                 <div class="empty-state">
-                    <div style="font-size:48px;margin-bottom:16px;">📌</div>
+                    <div style="font-size:48px;margin-bottom:16px;"><?php echo hdk_icon('bookmark', ['size' => '48px']); ?></div>
                     <p style="color:var(--color-text-muted);margin-bottom:16px;">Bắt đầu đọc truyện đầu tiên của bạn!</p>
                     <a href="<?php echo home_url('/danh-sach-truyen'); ?>" class="btn btn-primary">Khám phá truyện</a>
                 </div>
@@ -223,7 +223,7 @@ $avatar_html = $custom_avatar
             ?>
             <?php if (empty($stories)): ?>
                 <div class="empty-state">
-                    <div style="font-size:48px;margin-bottom:16px;">💎</div>
+                    <div style="font-size:48px;margin-bottom:16px;"><?php echo hdk_icon('gem', ['size' => '48px']); ?></div>
                     <p style="color:var(--color-text-muted);margin-bottom:16px;">Khám phá truyện hay để mua bằng Linh Thạch</p>
                     <a href="<?php echo home_url('/danh-sach-truyen'); ?>" class="btn btn-primary">Khám phá truyện</a>
                 </div>
@@ -236,7 +236,7 @@ $avatar_html = $custom_avatar
                                 <h3 class="card-title"><?php echo esc_html($story->title); ?></h3>
                                 <div class="card-meta"><?php echo esc_html($story->author_name ?? ''); ?></div>
                                 <div style="margin-top:8px;">
-                                    <span class="badge badge-warning">💎 Đã mua</span>
+                                    <span class="badge badge-warning"><?php echo hdk_icon('gem'); ?> Đã mua</span>
                                 </div>
                                 <div class="card-meta" style="margin-top:6px"><?php echo (int)($story->chapter_count ?? 0); ?> chương</div>
                             </div>
@@ -253,7 +253,7 @@ $avatar_html = $custom_avatar
             ?>
             <?php if (empty($rows)): ?>
                 <div class="empty-state">
-                    <div style="font-size:48px;margin-bottom:16px;">🕐</div>
+                    <div style="font-size:48px;margin-bottom:16px;"><?php echo hdk_icon('clock', ['size' => '48px']); ?></div>
                     <p style="color:var(--color-text-muted);">Lịch sử đọc sẽ xuất hiện ở đây</p>
                 </div>
             <?php else: ?>
@@ -279,7 +279,7 @@ $avatar_html = $custom_avatar
             ?>
             <?php if (empty($listening_history)): ?>
                 <div class="empty-state">
-                    <div style="font-size:48px;margin-bottom:16px;">🎧</div>
+                    <div style="font-size:48px;margin-bottom:16px;"><?php echo hdk_icon('headphones', ['size' => '48px']); ?></div>
                     <p style="color:var(--color-text-muted);margin-bottom:16px;">Lịch sử nghe truyện sẽ xuất hiện ở đây.</p>
                     <a href="<?php echo esc_url(hdk_page_url('danh-sach-truyen', ['audio' => '1'])); ?>" class="btn btn-primary">Khám phá truyện audio</a>
                 </div>
@@ -312,7 +312,7 @@ $avatar_html = $custom_avatar
             ?>
             <?php if (empty($comments)): ?>
                 <div class="empty-state">
-                    <div style="font-size:48px;margin-bottom:16px;">💬</div>
+                    <div style="font-size:48px;margin-bottom:16px;"><?php echo hdk_icon('message-square', ['size' => '48px']); ?></div>
                     <p style="color:var(--color-text-muted);">Bình luận của bạn sẽ xuất hiện ở đây.</p>
                 </div>
             <?php else: ?>
@@ -340,24 +340,24 @@ $avatar_html = $custom_avatar
             <div class="wallet-summary" style="display:flex;gap:16px;margin-bottom:24px;flex-wrap:wrap;">
                 <div class="wallet-stat" style="flex:1;min-width:140px;padding:20px;background:var(--color-bg-secondary);border-radius:var(--radius-md);text-align:center;">
                     <div style="font-size:var(--font-size-sm);color:var(--color-text-muted);margin-bottom:4px;">Số dư</div>
-                    <div style="font-size:var(--font-size-2xl);font-weight:700;color:var(--color-primary);">💎 <?php echo number_format($stats['credits']); ?></div>
+                    <div style="font-size:var(--font-size-2xl);font-weight:700;color:var(--color-primary);"><?php echo hdk_icon('gem'); ?> <?php echo number_format($stats['credits']); ?></div>
                 </div>
                 <div class="wallet-stat" style="flex:1;min-width:140px;padding:20px;background:var(--color-bg-secondary);border-radius:var(--radius-md);text-align:center;">
                     <div style="font-size:var(--font-size-sm);color:var(--color-text-muted);margin-bottom:4px;">Đã nạp</div>
-                    <div style="font-size:var(--font-size-xl);font-weight:600;color:var(--color-success);">📥 <?php echo number_format($stats['total_earned']); ?></div>
+                    <div style="font-size:var(--font-size-xl);font-weight:600;color:var(--color-success);"><?php echo hdk_icon('arrow-down-to-line'); ?> <?php echo number_format($stats['total_earned']); ?></div>
                 </div>
                 <div class="wallet-stat" style="flex:1;min-width:140px;padding:20px;background:var(--color-bg-secondary);border-radius:var(--radius-md);text-align:center;">
                     <div style="font-size:var(--font-size-sm);color:var(--color-text-muted);margin-bottom:4px;">Đã tiêu</div>
-                    <div style="font-size:var(--font-size-xl);font-weight:600;color:var(--color-danger);">📤 <?php echo number_format($stats['total_spent']); ?></div>
+                    <div style="font-size:var(--font-size-xl);font-weight:600;color:var(--color-danger);"><?php echo hdk_icon('arrow-up-from-line'); ?> <?php echo number_format($stats['total_spent']); ?></div>
                 </div>
             </div>
 
             <div style="display:flex;gap:12px;margin-bottom:24px;flex-wrap:wrap;">
                 <button type="button" class="btn btn-primary" onclick="document.getElementById('purchase-modal').style.display='flex'">
-                    💳 Nạp Linh Thạch
+                    <?php echo hdk_icon('credit-card'); ?> Nạp Linh Thạch
                 </button>
                 <button type="button" class="btn btn-outline daily-claim-btn" id="daily-claim-btn" onclick="claimDaily()">
-                    📅 Điểm danh +<?php echo (int)get_option('hdk_daily_credits', 10); ?> Linh Thạch
+                    <?php echo hdk_icon('calendar'); ?> Điểm danh +<?php echo (int)get_option('hdk_daily_credits', 10); ?> Linh Thạch
                 </button>
             </div>
 
@@ -366,7 +366,7 @@ $avatar_html = $custom_avatar
                 <div style="background:var(--color-bg);border-radius:var(--radius-lg);padding:32px;max-width:500px;width:90%;max-height:80vh;overflow-y:auto;">
                     <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:20px;">
                         <h2 style="margin:0;">Nạp Linh Thạch</h2>
-                        <button type="button" class="btn btn-ghost btn-sm" onclick="document.getElementById('purchase-modal').style.display='none'">✕</button>
+                        <button type="button" class="btn btn-ghost btn-sm" onclick="document.getElementById('purchase-modal').style.display='none'"><?php echo hdk_icon('x'); ?></button>
                     </div>
                     <?php if (empty($packages)): ?>
                         <p style="color:var(--color-text-muted);">Chưa có gói nạp nào.</p>
@@ -383,7 +383,7 @@ $avatar_html = $custom_avatar
                                             <?php endif; ?>
                                         </div>
                                         <div style="text-align:right;">
-                                            <div style="font-weight:700;font-size:var(--font-size-lg);">💎 <?php echo number_format((int)$pkg->credits); ?></div>
+                                            <div style="font-weight:700;font-size:var(--font-size-lg);"><?php echo hdk_icon('gem'); ?> <?php echo number_format((int)$pkg->credits); ?></div>
                                             <div style="color:var(--color-text-muted);font-size:var(--font-size-sm);"><?php echo number_format((int)$pkg->price_vnd); ?> đ</div>
                                         </div>
                                     </div>
@@ -400,7 +400,7 @@ $avatar_html = $custom_avatar
             <h3 style="margin-bottom:12px;">Lịch sử giao dịch</h3>
             <?php if (empty($transactions)): ?>
                 <div class="empty-state">
-                    <div style="font-size:48px;margin-bottom:16px;">💎</div>
+                    <div style="font-size:48px;margin-bottom:16px;"><?php echo hdk_icon('gem', ['size' => '48px']); ?></div>
                     <p style="color:var(--color-text-muted);">Chưa có giao dịch nào</p>
                 </div>
             <?php else: ?>
@@ -444,7 +444,7 @@ $avatar_html = $custom_avatar
             </div>
             <?php if (empty($notifications)): ?>
                 <div class="empty-state">
-                    <div style="font-size:48px;margin-bottom:16px;">🔔</div>
+                    <div style="font-size:48px;margin-bottom:16px;"><?php echo hdk_icon('bell', ['size' => '48px']); ?></div>
                     <p style="color:var(--color-text-muted);">Chưa có thông báo nào</p>
                 </div>
             <?php else: ?>

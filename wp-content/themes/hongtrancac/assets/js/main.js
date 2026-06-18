@@ -8,6 +8,27 @@
 
     document.documentElement.classList.add('motion-enabled');
 
+    window.hdkIcon = function(name, className) {
+        var cls = 'hdk-icon hdk-icon-' + name + (className ? ' ' + className : '');
+        var icons = {
+            sun: '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="4"/><path d="M12 2v2"/><path d="M12 20v2"/><path d="m4.93 4.93 1.41 1.41"/><path d="m17.66 17.66 1.41 1.41"/><path d="M2 12h2"/><path d="M20 12h2"/><path d="m6.34 17.66-1.41 1.41"/><path d="m19.07 4.93-1.41 1.41"/></svg>',
+            moon: '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20.985 12.486a9 9 0 1 1-9.473-9.472c.405-.022.617.46.402.803a6 6 0 0 0 8.268 8.268c.344-.215.825-.004.803.401"/></svg>',
+            star: '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M11.525 2.295a.53.53 0 0 1 .95 0l2.31 4.679a2.123 2.123 0 0 0 1.595 1.16l5.166.756a.53.53 0 0 1 .294.904l-3.736 3.638a2.123 2.123 0 0 0-.611 1.878l.882 5.14a.53.53 0 0 1-.771.56l-4.618-2.428a2.122 2.122 0 0 0-1.973 0L6.396 21.01a.53.53 0 0 1-.77-.56l.881-5.139a2.122 2.122 0 0 0-.611-1.879L2.16 9.795a.53.53 0 0 1 .294-.906l5.165-.755a2.122 2.122 0 0 0 1.597-1.16z"/></svg>',
+            'star-filled': '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M11.525 2.295a.53.53 0 0 1 .95 0l2.31 4.679a2.123 2.123 0 0 0 1.595 1.16l5.166.756a.53.53 0 0 1 .294.904l-3.736 3.638a2.123 2.123 0 0 0-.611 1.878l.882 5.14a.53.53 0 0 1-.771.56l-4.618-2.428a2.122 2.122 0 0 0-1.973 0L6.396 21.01a.53.53 0 0 1-.77-.56l.881-5.139a2.122 2.122 0 0 0-.611-1.879L2.16 9.795a.53.53 0 0 1 .294-.906l5.165-.755a2.122 2.122 0 0 0 1.597-1.16z"/></svg>',
+            play: '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 5a2 2 0 0 1 3.008-1.728l11.997 6.998a2 2 0 0 1 .003 3.458l-12 7A2 2 0 0 1 5 19z"/></svg>',
+            pause: '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="14" y="3" width="5" height="18" rx="1"/><rect x="5" y="3" width="5" height="18" rx="1"/></svg>',
+            x: '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 6 6 18"/><path d="m6 6 12 12"/></svg>',
+            lock: '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect width="18" height="11" x="3" y="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>',
+            unlock: '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect width="18" height="11" x="3" y="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 9.9-1"/></svg>',
+            check: '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg>',
+            heart: '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M2 9.5a5.5 5.5 0 0 1 9.591-3.676.56.56 0 0 0 .818 0A5.49 5.49 0 0 1 22 9.5c0 2.29-1.5 4-3 5.5l-5.492 5.313a2 2 0 0 1-3 .019L5 15c-1.5-1.5-3-3.2-3-5.5"/></svg>',
+            gem: '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10.5 3 8 9l4 13 4-13-2.5-6"/><path d="M17 3a2 2 0 0 1 1.6.8l3 4a2 2 0 0 1 .013 2.382l-7.99 10.986a2 2 0 0 1-3.247 0l-7.99-10.986A2 2 0 0 1 2.4 7.8l2.998-3.997A2 2 0 0 1 7 3z"/><path d="M2 9h20"/></svg>',
+        };
+        var svg = icons[name] || '';
+        if (!svg) return '';
+        return svg.replace('<svg', '<svg class="' + cls + '" aria-hidden="true"');
+    };
+
     function siteUrl(path) {
         var base = (window.hdkApi && window.hdkApi.homeUrl) || '/';
         if (path) return base.replace(/\/$/, '') + '/' + path.replace(/^\//, '');
@@ -61,7 +82,7 @@
             document.documentElement.setAttribute('data-theme', theme);
         } catch (e) {}
         if (toggleBtn) {
-            toggleBtn.textContent = theme === 'dark' ? '\u263E' : '\u2600';
+            toggleBtn.innerHTML = theme === 'dark' ? window.hdkIcon('sun') : window.hdkIcon('moon');
             toggleBtn.setAttribute('aria-pressed', theme === 'dark' ? 'true' : 'false');
             toggleBtn.setAttribute('aria-label', theme === 'dark' ? 'Chuy\u1EC3n sang ch\u1EBF \u0111\u1ED9 s\u00E1ng' : 'Chuy\u1EC3n sang ch\u1EBF \u0111\u1ED9 t\u1ED1i');
         }
@@ -180,7 +201,7 @@
                 var meta = [
                     story.author_name || '',
                     story.total_chapters ? (story.total_chapters + ' chương') : '',
-                    story.average_rating ? ('★ ' + parseFloat(story.average_rating).toFixed(1)) : ''
+                    story.average_rating ? (window.hdkIcon('star') + ' ' + parseFloat(story.average_rating).toFixed(1)) : ''
                 ].filter(Boolean).join(' · ');
                 return '<a class="search-result-card" href="' + siteUrl(slug) + '">' +
                     '<img src="' + escapeHtml(cover) + '" alt="' + escapeHtml(story.title) + '">' +
@@ -464,7 +485,7 @@
             .then(function(r) { return r.json(); })
             .then(function(data) {
                 btn.dataset.favorited = data.favorited ? '1' : '0';
-                btn.textContent = data.favorited ? 'Bỏ yêu thích' : 'Yêu thích';
+                btn.innerHTML = window.hdkIcon('heart') + ' ' + (data.favorited ? 'Bỏ yêu thích' : 'Yêu thích');
                 if (data.total_favorites !== undefined) {
                     var countEl = document.querySelector('.favorite-count');
                     if (countEl) countEl.textContent = data.total_favorites;
@@ -494,7 +515,7 @@
             .then(function(data) {
                 var stars = widget.querySelectorAll('.star');
                 stars.forEach(function(s, i) {
-                    s.textContent = i < rating ? '★' : '☆';
+                    s.innerHTML = i < rating ? window.hdkIcon('star-filled', 'hdk-icon-filled') : window.hdkIcon('star');
                 });
 
                 var textEl = widget.querySelector('span:last-child');
@@ -576,7 +597,8 @@
         if (!btn) return;
 
         btn.disabled = true;
-        btn.textContent = 'Đang xử lý…';
+        if (!btn.dataset.originalHtml) btn.dataset.originalHtml = btn.innerHTML;
+        btn.innerHTML = 'Đang xử lý…';
 
         fetch(apiUrl('/daily-claim'), {
             method: 'POST',
@@ -585,17 +607,17 @@
             .then(function(r) { return r.json().then(function(d) { return {status: r.status, data: d}; }); })
             .then(function(result) {
                 if (result.status === 200 && result.data.success) {
-                    btn.textContent = 'Đã nhận +' + result.data.credits_earned + ' Linh Thạch!';
+                    btn.innerHTML = 'Đã nhận +' + result.data.credits_earned + ' Linh Thạch!';
                     btn.style.background = 'var(--color-success)';
                     btn.style.color = 'var(--color-on-success)';
                     btn.style.borderColor = 'var(--color-success)';
                     setTimeout(function() { location.reload(); }, 1500);
                 } else if (result.status === 409) {
-                    btn.textContent = 'Đã điểm danh hôm nay';
+                    btn.innerHTML = btn.dataset.originalHtml;
                     btn.disabled = true;
                     btn.style.opacity = '0.5';
                 } else {
-                    btn.textContent = 'Lỗi, thử lại';
+                    btn.innerHTML = btn.dataset.originalHtml;
                     btn.disabled = false;
                 }
             })
@@ -736,9 +758,9 @@
                         var chapterNumber = parseInt(ch.chapter_number, 10);
                         var cls = 'toc-chapter';
                         if (chapterNumber === currentChapter) cls += ' current';
-                        var lockIcon = '🔓';
-                        if (ch.is_purchased) lockIcon = '✅';
-                        else if (ch.is_locked) lockIcon = '🔒';
+                    var lockIcon = window.hdkIcon('unlock');
+                    if (ch.is_purchased) lockIcon = window.hdkIcon('check');
+                    else if (ch.is_locked) lockIcon = window.hdkIcon('lock');
                         var url = siteUrl(storySlug + '?chuong=' + chapterNumber);
                         html += '<a href="' + url + '" class="' + cls + '">' +
                             '<span class="toc-chapter-num">' + chapterNumber + '</span>' +
@@ -783,9 +805,9 @@
                     '<strong></strong>' +
                     '<span></span>' +
                 '</div>' +
-                '<button type="button" class="hdk-audio-control" aria-label="Phát hoặc tạm dừng">▶</button>' +
+                '<button type="button" class="hdk-audio-control" aria-label="Phát hoặc tạm dừng">' + window.hdkIcon('play') + '</button>' +
                 '<div class="hdk-audio-progress"><span></span></div>' +
-                '<button type="button" class="hdk-audio-close" aria-label="Đóng player">×</button>';
+                '<button type="button" class="hdk-audio-close" aria-label="Đóng player">' + window.hdkIcon('x') + '</button>';
             document.body.appendChild(player);
             titleEl = player.querySelector('strong');
             metaEl = player.querySelector('span');
@@ -803,18 +825,18 @@
                 player.classList.remove('active');
             });
             audio.addEventListener('play', function() {
-                playBtn.textContent = '⏸';
+                playBtn.innerHTML = window.hdkIcon('pause');
                 if (currentItem) saveListeningHistory(currentItem);
             });
             audio.addEventListener('pause', function() {
-                playBtn.textContent = '▶';
+                playBtn.innerHTML = window.hdkIcon('play');
             });
             audio.addEventListener('timeupdate', function() {
                 if (!audio.duration || !progressEl) return;
                 progressEl.style.width = Math.min(100, (audio.currentTime / audio.duration) * 100) + '%';
             });
             audio.addEventListener('ended', function() {
-                playBtn.textContent = '▶';
+                playBtn.innerHTML = window.hdkIcon('play');
                 if (progressEl) progressEl.style.width = '0%';
             });
         }
@@ -853,7 +875,7 @@
             }
             player.classList.add('active');
             audio.play().catch(function() {
-                playBtn.textContent = '▶';
+                playBtn.innerHTML = window.hdkIcon('play');
             });
         });
     })();

@@ -18,7 +18,7 @@
 <header class="site-header" style="background:var(--color-bg);border-bottom:1px solid var(--color-border);height:var(--header-height);">
     <div class="container" style="display:flex;align-items:center;justify-content:space-between;height:100%;gap:16px;">
         <a href="<?php echo home_url('/'); ?>" class="site-logo" style="font-size:var(--font-size-xl);font-weight:700;color:var(--color-primary);display:flex;align-items:center;gap:8px;text-decoration:none;">
-            🏯 Hồng Trần Các
+            <?php echo hdk_icon('castle'); ?> Hồng Trần Các
         </a>
 
         <nav class="main-nav" style="display:flex;align-items:center;gap:4px;" id="main-nav">
@@ -30,13 +30,13 @@
         </nav>
 
         <div class="header-actions" style="display:flex;align-items:center;gap:8px;">
-            <button type="button" class="btn btn-ghost btn-sm theme-toggle" id="theme-toggle" aria-label="Chuyển chế độ sáng/tối" aria-pressed="false" style="min-height:var(--touch-target);min-width:var(--touch-target);font-size:1.15rem;">☀</button>
+            <button type="button" class="btn btn-ghost btn-sm theme-toggle" id="theme-toggle" aria-label="Chuyển chế độ sáng/tối" aria-pressed="false" style="min-height:var(--touch-target);min-width:var(--touch-target);"><?php echo hdk_icon('sun'); ?></button>
             <button type="button" class="btn btn-ghost btn-sm search-toggle" aria-label="Tìm kiếm" aria-controls="search-modal" aria-expanded="false" style="min-height:var(--touch-target);min-width:var(--touch-target);">
-                🔍
+                <?php echo hdk_icon('search'); ?>
             </button>
             <?php if (is_user_logged_in()): ?>
-                <span id="notif-bell" style="position:relative;cursor:pointer;min-height:var(--touch-target);min-width:var(--touch-target);display:inline-flex;align-items:center;justify-content:center;font-size:1.15rem;" onclick="toggleNotifDropdown()" aria-label="Thông báo">
-                    🔔
+                <span id="notif-bell" style="position:relative;cursor:pointer;min-height:var(--touch-target);min-width:var(--touch-target);display:inline-flex;align-items:center;justify-content:center;" onclick="toggleNotifDropdown()" aria-label="Thông báo">
+                    <?php echo hdk_icon('bell'); ?>
                     <span id="notif-badge" style="display:none;position:absolute;top:2px;right:2px;background:var(--color-danger);color:var(--color-on-danger);border-radius:10px;padding:0 5px;font-size:10px;font-weight:700;min-width:16px;text-align:center;line-height:16px;"></span>
                 </span>
                 <!-- Notification Dropdown -->
@@ -59,25 +59,25 @@
                     <button type="button" class="btn btn-ghost btn-sm user-dropdown-toggle" id="user-dropdown-toggle"
                             aria-haspopup="true" aria-expanded="false"
                             style="min-height:var(--touch-target);display:flex;align-items:center;gap:6px;">
-                        <span style="font-size:1rem;">👤</span>
+                        <?php echo hdk_icon('user'); ?>
                         <span class="user-name"><?php echo esc_html($current_user->display_name); ?></span>
-                        <span class="dropdown-arrow">▾</span>
+                        <span class="dropdown-arrow"><?php echo hdk_icon('chevron-down', ['size' => '0.7rem']); ?></span>
                     </button>
                     <div class="user-dropdown-menu" id="user-dropdown-menu"
                          style="display:none;position:absolute;top:100%;right:0;min-width:200px;background:var(--color-bg);border:1px solid var(--color-border);border-radius:var(--radius-md);box-shadow:0 4px 16px rgba(0,0,0,0.12);z-index:150;padding:8px 0;margin-top:4px;">
                         <div class="dropdown-item" style="padding:8px 16px;color:var(--color-text-muted);font-size:var(--font-size-sm);border-bottom:1px solid var(--color-border-light);">
-                            💎 <strong style="color:var(--color-primary);"><?php echo number_format($credits); ?></strong> Linh Thạch
+                            <?php echo hdk_icon('gem'); ?> <strong style="color:var(--color-primary);"><?php echo number_format($credits); ?></strong> Linh Thạch
                         </div>
                         <a href="<?php echo home_url('/tai-khoan'); ?>" class="dropdown-item" style="display:block;padding:10px 16px;text-decoration:none;color:var(--color-text-primary);">
-                            📖 Tài khoản
+                            <?php echo hdk_icon('book-open'); ?> Tài khoản
                         </a>
                         <?php if (current_user_can('manage_options')): ?>
                             <a href="<?php echo admin_url(); ?>" class="dropdown-item" style="display:block;padding:10px 16px;text-decoration:none;color:var(--color-text-primary);">
-                                ⚙ Admin
+                                <?php echo hdk_icon('settings'); ?> Admin
                             </a>
                         <?php endif; ?>
                         <a href="<?php echo wp_logout_url(home_url()); ?>" class="dropdown-item" style="display:block;padding:10px 16px;text-decoration:none;color:var(--color-text-primary);border-top:1px solid var(--color-border-light);">
-                            🚪 Đăng xuất
+                            <?php echo hdk_icon('log-out'); ?> Đăng xuất
                         </a>
                     </div>
                 </div>
@@ -86,7 +86,7 @@
                 <a href="<?php echo esc_url(hdk_register_url(home_url(add_query_arg([])))); ?>" class="btn btn-outline btn-sm auth-register-link">Đăng ký</a>
             <?php endif; ?>
             <button type="button" class="btn btn-ghost btn-sm mobile-menu-toggle" style="display:none;min-height:var(--touch-target);">
-                ☰
+                <?php echo hdk_icon('menu'); ?>
             </button>
         </div>
     </div>
@@ -98,7 +98,7 @@
         <form id="site-search-form" class="search-form" action="<?php echo esc_url(home_url('/danh-sach-truyen/')); ?>" method="get">
             <input type="search" id="site-search-input" name="keyword" aria-label="Tìm truyện" autocomplete="off" placeholder="Tìm truyện, tác giả, thể loại…">
             <button type="submit" class="btn btn-primary btn-sm">Tìm</button>
-            <button type="button" class="btn btn-ghost btn-sm" data-close-search aria-label="Đóng tìm kiếm">✕</button>
+            <button type="button" class="btn btn-ghost btn-sm" data-close-search aria-label="Đóng tìm kiếm"><?php echo hdk_icon('x'); ?></button>
         </form>
         <div id="site-search-status" class="search-status" aria-live="polite">Nhập ít nhất 2 ký tự để tìm truyện.</div>
         <div id="site-search-results" class="search-results"></div>
@@ -110,7 +110,7 @@
     <div style="background:var(--color-bg);width:280px;height:100%;padding:20px;overflow-y:auto;">
         <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:20px;">
             <span style="font-weight:700;">Menu</span>
-            <button type="button" class="btn btn-ghost btn-sm" data-close-mobile-drawer aria-label="Đóng menu">✕</button>
+            <button type="button" class="btn btn-ghost btn-sm" data-close-mobile-drawer aria-label="Đóng menu"><?php echo hdk_icon('x'); ?></button>
         </div>
         <nav style="display:flex;flex-direction:column;gap:4px;">
             <a href="<?php echo home_url('/'); ?>" class="btn btn-ghost">Trang chủ</a>
@@ -137,33 +137,33 @@
 <?php $hdk_account_tab = isset($_GET['tab']) ? sanitize_key($_GET['tab']) : ''; ?>
 <nav class="mobile-bottom-nav" id="mobile-bottom-nav" aria-label="Điều hướng chính">
     <a href="<?php echo home_url('/'); ?>" class="bottom-nav-item <?php echo is_front_page() ? 'active' : ''; ?>" aria-label="Trang chủ">
-        <span class="bottom-nav-icon">🏠</span>
+        <span class="bottom-nav-icon hdk-icon-bottom-nav"><?php echo hdk_icon('home'); ?></span>
         <span class="bottom-nav-label">Trang chủ</span>
     </a>
     <a href="<?php echo home_url('/the-loai'); ?>" class="bottom-nav-item <?php echo is_page('the-loai') ? 'active' : ''; ?>" aria-label="Thể loại">
-        <span class="bottom-nav-icon">📂</span>
+        <span class="bottom-nav-icon hdk-icon-bottom-nav"><?php echo hdk_icon('folder'); ?></span>
         <span class="bottom-nav-label">Thể loại</span>
     </a>
     <button type="button" class="bottom-nav-item bottom-nav-search" aria-label="Tìm kiếm" data-bottom-nav-action="search">
-        <span class="bottom-nav-icon">🔍</span>
+        <span class="bottom-nav-icon hdk-icon-bottom-nav"><?php echo hdk_icon('search'); ?></span>
         <span class="bottom-nav-label">Tìm kiếm</span>
     </button>
     <?php if (is_user_logged_in()): ?>
     <a href="<?php echo esc_url(hdk_page_url('tai-khoan', ['tab' => 'favorites'])); ?>" class="bottom-nav-item <?php echo is_page('tai-khoan') && $hdk_account_tab === 'favorites' ? 'active' : ''; ?>" aria-label="Yêu thích">
-        <span class="bottom-nav-icon">❤️</span>
+        <span class="bottom-nav-icon hdk-icon-bottom-nav"><?php echo hdk_icon('heart'); ?></span>
         <span class="bottom-nav-label">Yêu thích</span>
     </a>
     <a href="<?php echo esc_url(hdk_page_url('tai-khoan')); ?>" class="bottom-nav-item <?php echo is_page('tai-khoan') && $hdk_account_tab === '' ? 'active' : ''; ?>" aria-label="Cá nhân">
-        <span class="bottom-nav-icon">👤</span>
+        <span class="bottom-nav-icon hdk-icon-bottom-nav"><?php echo hdk_icon('user'); ?></span>
         <span class="bottom-nav-label">Cá nhân</span>
     </a>
     <?php else: ?>
     <a href="<?php echo esc_url(hdk_login_url(home_url(add_query_arg([])))); ?>" class="bottom-nav-item" aria-label="Yêu thích">
-        <span class="bottom-nav-icon">❤️</span>
+        <span class="bottom-nav-icon hdk-icon-bottom-nav"><?php echo hdk_icon('heart'); ?></span>
         <span class="bottom-nav-label">Yêu thích</span>
     </a>
     <a href="<?php echo esc_url(hdk_login_url(home_url(add_query_arg([])))); ?>" class="bottom-nav-item" aria-label="Cá nhân">
-        <span class="bottom-nav-icon">👤</span>
+        <span class="bottom-nav-icon hdk-icon-bottom-nav"><?php echo hdk_icon('user'); ?></span>
         <span class="bottom-nav-label">Cá nhân</span>
     </a>
     <?php endif; ?>

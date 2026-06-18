@@ -89,7 +89,7 @@ function hdk_get_story_card($story, $index = 0) {
             <?php endif; ?>
             <?php if (!empty($price_summary['has_pricing'])): ?>
                 <div class="card-meta" style="margin-top:4px;">
-                    <span style="color:var(--color-warning);">💎 <?php echo esc_html($price_summary['label']); ?></span>
+                    <span style="color:var(--color-warning);"><?php echo hdk_icon('gem'); ?> <?php echo esc_html($price_summary['label']); ?></span>
                 </div>
             <?php endif; ?>
             <div class="card-meta" style="display:flex;justify-content:space-between;margin-top:6px">
@@ -97,9 +97,9 @@ function hdk_get_story_card($story, $index = 0) {
                 <span><?php echo $chapters; ?> chương</span>
             </div>
             <?php if (hdk_story_has_audio($story)): ?>
-                <div class="card-meta" style="margin-top:6px;color:var(--color-primary);">🎧 Có audio</div>
+                <div class="card-meta" style="margin-top:6px;color:var(--color-primary);"><?php echo hdk_icon('headphones'); ?> Có audio</div>
             <?php endif; ?>
-            <div class="card-meta" style="text-align:right">👁 <?php echo $views; ?></div>
+            <div class="card-meta" style="text-align:right"><?php echo hdk_icon('eye'); ?> <?php echo $views; ?></div>
         </div>
     </a>
     <?php
@@ -179,7 +179,7 @@ function hdk_get_hero_section() {
                         </div>
                     </div>
                     <div class="hero-visual" style="flex:0 0 240px;text-align:center;">
-                        <div style="font-size:120px;line-height:1;">📚</div>
+                        <div style="font-size:120px;line-height:1;"><?php echo hdk_icon('book-open', ['size' => '120px']); ?></div>
                     </div>
                 </div>
             </div>
@@ -245,7 +245,7 @@ function hdk_get_pagination($total_pages, $current_page = 1, $base_args = []) {
     ?>
     <nav class="pagination" style="display:flex;justify-content:center;align-items:center;gap:8px;padding:24px 0;flex-wrap:wrap;">
         <?php if ($current_page > 1): ?>
-            <a href="<?php echo esc_url(add_query_arg(array_merge($base_args, ['page' => $current_page - 1]))); ?>" class="btn btn-ghost btn-sm">&laquo; Trước</a>
+            <a href="<?php echo esc_url(add_query_arg(array_merge($base_args, ['page' => $current_page - 1]))); ?>" class="btn btn-ghost btn-sm"><?php echo hdk_icon('chevron-left'); ?> Trước</a>
         <?php endif; ?>
         <?php
         $start = max(1, $current_page - 2);
@@ -256,7 +256,7 @@ function hdk_get_pagination($total_pages, $current_page = 1, $base_args = []) {
             <a href="<?php echo esc_url(add_query_arg(array_merge($base_args, ['page' => $i]))); ?>" class="btn <?php echo $active; ?> btn-sm"><?php echo $i; ?></a>
         <?php endfor; ?>
         <?php if ($current_page < $total_pages): ?>
-            <a href="<?php echo esc_url(add_query_arg(array_merge($base_args, ['page' => $current_page + 1]))); ?>" class="btn btn-ghost btn-sm">Sau &raquo;</a>
+            <a href="<?php echo esc_url(add_query_arg(array_merge($base_args, ['page' => $current_page + 1]))); ?>" class="btn btn-ghost btn-sm">Sau <?php echo hdk_icon('chevron-right'); ?></a>
         <?php endif; ?>
     </nav>
     <?php
@@ -268,7 +268,7 @@ function hdk_get_rating_widget($story_id = 0, $current_rating = 0, $total_rating
     <div class="rating-widget" style="display:flex;align-items:center;gap:8px;" data-story-id="<?php echo (int)$story_id; ?>">
         <div class="stars" style="display:flex;gap:2px;color:var(--color-rating);font-size:20px;">
             <?php for ($i = 1; $i <= 5; $i++): ?>
-                <span class="star" data-value="<?php echo $i; ?>" style="cursor:pointer;"><?php echo $i <= round($avg) ? '★' : '☆'; ?></span>
+                <span class="star" data-value="<?php echo $i; ?>" style="cursor:pointer;"><?php echo $i <= round($avg) ? hdk_icon('star', ['attrs' => ['fill' => 'currentColor', 'data-star' => 'filled']]) : hdk_icon('star'); ?></span>
             <?php endfor; ?>
         </div>
         <span style="font-size:var(--font-size-sm);color:var(--color-text-muted);">(<?php echo $avg; ?> - <?php echo number_format($total_ratings); ?> đánh giá)</span>
@@ -286,7 +286,7 @@ function hdk_get_story_card_badge($type, $data = null) {
                 $chap, $pct
             );
         case 'purchased':
-            return '<div class="story-badge story-badge-purchased">💎 Đã mua</div>';
+            return '<div class="story-badge story-badge-purchased">' . hdk_icon('gem') . ' Đã mua</div>';
         case 'history':
             $chap = (int)($data->chapter_number ?? 0);
             $time = mysql2date('H:i d/m/Y', $data->created_at ?? '');

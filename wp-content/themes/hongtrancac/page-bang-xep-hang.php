@@ -26,7 +26,7 @@ get_header();
 ?>
 
 <div class="container page-shell">
-    <h1 class="section-title" style="margin-bottom:16px;">🏆 Bảng xếp hạng</h1>
+    <h1 class="section-title" style="margin-bottom:16px;"><?php echo hdk_icon('trophy'); ?> Bảng xếp hạng</h1>
 
     <!-- Filter Tabs -->
     <div style="background:var(--color-bg);border-radius:var(--radius-md);padding:16px;border:1px solid var(--color-border);margin-bottom:20px;display:flex;flex-wrap:wrap;gap:8px;align-items:center;">
@@ -62,7 +62,7 @@ get_header();
     <div style="background:var(--color-bg);border-radius:var(--radius-md);border:1px solid var(--color-border);overflow:hidden;">
         <?php foreach ($result['stories'] as $i => $story):
             $rank = ($page - 1) * 20 + $i + 1;
-            $medal = $rank === 1 ? '🥇' : ($rank === 2 ? '🥈' : ($rank === 3 ? '🥉' : '#'.$rank));
+            $medal = $rank === 1 ? hdk_icon('medal', ['attrs' => ['fill' => 'currentColor']]) : ($rank === 2 ? hdk_icon('medal') : ($rank === 3 ? hdk_icon('medal') : '#'.$rank));
         ?>
         <div class="story-list-row">
             <div style="font-size:var(--font-size-xl);font-weight:700;min-width:50px;text-align:center;"><?php echo $medal; ?></div>
@@ -82,9 +82,9 @@ get_header();
             <div style="text-align:right;min-width:100px;">
                 <div style="font-weight:700;font-size:var(--font-size-lg);color:var(--color-primary);">
                     <?php
-                    if ($metric === 'views') echo number_format($story->total_views) . ' 👁';
-                    elseif ($metric === 'favorites') echo number_format($story->total_favorites) . ' ❤️';
-                    else echo $story->average_rating . ' ⭐ (' . $story->total_ratings . ')';
+                    if ($metric === 'views') echo number_format($story->total_views) . ' ' . hdk_icon('eye');
+                    elseif ($metric === 'favorites') echo number_format($story->total_favorites) . ' ' . hdk_icon('heart');
+                    else echo $story->average_rating . ' ' . hdk_icon('star') . ' (' . $story->total_ratings . ')';
                     ?>
                 </div>
                 <div style="font-size:var(--font-size-xs);color:var(--color-text-muted);"><?php echo $story->total_chapters; ?> chương</div>

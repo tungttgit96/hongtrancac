@@ -53,8 +53,8 @@ get_header();
 <div class="container page-shell" style="padding-top:16px;padding-bottom:32px;">
     <!-- Breadcrumb -->
     <nav style="font-size:var(--font-size-sm);color:var(--color-text-muted);margin-bottom:16px;">
-        <a href="<?php echo home_url('/'); ?>">Trang chủ</a> &raquo;
-        <a href="<?php echo esc_url(hdk_story_url($story->slug)); ?>"><?php echo esc_html($story->title); ?></a> &raquo;
+        <a href="<?php echo home_url('/'); ?>">Trang chủ</a> <?php echo hdk_icon('chevron-right'); ?>
+        <a href="<?php echo esc_url(hdk_story_url($story->slug)); ?>"><?php echo esc_html($story->title); ?></a> <?php echo hdk_icon('chevron-right'); ?>
         <span>Chương <?php echo $chapter->chapter_number; ?></span>
     </nav>
 
@@ -82,22 +82,22 @@ get_header();
         </select>
 
         <span style="color:var(--color-text-muted);margin-left:12px;margin-right:4px;">Theme</span>
-        <button type="button" class="btn btn-ghost btn-sm reader-theme-btn" data-theme="light" onclick="setReaderTheme('light')" id="theme-btn-light">☀️</button>
-        <button type="button" class="btn btn-ghost btn-sm reader-theme-btn" data-theme="dark" onclick="setReaderTheme('dark')" id="theme-btn-dark">🌙</button>
-        <button type="button" class="btn btn-ghost btn-sm reader-theme-btn" data-theme="sepia" onclick="setReaderTheme('sepia')" id="theme-btn-sepia">📜</button>
+        <button type="button" class="btn btn-ghost btn-sm reader-theme-btn" data-theme="light" onclick="setReaderTheme('light')" id="theme-btn-light"><?php echo hdk_icon('sun'); ?></button>
+        <button type="button" class="btn btn-ghost btn-sm reader-theme-btn" data-theme="dark" onclick="setReaderTheme('dark')" id="theme-btn-dark"><?php echo hdk_icon('moon'); ?></button>
+        <button type="button" class="btn btn-ghost btn-sm reader-theme-btn" data-theme="sepia" onclick="setReaderTheme('sepia')" id="theme-btn-sepia"><?php echo hdk_icon('scroll'); ?></button>
 
-        <button type="button" class="btn btn-ghost btn-sm" onclick="toggleReadingWidth()" id="width-toggle-btn" style="margin-left:12px;">📏</button>
+        <button type="button" class="btn btn-ghost btn-sm" onclick="toggleReadingWidth()" id="width-toggle-btn" style="margin-left:12px;"><?php echo hdk_icon('ruler'); ?></button>
     </div>
 
     <!-- Floating TOC -->
-    <button type="button" class="toc-float-btn" id="toc-float-btn" onclick="toggleTOC()" aria-label="Mục lục" style="position:fixed;right:16px;bottom:80px;z-index:90;width:48px;height:48px;border-radius:50%;background:var(--color-primary);color:var(--color-on-primary);border:none;font-size:20px;cursor:pointer;box-shadow:0 4px 12px rgba(0,0,0,0.15);display:flex;align-items:center;justify-content:center;">📋</button>
+    <button type="button" class="toc-float-btn" id="toc-float-btn" onclick="toggleTOC()" aria-label="Mục lục" style="position:fixed;right:16px;bottom:80px;z-index:90;width:48px;height:48px;border-radius:50%;background:var(--color-primary);color:var(--color-on-primary);border:none;font-size:20px;cursor:pointer;box-shadow:0 4px 12px rgba(0,0,0,0.15);display:flex;align-items:center;justify-content:center;"><?php echo hdk_icon('list'); ?></button>
 
     <!-- TOC Drawer -->
     <div class="toc-overlay" id="toc-overlay" style="display:none;position:fixed;top:0;left:0;right:0;bottom:0;background:var(--color-overlay);z-index:200;" onclick="closeTOC()"></div>
     <div class="toc-drawer" id="toc-drawer" style="position:fixed;top:0;right:0;width:320px;max-width:85vw;height:100%;background:var(--color-bg);z-index:201;transform:translateX(100%);transition:transform 0.3s ease;overflow-y:auto;padding:20px;box-shadow:-4px 0 16px rgba(0,0,0,0.1);">
         <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px;">
             <h3 style="margin:0;">Mục lục</h3>
-            <button type="button" class="btn btn-ghost btn-sm" onclick="closeTOC()" aria-label="Đóng">✕</button>
+            <button type="button" class="btn btn-ghost btn-sm" onclick="closeTOC()" aria-label="Đóng"><?php echo hdk_icon('x'); ?></button>
         </div>
         <div id="toc-list" style="display:flex;flex-direction:column;gap:4px;">
             <p style="color:var(--color-text-muted);text-align:center;padding:20px;">Đang tải…</p>
@@ -106,7 +106,7 @@ get_header();
 
     <!-- Report Button -->
     <div style="text-align:right;margin-bottom:8px;">
-        <button type="button" class="btn btn-ghost btn-sm" onclick="toggleReportModal()" style="font-size:var(--font-size-sm);">🚩 Báo lỗi</button>
+        <button type="button" class="btn btn-ghost btn-sm" onclick="toggleReportModal()" style="font-size:var(--font-size-sm);"><?php echo hdk_icon('flag'); ?> Báo lỗi</button>
     </div>
 
     <!-- Report Modal -->
@@ -136,18 +136,18 @@ get_header();
     <!-- Chapter Navigation -->
     <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:12px;margin-bottom:20px;background:var(--color-bg);border-radius:var(--radius-md);padding:16px;border:1px solid var(--color-border);">
         <?php if ($prev): ?>
-            <a href="<?php echo esc_url(hdk_story_url($story->slug, ['chuong' => $prev])); ?>" class="btn btn-ghost btn-sm">&laquo; Chương trước</a>
+            <a href="<?php echo esc_url(hdk_story_url($story->slug, ['chuong' => $prev])); ?>" class="btn btn-ghost btn-sm"><?php echo hdk_icon('chevron-left'); ?> Chương trước</a>
         <?php else: ?>
             <span></span>
         <?php endif; ?>
 
         <div style="text-align:center;">
             <h1 style="font-size:var(--font-size-lg);font-weight:700;margin-bottom:4px;"><?php echo esc_html($chapter->title); ?></h1>
-            <span style="font-size:var(--font-size-xs);color:var(--color-text-muted);">👁 <?php echo number_format($chapter->views); ?> lượt đọc</span>
+            <span style="font-size:var(--font-size-xs);color:var(--color-text-muted);"><?php echo hdk_icon('eye'); ?> <?php echo number_format($chapter->views); ?> lượt đọc</span>
         </div>
 
         <?php if ($next): ?>
-            <a href="<?php echo esc_url(hdk_story_url($story->slug, ['chuong' => $next])); ?>" class="btn btn-primary btn-sm">Chương sau &raquo;</a>
+            <a href="<?php echo esc_url(hdk_story_url($story->slug, ['chuong' => $next])); ?>" class="btn btn-primary btn-sm">Chương sau <?php echo hdk_icon('chevron-right'); ?></a>
         <?php else: ?>
             <span></span>
         <?php endif; ?>
@@ -163,13 +163,13 @@ get_header();
     <!-- Bottom Navigation -->
     <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:12px;margin-top:20px;background:var(--color-bg);border-radius:var(--radius-md);padding:16px;border:1px solid var(--color-border);">
         <?php if ($prev): ?>
-            <a href="<?php echo esc_url(hdk_story_url($story->slug, ['chuong' => $prev])); ?>" class="btn btn-outline btn-sm">&laquo; Chương trước</a>
+            <a href="<?php echo esc_url(hdk_story_url($story->slug, ['chuong' => $prev])); ?>" class="btn btn-outline btn-sm"><?php echo hdk_icon('chevron-left'); ?> Chương trước</a>
         <?php else: ?>
             <span></span>
         <?php endif; ?>
-        <button type="button" class="btn btn-ghost btn-sm" onclick="toggleTOC()" style="min-height:var(--touch-target);">📋 Mục lục</button>
+        <button type="button" class="btn btn-ghost btn-sm" onclick="toggleTOC()" style="min-height:var(--touch-target);"><?php echo hdk_icon('list'); ?> Mục lục</button>
         <?php if ($next): ?>
-            <a href="<?php echo esc_url(hdk_story_url($story->slug, ['chuong' => $next])); ?>" class="btn btn-primary">Chương sau &raquo;</a>
+            <a href="<?php echo esc_url(hdk_story_url($story->slug, ['chuong' => $next])); ?>" class="btn btn-primary">Chương sau <?php echo hdk_icon('chevron-right'); ?></a>
         <?php else: ?>
             <span></span>
         <?php endif; ?>

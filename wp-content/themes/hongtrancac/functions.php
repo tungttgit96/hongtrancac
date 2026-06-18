@@ -44,6 +44,84 @@ add_action('wp_head', function() {
     echo '<script>window.hdkRestNonce = ' . wp_json_encode(wp_create_nonce('wp_rest')) . ';</script>' . "\n";
 }, 1);
 
+/**
+ * Render a Lucide SVG icon inline.
+ *
+ * Reads the SVG file from assets/icons/{$name}.svg, sanitizes it,
+ * and returns safe HTML with ARIA attributes.
+ *
+ * @param string $name Icon name (kebab-case, e.g. "book-open").
+ * @param array  $args {
+ *     Optional. Override attributes.
+ *     @type string $class Additional CSS classes.
+ *     @type string $label Accessible label (sets aria-label + role="img").
+ *     @type string $size   Width & height in CSS units (e.g. "1em", "24px").
+ *     @type array  $attrs  Extra HTML attributes as key => value pairs.
+ * }
+ * @return string SVG markup or empty string on failure.
+ */
+function hdk_icon($name, $args = []) {
+    if (!preg_match('/^[a-z][a-z0-9-]*$/', $name)) {
+        return '';
+    }
+
+    $file = get_template_directory() . '/assets/icons/' . $name . '.svg';
+    if (!file_exists($file)) {
+        return '';
+    }
+
+    $svg = trim(file_get_contents($file));
+    if ($svg === '' || $svg === false) {
+        return '';
+    }
+
+    $svg = preg_replace('/^<\?xml.*?\?>\s*/s', '', $svg);
+    $svg = preg_replace('/<!--.*?-->\s*/s', '', $svg);
+
+    $class = 'hdk-icon hdk-icon-' . $name;
+    if (!empty($args['class'])) {
+        $class .= ' ' . esc_attr($args['class']);
+    }
+
+    $has_label = !empty($args['label']);
+
+    // Strip attributes we will inject (avoid duplicates)
+    $strip_attrs = 'class|width|height|fill|aria-hidden|aria-label|role';
+    if (!empty($args['attrs']) && is_array($args['attrs'])) {
+        $strip_attrs .= '|' . implode('|', array_map('preg_quote', array_keys($args['attrs'])));
+    }
+    $svg = preg_replace('/\s(?:' . $strip_attrs . ')="[^"]*"/', '', $svg);
+
+    // Build all SVG attributes in one shot
+    $svg_attrs = ' class="' . $class . '"';
+
+    $user_fill = !empty($args['attrs']) && is_array($args['attrs']) && isset($args['attrs']['fill']);
+    if (!$user_fill) {
+        $svg_attrs .= ' fill="none"';
+    }
+
+    if ($has_label) {
+        $svg_attrs .= ' aria-label="' . esc_attr($args['label']) . '" role="img"';
+    } else {
+        $svg_attrs .= ' aria-hidden="true"';
+    }
+
+    if (!empty($args['size'])) {
+        $s = esc_attr($args['size']);
+        $svg_attrs .= ' width="' . $s . '" height="' . $s . '"';
+    }
+
+    if (!empty($args['attrs']) && is_array($args['attrs'])) {
+        foreach ($args['attrs'] as $k => $v) {
+            $svg_attrs .= ' ' . esc_attr($k) . '="' . esc_attr($v) . '"';
+        }
+    }
+
+    $svg = preg_replace('/<svg/', '<svg' . $svg_attrs, $svg, 1);
+
+    return $svg;
+}
+
 // Include template parts
 require_once get_template_directory() . '/inc/template-functions.php';
 

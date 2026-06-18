@@ -17,15 +17,15 @@ get_header();
 
 <div class="container page-shell" style="padding-bottom:32px;">
     <nav style="font-size:var(--font-size-sm);color:var(--color-text-muted);margin-bottom:16px;">
-        <a href="<?php echo home_url('/'); ?>">Trang chủ</a> &raquo;
-        <a href="<?php echo esc_url(hdk_story_url($story->slug)); ?>"><?php echo esc_html($story->title); ?></a> &raquo;
+        <a href="<?php echo home_url('/'); ?>">Trang chủ</a> <?php echo hdk_icon('chevron-right'); ?>
+        <a href="<?php echo esc_url(hdk_story_url($story->slug)); ?>"><?php echo esc_html($story->title); ?></a> <?php echo hdk_icon('chevron-right'); ?>
         <span>Chương <?php echo $chapter->chapter_number; ?></span>
     </nav>
 
     <?php if ($access['reason'] === 'login_required'): ?>
         <!-- Login Required -->
         <div style="text-align:center;padding:60px 0;max-width:500px;margin:0 auto;">
-            <div style="font-size:80px;margin-bottom:16px;">🔒</div>
+            <div style="font-size:80px;margin-bottom:16px;"><?php echo hdk_icon('lock', ['size' => '80px']); ?></div>
             <h2 style="font-size:var(--font-size-2xl);margin-bottom:12px;">Cần đăng nhập để đọc</h2>
             <p style="color:var(--color-text-muted);margin-bottom:8px;">
                 <?php echo $free_chapters; ?> chương đầu miễn phí. Từ chương <?php echo $free_chapters + 1; ?> cần đăng nhập.
@@ -38,7 +38,7 @@ get_header();
     <?php else: ?>
         <!-- Paywall -->
         <div style="text-align:center;padding:40px 0;max-width:600px;margin:0 auto;" id="paywall-container">
-            <div style="font-size:60px;margin-bottom:12px;">💎</div>
+            <div style="font-size:60px;margin-bottom:12px;"><?php echo hdk_icon('gem', ['size' => '60px']); ?></div>
             <h2 style="font-size:var(--font-size-2xl);margin-bottom:8px;">Chương <?php echo $chapter->chapter_number; ?>: <?php echo esc_html($chapter->title); ?></h2>
             <p style="color:var(--color-text-muted);margin-bottom:24px;">
                 <?php echo $free_chapters; ?> chương đầu miễn phí. Chương này cần <strong><?php echo $chapter_price; ?> Linh Thạch</strong> để đọc.
@@ -54,13 +54,13 @@ get_header();
 
             <div style="display:flex;gap:12px;justify-content:center;flex-wrap:wrap;align-items:center;" id="purchase-buttons">
                 <?php if ($chapter_price > 0): ?>
-                <button type="button" class="btn btn-primary" onclick="purchaseChapter(<?php echo $story->id; ?>, <?php echo $chapter_number; ?>)">
-                    🔑 Mua chương này (<?php echo $chapter_price; ?> Linh Thạch)
+                <button type="button" class="btn btn-primary" onclick="purchaseChapter(<?php echo $story->id; ?>, <?php echo $chapter_number; ?>, this)">
+                    <?php echo hdk_icon('key-round'); ?> Mua chương này (<?php echo $chapter_price; ?> Linh Thạch)
                 </button>
                 <?php endif; ?>
                 <?php if ($full_price > 0): ?>
-                <button type="button" class="btn btn-outline" onclick="purchaseFull(<?php echo $story->id; ?>)">
-                    📚 Mở toàn bộ (<?php echo $full_price; ?> Linh Thạch)
+                <button type="button" class="btn btn-outline" onclick="purchaseFull(<?php echo $story->id; ?>, this)">
+                    <?php echo hdk_icon('book-open'); ?> Mở toàn bộ (<?php echo $full_price; ?> Linh Thạch)
                 </button>
                 <?php endif; ?>
             </div>
@@ -89,10 +89,11 @@ fetch(apiBase + '/credits')
         document.getElementById('credits-display').textContent = '';
     });
 
-function purchaseChapter(sid, cnum) {
-    var btn = event.target;
+function purchaseChapter(sid, cnum, btn) {
+    if (!btn) return;
     btn.disabled = true;
-    btn.textContent = 'Đang xử lý…';
+    if (!btn.dataset.originalHtml) btn.dataset.originalHtml = btn.innerHTML;
+    btn.innerHTML = 'Đang xử lý…';
     document.getElementById('purchase-message').textContent = '';
 
     fetch(apiBase + '/purchase/chapter', {
@@ -108,20 +109,21 @@ function purchaseChapter(sid, cnum) {
         } else if (d.code === 'insufficient_credits') {
             document.getElementById('purchase-message').innerHTML = '<span style="color:var(--color-danger);">' + d.message + '</span>';
             btn.disabled = false;
-            btn.textContent = '🔑 Mua chương này (' + <?php echo $chapter_price; ?> + ' Linh Thạch)';
+            btn.innerHTML = btn.dataset.originalHtml;
         }
     })
     .catch(function() {
         document.getElementById('purchase-message').innerHTML = '<span style="color:var(--color-danger);">Lỗi kết nối. Thử lại.</span>';
         btn.disabled = false;
-        btn.textContent = '🔑 Mua chương này (' + <?php echo $chapter_price; ?> + ' Linh Thạch)';
+        btn.innerHTML = btn.dataset.originalHtml;
     });
 }
 
-function purchaseFull(sid) {
-    var btn = event.target;
+function purchaseFull(sid, btn) {
+    if (!btn) return;
     btn.disabled = true;
-    btn.textContent = 'Đang xử lý…';
+    if (!btn.dataset.originalHtml) btn.dataset.originalHtml = btn.innerHTML;
+    btn.innerHTML = 'Đang xử lý…';
 
     fetch(apiBase + '/purchase/full', {
         method: 'POST',
@@ -136,13 +138,13 @@ function purchaseFull(sid) {
         } else if (d.code === 'insufficient_credits') {
             document.getElementById('purchase-message').innerHTML = '<span style="color:var(--color-danger);">' + d.message + '</span>';
             btn.disabled = false;
-            btn.textContent = '📚 Mở toàn bộ (' + <?php echo $full_price; ?> + ' Linh Thạch)';
+            btn.innerHTML = btn.dataset.originalHtml;
         }
     })
     .catch(function() {
         document.getElementById('purchase-message').innerHTML = '<span style="color:var(--color-danger);">Lỗi kết nối.</span>';
         btn.disabled = false;
-        btn.textContent = '📚 Mở toàn bộ (' + <?php echo $full_price; ?> + ' Linh Thạch)';
+        btn.innerHTML = btn.dataset.originalHtml;
     });
 }
 </script>

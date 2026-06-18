@@ -22,6 +22,7 @@
   },
   "homepage": "https://github.com/tungttgit96/hongtrancac#readme",
   "dependencies": {
+    "lucide-react": "^1.21.0",
     "lucide-static": "^1.18.0"
   }
 }

@@ -41,9 +41,9 @@ get_header();
 
 <div class="container page-shell">
     <nav style="font-size:var(--font-size-sm);color:var(--color-text-muted);margin-bottom:20px;">
-        <a href="<?php echo home_url('/'); ?>">Trang chủ</a> &raquo;
+        <a href="<?php echo home_url('/'); ?>">Trang chủ</a> <?php echo hdk_icon('chevron-right'); ?>
         <?php if (!empty($story->categories)): ?>
-            <a href="<?php echo esc_url(hdk_category_url($story->categories[0]->slug)); ?>"><?php echo esc_html($story->categories[0]->name); ?></a> &raquo;
+            <a href="<?php echo esc_url(hdk_category_url($story->categories[0]->slug)); ?>"><?php echo esc_html($story->categories[0]->name); ?></a> <?php echo hdk_icon('chevron-right'); ?>
         <?php endif; ?>
         <span><?php echo esc_html($story->title); ?></span>
     </nav>
@@ -75,9 +75,9 @@ get_header();
             <?php hdk_get_rating_widget($story->id, $story->average_rating * $story->total_ratings, $story->total_ratings); ?>
 
             <div style="margin-top:16px;display:flex;gap:12px;flex-wrap:wrap;">
-                <a href="<?php echo esc_url(hdk_story_url($story->slug, ['chuong' => 1])); ?>" class="btn btn-primary">📖 Đọc từ đầu</a>
+                <a href="<?php echo esc_url(hdk_story_url($story->slug, ['chuong' => 1])); ?>" class="btn btn-primary"><?php echo hdk_icon('book-open'); ?> Đọc từ đầu</a>
                 <?php if ($chapters): ?>
-                    <a href="<?php echo esc_url(hdk_story_url($story->slug, ['chuong' => $chapters[count($chapters)-1]->chapter_number])); ?>" class="btn btn-outline">📄 Chương mới nhất</a>
+                    <a href="<?php echo esc_url(hdk_story_url($story->slug, ['chuong' => $chapters[count($chapters)-1]->chapter_number])); ?>" class="btn btn-outline"><?php echo hdk_icon('file-text'); ?> Chương mới nhất</a>
                 <?php endif; ?>
                 <?php if (hdk_story_has_audio($story)): ?>
                     <button type="button" class="btn btn-outline hdk-audio-play"
@@ -85,11 +85,11 @@ get_header();
                             data-audio-title="<?php echo esc_attr(($story->audio_title ?? '') ?: $story->title); ?>"
                             data-story-title="<?php echo esc_attr($story->title); ?>"
                             data-story-url="<?php echo esc_url(hdk_story_url($story->slug)); ?>">
-                        🎧 Nghe truyện
+                        <?php echo hdk_icon('headphones'); ?> Nghe truyện
                     </button>
                 <?php endif; ?>
                 <button type="button" class="btn btn-outline favorite-btn" data-story-id="<?php echo $story->id; ?>" data-favorited="<?php echo $is_favorited ? '1' : '0'; ?>">
-                    <?php echo $is_favorited ? '❤️ Bỏ yêu thích' : '🤍 Yêu thích'; ?>
+                    <?php echo $is_favorited ? hdk_icon('heart') . ' Bỏ yêu thích' : hdk_icon('heart') . ' Yêu thích'; ?>
                 </button>
             </div>
         </div>
@@ -122,7 +122,7 @@ get_header();
         ?>
         <?php if ($has_pricing): ?>
         <div style="margin-bottom:12px;font-size:13px;color:var(--color-text-muted);">
-            <?php if (!empty($price_summary['label'])): ?>💎 <?php echo esc_html($price_summary['label']); ?><?php endif; ?>
+            <?php if (!empty($price_summary['label'])): ?><?php echo hdk_icon('gem'); ?> <?php echo esc_html($price_summary['label']); ?><?php endif; ?>
             <?php if ($full_price > 0): ?>
                 <?php if ($user_id): ?>
                 <button type="button" onclick="purchaseFullStory(<?php echo $story->id; ?>)" style="margin-left:8px;font-size:12px;padding:2px 10px;border-radius:12px;border:1px solid var(--color-primary);background:var(--color-primary);color:var(--color-on-primary);cursor:pointer;">Mua full</button>
@@ -137,7 +137,7 @@ get_header();
                 $chap_price_mode = $chap->price_mode ?? ((int)($chap->price ?? 0) > 0 ? 'custom' : 'inherit');
                 $locked = !$story->is_free && $chap_price_mode !== 'free' && $chap->chapter_number > $free_limit && ($chap_price > 0 || $full_price > 0);
                 $purchased = $locked && $user_id ? HDK_Template_Loader::has_purchased_chapter($story->id, $chap->chapter_number) : false;
-                $icon = !$locked ? '🔓' : ($purchased ? '✅' : '🔒');
+                $icon = !$locked ? hdk_icon('unlock') : ($purchased ? hdk_icon('check') : hdk_icon('lock'));
             ?>
                 <div style="display:flex;justify-content:space-between;align-items:center;padding:8px 12px;
                            border-radius:var(--radius-sm);border:1px solid var(--color-border-light);
@@ -150,12 +150,12 @@ get_header();
                     <?php if ($locked && !$purchased && $user_id): ?>
                         <button type="button" onclick="event.preventDefault();purchaseChapterInline(<?php echo $story->id; ?>, <?php echo $chap->chapter_number; ?>, this)"
                             style="margin-left:8px;font-size:11px;padding:3px 10px;border-radius:12px;border:1px solid var(--color-primary);background:transparent;color:var(--color-primary);cursor:pointer;white-space:nowrap;">
-                            <?php echo $chap_price; ?> 💎
+                            <?php echo $chap_price; ?> <?php echo hdk_icon('gem'); ?>
                         </button>
                     <?php elseif (!$locked || $purchased): ?>
-                        <span style="font-size:var(--font-size-xs);color:var(--color-text-muted);white-space:nowrap;">👁 <?php echo number_format($chap->views); ?></span>
+                        <span style="font-size:var(--font-size-xs);color:var(--color-text-muted);white-space:nowrap;"><?php echo hdk_icon('eye'); ?> <?php echo number_format($chap->views); ?></span>
                     <?php else: ?>
-                        <a href="<?php echo esc_url(hdk_login_url(hdk_story_url($story->slug, ['chuong' => $chap->chapter_number]))); ?>" style="font-size:11px;color:var(--color-text-muted);white-space:nowrap;text-decoration:none;">🔒 Đăng nhập</a>
+                        <a href="<?php echo esc_url(hdk_login_url(hdk_story_url($story->slug, ['chuong' => $chap->chapter_number]))); ?>" style="font-size:11px;color:var(--color-text-muted);white-space:nowrap;text-decoration:none;"><?php echo hdk_icon('lock'); ?> Đăng nhập</a>
                     <?php endif; ?>
                 </div>
             <?php endforeach; ?>
@@ -198,7 +198,8 @@ get_header();
 var apiBase = (window.hdkApi && window.hdkApi.restBase) || <?php echo wp_json_encode(rest_url('hdk/v1')); ?>;
 function purchaseChapterInline(storyId, chapterNum, btn) {
     btn.disabled = true;
-    btn.textContent = '…';
+    if (!btn.dataset.originalHtml) btn.dataset.originalHtml = btn.innerHTML;
+    btn.innerHTML = 'Đang xử lý…';
     var msg = document.getElementById('purchase-msg');
     fetch(apiBase + '/purchase/chapter', {
         method: 'POST',
@@ -209,7 +210,7 @@ function purchaseChapterInline(storyId, chapterNum, btn) {
     .then(d => {
         if (d.success) {
             if (msg) { msg.innerHTML = '<span style="color:var(--color-success);">Mua thành công!</span>'; }
-            btn.textContent = '✅';
+            btn.innerHTML = window.hdkIcon('check');
             btn.style.borderColor = 'var(--color-success)';
             btn.style.color = 'var(--color-success)';
             btn.style.background = 'transparent';
@@ -217,12 +218,12 @@ function purchaseChapterInline(storyId, chapterNum, btn) {
         } else if (d.code === 'insufficient_credits') {
             if (msg) msg.innerHTML = '<span style="color:var(--color-danger);">' + d.message + '</span>';
             btn.disabled = false;
-            btn.textContent = btn.textContent.replace('…', '💎');
+            btn.innerHTML = btn.dataset.originalHtml;
         }
     })
     .catch(function() {
         btn.disabled = false;
-        btn.textContent = btn.textContent.replace('…', '💎');
+        btn.innerHTML = btn.dataset.originalHtml;
     });
 }
 
