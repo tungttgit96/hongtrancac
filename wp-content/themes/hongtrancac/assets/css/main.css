@@ -506,6 +506,79 @@ select {
     color: var(--color-star, #f5a623);
 }
 
+/* Avatar Upload */
+.hdk-avatar-upload {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    flex-wrap: wrap;
+}
+.hdk-avatar-preview {
+    width: 96px;
+    height: 96px;
+    border-radius: 50%;
+    background: var(--color-bg-secondary);
+    border: 2px dashed var(--color-border);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    overflow: hidden;
+    flex-shrink: 0;
+}
+.hdk-avatar-preview img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+.hdk-avatar-preview.has-preview {
+    border-style: solid;
+    border-color: var(--color-primary);
+}
+.hdk-avatar-dropzone {
+    flex: 1;
+    min-width: 200px;
+    min-height: 96px;
+    border: 2px dashed var(--color-border);
+    border-radius: var(--radius-md);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 4px;
+    padding: 16px;
+    cursor: pointer;
+    transition: border-color 0.2s, background 0.2s;
+    color: var(--color-text-secondary);
+}
+.hdk-avatar-dropzone:hover,
+.hdk-avatar-dropzone:focus-visible,
+.hdk-avatar-dropzone.dragover {
+    border-color: var(--color-primary);
+    background: var(--color-primary-light);
+    color: var(--color-primary);
+}
+.hdk-avatar-dropzone:focus-visible {
+    outline: 3px solid var(--color-input-focus-ring);
+    outline-offset: 2px;
+}
+.hdk-avatar-dropzone.has-file {
+    border-style: solid;
+    border-color: var(--color-success);
+    background: none;
+}
+.hdk-avatar-dropzone.has-error {
+    border-color: var(--color-danger);
+}
+.hdk-avatar-error {
+    width: 100%;
+    padding: 8px 12px;
+    border-radius: var(--radius-sm);
+    background: var(--color-danger);
+    color: var(--color-on-danger);
+    font-size: 13px;
+    margin-top: 8px;
+}
+
 .sr-only {
     position: absolute; width: 1px; height: 1px;
     padding: 0; margin: -1px; overflow: hidden;
@@ -2079,4 +2152,15 @@ article p:last-child {
 /* ===== Report Modal ===== */
 #report-modal > div {
     animation: modalIn 0.2s ease;
+}
+
+@media (max-width: 768px) {
+    .hdk-avatar-upload {
+        flex-direction: column;
+        align-items: flex-start;
+    }
+    .hdk-avatar-dropzone {
+        width: 100%;
+        min-width: auto;
+    }
 }

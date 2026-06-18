@@ -348,6 +348,139 @@
         })();
     })();
 
+    // ===== Avatar Upload (Account Settings) =====
+    (function initAvatarUpload() {
+        var dropzone = document.getElementById('avatar-dropzone');
+        var fileInput = document.getElementById('avatar-file-input');
+        var preview = document.getElementById('avatar-preview');
+        var previewImg = document.getElementById('avatar-preview-img');
+        var errorEl = document.getElementById('avatar-error');
+        var hiddenUrl = document.getElementById('account-avatar-url');
+        var ALLOWED = ['image/jpeg', 'image/png', 'image/webp', 'image/gif'];
+        var MAX_SIZE = 3 * 1024 * 1024;
+
+        if (!dropzone || !fileInput || !preview) return;
+
+        function showError(msg) {
+            if (!errorEl) return;
+            errorEl.textContent = msg;
+            errorEl.style.display = 'block';
+            dropzone.classList.add('has-error');
+        }
+
+        function clearError() {
+            if (!errorEl) return;
+            errorEl.textContent = '';
+            errorEl.style.display = 'none';
+            dropzone.classList.remove('has-error');
+        }
+
+        function showPreview(file) {
+            clearError();
+            var reader = new FileReader();
+            reader.onload = function(ev) {
+                if (!previewImg) {
+                    var img = document.createElement('img');
+                    img.id = 'avatar-preview-img';
+                    img.alt = 'Avatar xem trước';
+                    img.src = ev.target.result;
+                    preview.innerHTML = '';
+                    preview.appendChild(img);
+                    previewImg = img;
+                } else {
+                    previewImg.src = ev.target.result;
+                }
+                preview.classList.add('has-preview');
+                dropzone.classList.add('has-file');
+            };
+            reader.onerror = function() {
+                showError('Không thể đọc file ảnh.');
+            };
+            reader.readAsDataURL(file);
+        }
+
+        function validateFile(file) {
+            if (ALLOWED.indexOf(file.type) === -1) {
+                showError('Chỉ chấp nhận file JPG, PNG, WebP hoặc GIF.');
+                return false;
+            }
+            if (file.size > MAX_SIZE) {
+                showError('Dung lượng tối đa 3MB.');
+                return false;
+            }
+            return true;
+        }
+
+        function handleFile(file) {
+            if (!validateFile(file)) {
+                fileInput.value = '';
+                return;
+            }
+            showPreview(file);
+        }
+
+        function setInputFile(file) {
+            if (!window.DataTransfer) return false;
+            try {
+                var dataTransfer = new DataTransfer();
+                dataTransfer.items.add(file);
+                fileInput.files = dataTransfer.files;
+                return true;
+            } catch (e) {
+                return false;
+            }
+        }
+
+        if (previewImg) {
+            preview.classList.add('has-preview');
+        }
+
+        // Click dropzone -> open file picker
+        dropzone.addEventListener('click', function() {
+            fileInput.click();
+        });
+
+        dropzone.addEventListener('keydown', function(e) {
+            if (e.key !== 'Enter' && e.key !== ' ') return;
+            e.preventDefault();
+            fileInput.click();
+        });
+
+        // File input change
+        fileInput.addEventListener('change', function() {
+            if (fileInput.files && fileInput.files.length) {
+                handleFile(fileInput.files[0]);
+            }
+        });
+
+        // Drag events
+        dropzone.addEventListener('dragover', function(e) {
+            e.preventDefault();
+            e.stopPropagation();
+            dropzone.classList.add('dragover');
+        });
+
+        dropzone.addEventListener('dragleave', function(e) {
+            e.preventDefault();
+            e.stopPropagation();
+            dropzone.classList.remove('dragover');
+        });
+
+        dropzone.addEventListener('drop', function(e) {
+            e.preventDefault();
+            e.stopPropagation();
+            dropzone.classList.remove('dragover');
+            if (e.dataTransfer.files && e.dataTransfer.files.length) {
+                var file = e.dataTransfer.files[0];
+                if (setInputFile(file)) {
+                    handleFile(file);
+                } else {
+                    showError('Trình duyệt không hỗ trợ kéo thả file, hãy bấm để chọn ảnh.');
+                }
+            }
+        });
+    })();
+
     // ===== Motion Observer =====
     (function initMotion() {
         try {

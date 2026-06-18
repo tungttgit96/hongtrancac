@@ -43,6 +43,40 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['hdk_account_settings'
         $display_name = sanitize_text_field($_POST['display_name'] ?? '');
         $user_email = sanitize_email($_POST['user_email'] ?? '');
         $avatar_url = esc_url_raw($_POST['avatar_url'] ?? '');
+        $avatar_file = $_FILES['avatar_file'] ?? null;
+        $has_avatar_upload = is_array($avatar_file)
+            && !empty($avatar_file['name'])
+            && (int)($avatar_file['error'] ?? UPLOAD_ERR_NO_FILE) !== UPLOAD_ERR_NO_FILE;
+        $allowed_avatar_mimes = [
+            'jpg|jpeg' => 'image/jpeg',
+            'png' => 'image/png',
+            'webp' => 'image/webp',
+            'gif' => 'image/gif',
+        ];
+        $max_avatar_size = 3 * 1024 * 1024; // 3MB
+
+        if ($has_avatar_upload) {
+            $upload_error = (int)($avatar_file['error'] ?? UPLOAD_ERR_NO_FILE);
+            if ($upload_error !== UPLOAD_ERR_OK) {
+                $account_error = 'Avatar: lỗi upload, vui lòng thử lại.';
+            } elseif ((int)($avatar_file['size'] ?? 0) <= 0) {
+                $account_error = 'Avatar: file ảnh không hợp lệ.';
+            } elseif ((int)$avatar_file['size'] > $max_avatar_size) {
+                $account_error = 'Avatar: dung lượng tối đa 3MB.';
+            } else {
+                if (!function_exists('wp_check_filetype_and_ext')) {
+                    require_once ABSPATH . 'wp-admin/includes/file.php';
+                }
+                $checked = wp_check_filetype_and_ext(
+                    $avatar_file['tmp_name'],
+                    $avatar_file['name'],
+                    $allowed_avatar_mimes
+                );
+                if (empty($checked['type']) || !in_array($checked['type'], $allowed_avatar_mimes, true)) {
+                    $account_error = 'Avatar: chỉ chấp nhận file JPG, PNG, WebP hoặc GIF.';
+                }
+            }
+        }
         $current_password = $_POST['current_password'] ?? '';
         $new_password = $_POST['new_password'] ?? '';
         $confirm_password = $_POST['confirm_password'] ?? '';
@@ -71,6 +105,40 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['hdk_account_settings'
                 $account_error = 'Mật khẩu mới nhập lại không khớp.';
             } else {
                 $update['user_pass'] = $new_password;
+            }
+        }
+
+        if (!$account_error && $has_avatar_upload) {
+            if (!function_exists('wp_handle_upload')) {
+                require_once ABSPATH . 'wp-admin/includes/file.php';
+            }
+            if (!function_exists('wp_generate_attachment_metadata')) {
+                require_once ABSPATH . 'wp-admin/includes/image.php';
+            }
+
+            $uploaded = wp_handle_upload($avatar_file, [
+                'test_form' => false,
+                'mimes' => $allowed_avatar_mimes,
+            ]);
+
+            if ($uploaded && empty($uploaded['error'])) {
+                $attachment_id = wp_insert_attachment([
+                    'guid' => $uploaded['url'],
+                    'post_mime_type' => $uploaded['type'],
+                    'post_title' => 'Avatar - ' . $user->user_login,
+                    'post_status' => 'inherit',
+                ], $uploaded['file']);
+
+                if (is_wp_error($attachment_id)) {
+                    $account_error = 'Avatar: không thể lưu ảnh, thử lại.';
+                } else {
+                    $attach_data = wp_generate_attachment_metadata($attachment_id, $uploaded['file']);
+                    wp_update_attachment_metadata($attachment_id, $attach_data);
+                    $avatar_url = $uploaded['url'];
+                    update_user_meta($user_id, 'hdk_avatar_attachment_id', $attachment_id);
+                }
+            } else {
+                $account_error = 'Avatar: ' . ($uploaded['error'] ?? 'lỗi không xác định.');
             }
         }
 
@@ -477,7 +545,7 @@ $avatar_html = $custom_avatar
             <div class="account-settings-panel panel panel-pad">
                 <h2 style="font-size:var(--font-size-xl);font-weight:700;margin-bottom:8px;">Cài đặt tài khoản</h2>
                 <p style="color:var(--color-text-muted);margin-bottom:20px;">Cập nhật tên hiển thị, email, avatar và mật khẩu đăng nhập.</p>
-                <form method="post" class="account-settings-form">
+                <form method="post" class="account-settings-form" enctype="multipart/form-data">
                     <?php wp_nonce_field('hdk_account_settings'); ?>
                     <input type="hidden" name="hdk_account_settings" value="1">
 
@@ -494,10 +562,29 @@ $avatar_html = $custom_avatar
                             <label for="account-email">Email</label>
                             <input type="email" name="user_email" id="account-email" value="<?php echo esc_attr($user->user_email); ?>" required style="width:100%;">
                         </p>
-                        <p>
-                            <label for="account-avatar-url">Avatar URL</label>
-                            <input type="url" name="avatar_url" id="account-avatar-url" value="<?php echo esc_attr($avatar_url); ?>" placeholder="https://..." style="width:100%;">
-                        </p>
+                    </div>
+
+                    <!-- Avatar Upload -->
+                    <div class="account-avatar-section" style="margin-top:16px;">
+                        <label style="display:block;margin-bottom:6px;font-weight:500;">Avatar</label>
+                        <div class="hdk-avatar-upload" id="avatar-upload-area">
+                            <input type="hidden" name="avatar_url" id="account-avatar-url" value="<?php echo esc_attr($avatar_url); ?>">
+                            <div class="hdk-avatar-preview" id="avatar-preview">
+                                <?php if ($avatar_url): ?>
+                                    <img src="<?php echo esc_url($avatar_url); ?>" alt="Avatar hiện tại" id="avatar-preview-img">
+                                <?php else: ?>
+                                    <?php echo hdk_icon('image', ['size' => '40px']); ?>
+                                <?php endif; ?>
+                            </div>
+                            <div class="hdk-avatar-dropzone" id="avatar-dropzone" role="button" tabindex="0" aria-describedby="avatar-error">
+                                <?php echo hdk_icon('upload-cloud', ['size' => '24px']); ?>
+                                <span>Kéo thả ảnh vào đây</span>
+                                <span style="font-size:12px;color:var(--color-text-muted);">hoặc bấm để chọn ảnh</span>
+                                <span style="font-size:11px;color:var(--color-text-muted);">JPG, PNG, WebP, GIF &bull; Tối đa 3MB</span>
+                            </div>
+                            <input type="file" name="avatar_file" id="avatar-file-input" accept="image/jpeg,image/png,image/webp,image/gif" style="display:none;">
+                            <div class="hdk-avatar-error" id="avatar-error" style="display:none;"></div>
+                        </div>
                     </div>
 
                     <h3 style="font-size:var(--font-size-base);margin:18px 0 10px;">Đổi mật khẩu</h3>
@@ -516,7 +603,7 @@ $avatar_html = $custom_avatar
                         </p>
                     </div>
 
-                    <button type="submit" class="btn btn-primary">Lưu thay đổi</button>
+                    <button type="submit" class="btn btn-primary" style="margin-top:15px;">Lưu thay đổi</button>
                 </form>
             </div>
             <?php break;
