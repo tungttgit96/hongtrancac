@@ -8,8 +8,8 @@ get_header();
 $page = isset($_GET['page']) ? max(1, (int)$_GET['page']) : 1;
 $per_page = 20;
 
-// Get new/updated stories
-$new_stories = HDK_Cache::get_home_stories(['per_page' => 12, 'orderby' => 'updated_at', 'order' => 'DESC', 'exclude_hidden' => true], 'home_new');
+// Get new/updated stories (carousel: 16 stories for infinite loop)
+$new_stories = HDK_Cache::get_home_stories(['per_page' => 16, 'orderby' => 'updated_at', 'order' => 'DESC', 'exclude_hidden' => true], 'home_new_marquee');
 
 // Get hot stories (most views)
 $hot_stories = HDK_Cache::get_home_stories(['per_page' => 12, 'orderby' => 'total_views', 'order' => 'DESC', 'exclude_hidden' => true], 'home_hot');
@@ -43,10 +43,19 @@ foreach ($audio_stories as $audio_story) {
             <h2 class="section-title"><?php echo hdk_icon('sparkles'); ?> Truyện mới cập nhật</h2>
             <a href="<?php echo esc_url(hdk_page_url('danh-sach-truyen')); ?>" class="btn btn-outline btn-sm">Xem tất cả</a>
         </div>
-        <div class="grid grid-6 home-story-grid">
-            <?php foreach ($new_stories['stories'] as $i => $story): ?>
-                <?php hdk_get_story_card($story, $i); ?>
-            <?php endforeach; ?>
+        <div class="home-new-marquee">
+            <div class="home-new-track">
+                <div class="home-new-group">
+                    <?php foreach ($new_stories['stories'] as $i => $story): ?>
+                        <?php hdk_get_story_card($story, $i, ['variant' => 'compact-new']); ?>
+                    <?php endforeach; ?>
+                </div>
+                <div class="home-new-group" aria-hidden="true">
+                    <?php foreach ($new_stories['stories'] as $i => $story): ?>
+                        <?php hdk_get_story_card($story, $i + 16, ['variant' => 'compact-new', 'tabindex' => '-1', 'aria-hidden' => 'true']); ?>
+                    <?php endforeach; ?>
+                </div>
+            </div>
         </div>
     </div>
 </section>

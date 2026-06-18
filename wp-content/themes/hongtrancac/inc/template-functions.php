@@ -70,18 +70,56 @@ function hdk_story_has_audio($story) {
     return !empty($story->audio_url);
 }
 
-function hdk_get_story_card($story, $index = 0) {
+function hdk_get_story_card($story, $index = 0, $attrs = []) {
     $url = hdk_story_url($story->slug ?? '');
     $title = esc_html($story->title ?? '');
     $cover = $story->cover_url ?? get_template_directory_uri() . '/assets/img/placeholder.svg';
     $author = esc_html($story->author_name ?? '');
     $chapters = (int)($story->chapter_count ?? 0);
     $views = number_format((int)($story->total_views ?? 0));
+    $views_label = sprintf('%s lượt xem', $views);
+    $chapters_label = sprintf('%d chương', $chapters);
     $price_summary = class_exists('HDK_DB') ? HDK_DB::get_story_price_summary($story) : ['has_pricing' => false, 'label' => ''];
     $lazy = $index >= 8 ? ' loading="lazy"' : '';
-    ?>
-    <a href="<?php echo esc_url($url); ?>" class="card story-card motion-stagger" title="<?php echo $title; ?>">
-        <img src="<?php echo esc_url($cover); ?>" alt="<?php echo $title; ?>" class="card-img"<?php echo $lazy; ?>>
+    $variant = '';
+    $extra_attrs = '';
+    if (is_array($attrs)) {
+        if (isset($attrs['variant'])) {
+            $variant = $attrs['variant'];
+            unset($attrs['variant']);
+        }
+        foreach ($attrs as $name => $value) {
+            if ($value === false || $value === null) {
+                continue;
+            }
+            $extra_attrs .= ' ' . esc_attr($name);
+            if ($value !== true) {
+                $extra_attrs .= '="' . esc_attr($value) . '"';
+            }
+        }
+    } elseif (is_string($attrs)) {
+        $extra_attrs = $attrs;
+    }
+    if ($variant === 'compact-new'): ?>
+    <a href="<?php echo esc_url($url); ?>" class="card story-card story-card-compact motion-stagger" title="<?php echo $title; ?>"<?php echo $extra_attrs; ?>>
+        <div class="card-img-wrap">
+            <img src="<?php echo esc_url($cover); ?>" alt="<?php echo $title; ?>" class="card-img"<?php echo $lazy; ?>>
+            <span class="card-views-overlay" aria-label="<?php echo esc_attr($views_label); ?>"><?php echo hdk_icon('eye'); ?> <?php echo $views; ?></span>
+        </div>
+        <div class="card-body">
+            <h3 class="card-title"><?php echo $title; ?></h3>
+            <div class="card-meta card-meta-row">
+                <span class="story-card-status"><?php echo hdk_get_story_status_badge($story); ?></span>
+                <span class="story-card-chapters" aria-label="<?php echo esc_attr($chapters_label); ?>"><?php echo hdk_icon('book-open'); ?> <?php echo $chapters; ?></span>
+            </div>
+        </div>
+    </a>
+    <?php else: ?>
+    <a href="<?php echo esc_url($url); ?>" class="card story-card motion-stagger" title="<?php echo $title; ?>"<?php echo $extra_attrs; ?>>
+        <div class="card-img-wrap">
+            <img src="<?php echo esc_url($cover); ?>" alt="<?php echo $title; ?>" class="card-img"<?php echo $lazy; ?>>
+            <span class="card-views-overlay" aria-label="<?php echo esc_attr($views_label); ?>"><?php echo hdk_icon('eye'); ?> <?php echo $views; ?></span>
+        </div>
         <div class="card-body">
             <h3 class="card-title"><?php echo $title; ?></h3>
             <?php if ($author): ?>
@@ -99,10 +137,9 @@ function hdk_get_story_card($story, $index = 0) {
             <?php if (hdk_story_has_audio($story)): ?>
                 <div class="card-meta" style="margin-top:6px;color:var(--color-primary);"><?php echo hdk_icon('headphones'); ?> Có audio</div>
             <?php endif; ?>
-            <div class="card-meta" style="text-align:right"><?php echo hdk_icon('eye'); ?> <?php echo $views; ?></div>
         </div>
     </a>
-    <?php
+    <?php endif;
 }
 
 function hdk_get_hero_section() {
@@ -225,7 +262,7 @@ function hdk_get_hero_section() {
                                 <span class="banner-card-rank"><?php echo sprintf('%02d', $index + 1); ?></span>
                                 <span class="banner-card-overlay">
                                     <span class="banner-card-title"><?php echo esc_html($story->title); ?></span>
-                                    <span class="banner-card-views"><?php echo number_format((int)($story->total_views ?? 0)); ?> lượt đọc</span>
+                                    <span class="banner-card-views"><?php echo hdk_icon('eye'); ?> <?php echo number_format((int)($story->total_views ?? 0)); ?></span>
                                 </span>
                             </button>
                         <?php endforeach; ?>
