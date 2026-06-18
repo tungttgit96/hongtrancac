@@ -787,7 +787,7 @@ body.admin-bar .site-header {
     align-items: center;
     display: grid;
     gap: clamp(22px, 2.6vw, 36px);
-    grid-template-columns: minmax(230px, 0.82fr) minmax(260px, 0.92fr) minmax(330px, 1fr);
+    grid-template-columns: minmax(230px, 0.82fr) minmax(260px, 0.92fr) minmax(248px, 0.75fr);
     justify-content: space-between;
     min-height: 420px;
     position: relative;
@@ -859,7 +859,7 @@ body.admin-bar .site-header {
 }
 .hero-banner .banner-cards {
     display: grid;
-    gap: 12px;
+    gap: 9px;
     grid-template-columns: repeat(3, minmax(0, 1fr));
     grid-template-rows: repeat(2, minmax(0, 1fr));
     min-width: 0;
@@ -902,11 +902,11 @@ body.admin-bar .site-header {
     color: var(--color-banner-overlay-text);
     font-size: var(--font-size-xs);
     font-weight: 700;
-    left: 10px;
+    left: 7px;
     line-height: 1;
-    padding: 9px 10px;
+    padding: 6px 7px;
     position: absolute;
-    top: 10px;
+    top: 7px;
 }
 .hero-banner .banner-card.active .banner-card-rank {
     background: var(--color-banner-card-rank-active-bg);
@@ -921,14 +921,14 @@ body.admin-bar .site-header {
     left: 0;
     min-height: 48%;
     justify-content: flex-end;
-    padding: 38px 10px 10px;
+    padding: 28px 8px 8px;
     position: absolute;
     right: 0;
 }
 .hero-banner .banner-card-title {
     color: var(--color-banner-overlay-text);
     display: -webkit-box;
-    font-size: var(--font-size-sm);
+    font-size: clamp(11px, 0.9vw, var(--font-size-sm));
     font-weight: 700;
     line-height: 1.25;
     overflow: hidden;
@@ -957,8 +957,12 @@ body.admin-bar .site-header {
         width: min(40vw, 300px);
     }
     .hero-banner .banner-cards {
+        gap: 9px;
         grid-column: 1 / -1;
         grid-template-columns: repeat(6, minmax(0, 1fr));
+        margin-left: auto;
+        margin-right: auto;
+        max-width: 75%;
         order: 2;
     }
 }
@@ -1004,8 +1008,10 @@ body.admin-bar .site-header {
     }
     .hero-banner .banner-cards {
         display: flex;
-        gap: 10px;
+        gap: 8px;
         margin: 0 -6px;
+        max-width: none;
+        width: auto;
         overflow-x: auto;
         padding: 0 6px 4px;
         scroll-snap-type: x proximity;
@@ -1014,7 +1020,7 @@ body.admin-bar .site-header {
     }
     .hero-banner .banner-card {
         aspect-ratio: 2 / 3;
-        flex: 0 0 124px;
+        flex: 0 0 93px;
         scroll-snap-align: start;
     }
     .hero-banner .banner-title {
@@ -1036,10 +1042,13 @@ body.admin-bar .site-header {
         width: min(78vw, 260px);
     }
     .hero-banner .banner-card {
-        flex-basis: 104px;
+        flex-basis: 78px;
+    }
+    .hero-banner .banner-card-overlay {
+        padding: 22px 6px 6px;
     }
     .hero-banner .banner-card-title {
-        font-size: var(--font-size-xs);
+        font-size: 11px;
     }
 }
 

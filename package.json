@@ -1,0 +1,27 @@
+{
+  "name": "hongtrancac",
+  "version": "1.0.0",
+  "description": "Nền tảng đọc truyện chữ online xây dựng trên **WordPress** + custom theme + plugin.",
+  "main": "index.js",
+  "directories": {
+    "doc": "docs"
+  },
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/tungttgit96/hongtrancac.git"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "type": "commonjs",
+  "bugs": {
+    "url": "https://github.com/tungttgit96/hongtrancac/issues"
+  },
+  "homepage": "https://github.com/tungttgit96/hongtrancac#readme",
+  "dependencies": {
+    "lucide-static": "^1.18.0"
+  }
+}

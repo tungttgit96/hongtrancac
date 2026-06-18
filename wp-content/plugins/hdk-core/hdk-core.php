@@ -15,7 +15,7 @@ defined('ABSPATH') || exit;
  * installed with a .test domain. This keeps home_url(), site_url(), assets,
  * redirects, canonical URLs and REST links on the current loopback host.
  */
-function hdk_local_request_origin() {
+function hdk_local_request_base_url() {
     $host_header = $_SERVER['HTTP_HOST'] ?? '';
     if ($host_header === '') {
         return '';
@@ -33,18 +33,50 @@ function hdk_local_request_origin() {
     }
 
     $scheme = is_ssl() ? 'https' : 'http';
-    return $scheme . '://' . $host_header;
+    $origin = $scheme . '://' . $host_header;
+    $script_name = $_SERVER['SCRIPT_NAME'] ?? '';
+    $base_path = '';
+
+    if (is_string($script_name) && $script_name !== '') {
+        $base_path = rtrim(str_replace('\\', '/', dirname($script_name)), '/');
+        if ($base_path === '.' || $base_path === '/') {
+            $base_path = '';
+        }
+    }
+
+    return $origin . $base_path;
+}
+
+function hdk_local_request_origin() {
+    $base_url = hdk_local_request_base_url();
+    if ($base_url === '') {
+        return '';
+    }
+
+    $parts = wp_parse_url($base_url);
+    if (empty($parts['scheme']) || empty($parts['host'])) {
+        return '';
+    }
+
+    $origin = $parts['scheme'] . '://' . $parts['host'];
+    if (!empty($parts['port'])) {
+        $origin .= ':' . $parts['port'];
+    }
+
+    return $origin;
 }
 
 function hdk_filter_local_site_url($value) {
-    return hdk_local_request_origin() ?: $value;
+    return hdk_local_request_base_url() ?: $value;
 }
 
 function hdk_filter_local_absolute_url($url) {
-    $origin = hdk_local_request_origin();
-    if ($origin === '' || !is_string($url) || $url === '') {
+    $base_url = hdk_local_request_base_url();
+    if ($base_url === '' || !is_string($url) || $url === '') {
         return $url;
     }
+
+    $origin = hdk_local_request_origin();
 
     $url = str_replace(
         [
@@ -53,7 +85,7 @@ function hdk_filter_local_absolute_url($url) {
             'http://localhost/hongtrancac',
             'https://localhost/hongtrancac',
         ],
-        $origin,
+        $base_url,
         $url
     );
 

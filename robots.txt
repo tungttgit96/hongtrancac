@@ -4,5 +4,12 @@ Disallow: /wp-admin/
 Disallow: /wp-login.php
 Disallow: /wp-content/plugins/
 Disallow: /wp-includes/
+Crawl-delay: 5
 
-Sitemap: http://127.0.0.1:8000/sitemap.xml
+User-agent: AhrefsBot
+Crawl-delay: 10
+
+User-agent: SemrushBot
+Crawl-delay: 10
+
+Sitemap: https://hongtrancac.com/sitemap.xml
