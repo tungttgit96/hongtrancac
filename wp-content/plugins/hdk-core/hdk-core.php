@@ -34,14 +34,30 @@ function hdk_local_request_base_url() {
 
     $scheme = is_ssl() ? 'https' : 'http';
     $origin = $scheme . '://' . $host_header;
-    $script_name = $_SERVER['SCRIPT_NAME'] ?? '';
-    $base_path = '';
 
-    if (is_string($script_name) && $script_name !== '') {
-        $base_path = rtrim(str_replace('\\', '/', dirname($script_name)), '/');
-        if ($base_path === '.' || $base_path === '/') {
-            $base_path = '';
+    // Compute WordPress root path from ABSPATH, not from current script dir.
+    // SCRIPT_NAME contains /wp-admin/... on admin pages, which would
+    // produce a wrong base URL like /wp-admin causing asset 404s.
+    $base_path = '';
+    $doc_root = rtrim(str_replace('\\', '/', $_SERVER['DOCUMENT_ROOT'] ?? ''), '/');
+    $abspath  = str_replace('\\', '/', rtrim(ABSPATH, '/\\'));
+
+    if ($doc_root !== '' && str_starts_with(strtolower($abspath), strtolower($doc_root))) {
+        $base_path = rtrim(substr($abspath, strlen($doc_root)), '/');
+    } else {
+        // Fallback: strip WordPress runtime dirs from SCRIPT_NAME
+        $script_name = $_SERVER['SCRIPT_NAME'] ?? '';
+        if (is_string($script_name) && $script_name !== '') {
+            $base_path = rtrim(str_replace('\\', '/', dirname($script_name)), '/');
+            $base_path = preg_replace('#/(wp-admin|wp-includes|wp-content)(/.*)?$#i', '', $base_path);
+            if ($base_path === '.' || $base_path === '/') {
+                $base_path = '';
+            }
         }
+    }
+
+    if ($base_path === '.' || $base_path === '/') {
+        $base_path = '';
     }
 
     return $origin . $base_path;
