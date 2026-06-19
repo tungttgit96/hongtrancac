@@ -73,7 +73,11 @@ get_header();
                 <?php hdk_get_story_card($story, $i); ?>
             <?php endforeach; ?>
         </div>
-        <?php hdk_get_pagination($stories['pages'], $page); ?>
+        <?php hdk_get_pagination($stories['pages'], $page, [], [
+            'total' => $stories['total'],
+            'per_page' => $per_page,
+            'label' => 'truyện',
+        ]); ?>
     <?php else: ?>
         <div style="text-align:center;padding:60px 0;">
             <p style="font-size:var(--font-size-lg);color:var(--color-text-muted);">Chưa có truyện nào.</p>

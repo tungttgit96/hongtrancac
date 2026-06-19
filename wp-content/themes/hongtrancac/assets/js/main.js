@@ -1099,6 +1099,58 @@
         };
     }
 
+    // ===== Female Home Ranking Tabs =====
+    (function initFnhRankTabs() {
+        var tabs = document.querySelectorAll('.fnh-rank-tab');
+        if (!tabs.length) return;
+
+        tabs.forEach(function(tab) {
+            tab.addEventListener('click', function() {
+                var period = this.getAttribute('data-fnh-period');
+                if (!period) return;
+
+                // Update tabs
+                tabs.forEach(function(t) {
+                    t.setAttribute('aria-selected', 'false');
+                    t.setAttribute('tabindex', '-1');
+                    t.classList.remove('active');
+                });
+                this.setAttribute('aria-selected', 'true');
+                this.setAttribute('tabindex', '0');
+                this.classList.add('active');
+
+                // Update panels
+                var panels = document.querySelectorAll('.fnh-rank-panel');
+                panels.forEach(function(panel) {
+                    if (panel.getAttribute('data-fnh-panel') === period) {
+                        panel.removeAttribute('hidden');
+                        panel.classList.remove('hidden');
+                    } else {
+                        panel.setAttribute('hidden', '');
+                        panel.classList.add('hidden');
+                    }
+                });
+            });
+
+            // Keyboard navigation
+            tab.addEventListener('keydown', function(e) {
+                var currentIndex = Array.prototype.indexOf.call(tabs, this);
+                var nextIndex;
+                if (e.key === 'ArrowRight' || e.key === 'ArrowDown') {
+                    e.preventDefault();
+                    nextIndex = (currentIndex + 1) % tabs.length;
+                } else if (e.key === 'ArrowLeft' || e.key === 'ArrowUp') {
+                    e.preventDefault();
+                    nextIndex = (currentIndex - 1 + tabs.length) % tabs.length;
+                }
+                if (nextIndex !== undefined) {
+                    tabs[nextIndex].focus();
+                    tabs[nextIndex].click();
+                }
+            });
+        });
+    })();
+
     // ===== Report Modal =====
     window.toggleReportModal = function() {
         document.getElementById('report-modal').style.display = 'flex';

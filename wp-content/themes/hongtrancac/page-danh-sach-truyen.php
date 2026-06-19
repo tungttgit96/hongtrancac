@@ -95,6 +95,10 @@ get_header();
             'category' => $category,
             'audio' => $has_audio ? 1 : '',
             'orderby' => $orderby !== 'updated_at' ? $orderby : '',
+        ], [
+            'total' => $result['total'],
+            'per_page' => $per_page,
+            'label' => 'truyện',
         ]); ?>
     <?php else: ?>
         <?php if ($search): ?>

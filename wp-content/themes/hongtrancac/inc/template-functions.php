@@ -274,26 +274,48 @@ function hdk_get_hero_section() {
     <?php
 }
 
-function hdk_get_pagination($total_pages, $current_page = 1, $base_args = []) {
+function hdk_get_pagination($total_pages, $current_page = 1, $base_args = [], $options = []) {
     if ($total_pages <= 1) return;
     $base_args = array_filter($base_args, function($value) {
         return $value !== '' && $value !== null && $value !== 0 && $value !== '0';
     });
+    $defaults = [
+        'total' => 0,
+        'per_page' => 20,
+        'label' => '',
+        'show_count' => true,
+    ];
+    $options = wp_parse_args($options, $defaults);
+    $total = max(0, (int)$options['total']);
+    $per_page = max(1, (int)$options['per_page']);
+    $label = $options['label'];
+    $show_count = $options['show_count'];
+    $from = ($current_page - 1) * $per_page + 1;
+    $to = min($current_page * $per_page, $total);
     ?>
-    <nav class="pagination" style="display:flex;justify-content:center;align-items:center;gap:8px;padding:24px 0;flex-wrap:wrap;">
-        <?php if ($current_page > 1): ?>
-            <a href="<?php echo esc_url(add_query_arg(array_merge($base_args, ['page' => $current_page - 1]))); ?>" class="btn btn-ghost btn-sm"><?php echo hdk_icon('chevron-left'); ?> Trước</a>
-        <?php endif; ?>
-        <?php
-        $start = max(1, $current_page - 2);
-        $end = min($total_pages, $current_page + 2);
-        for ($i = $start; $i <= $end; $i++):
-            $active = $i === $current_page ? 'btn-primary' : 'btn-ghost';
-        ?>
-            <a href="<?php echo esc_url(add_query_arg(array_merge($base_args, ['page' => $i]))); ?>" class="btn <?php echo $active; ?> btn-sm"><?php echo $i; ?></a>
-        <?php endfor; ?>
-        <?php if ($current_page < $total_pages): ?>
-            <a href="<?php echo esc_url(add_query_arg(array_merge($base_args, ['page' => $current_page + 1]))); ?>" class="btn btn-ghost btn-sm">Sau <?php echo hdk_icon('chevron-right'); ?></a>
+    <nav class="pagination">
+        <div class="pagination-links">
+            <?php if ($current_page > 1): ?>
+                <a href="<?php echo esc_url(add_query_arg(array_merge($base_args, ['page' => $current_page - 1]))); ?>" class="btn btn-ghost btn-sm page-prev"><?php echo hdk_icon('chevron-left'); ?> Trước</a>
+            <?php else: ?>
+                <span class="btn btn-ghost btn-sm page-prev disabled"><?php echo hdk_icon('chevron-left'); ?> Trước</span>
+            <?php endif; ?>
+            <?php
+            $start = max(1, $current_page - 2);
+            $end = min($total_pages, $current_page + 2);
+            for ($i = $start; $i <= $end; $i++):
+                $active = $i === $current_page ? 'btn-primary' : 'btn-ghost';
+            ?>
+                <a href="<?php echo esc_url(add_query_arg(array_merge($base_args, ['page' => $i]))); ?>" class="btn <?php echo $active; ?> btn-sm page-num"><?php echo $i; ?></a>
+            <?php endfor; ?>
+            <?php if ($current_page < $total_pages): ?>
+                <a href="<?php echo esc_url(add_query_arg(array_merge($base_args, ['page' => $current_page + 1]))); ?>" class="btn btn-ghost btn-sm page-next">Sau <?php echo hdk_icon('chevron-right'); ?></a>
+            <?php else: ?>
+                <span class="btn btn-ghost btn-sm page-next disabled">Sau <?php echo hdk_icon('chevron-right'); ?></span>
+            <?php endif; ?>
+        </div>
+        <?php if ($show_count && $total > 0): ?>
+            <div class="pagination-summary">Hiển thị <?php echo $from; ?> &ndash; <?php echo $to; ?> / <?php echo number_format($total); ?> <?php echo $label ? esc_html($label) : ''; ?></div>
         <?php endif; ?>
     </nav>
     <?php
@@ -310,6 +332,319 @@ function hdk_get_rating_widget($story_id = 0, $current_rating = 0, $total_rating
         </div>
         <span style="font-size:var(--font-size-sm);color:var(--color-text-muted);">(<?php echo $avg; ?> - <?php echo number_format($total_ratings); ?> đánh giá)</span>
     </div>
+    <?php
+}
+
+// ===== Female Novel Home Helpers =====
+
+function hdk_fnh_get_latest_chapters($story_ids) {
+    if (empty($story_ids)) return [];
+    global $wpdb;
+    $table = HDK_DB::table('hdk_chapters');
+    $ids = array_map('intval', $story_ids);
+    $placeholders = implode(',', array_fill(0, count($ids), '%d'));
+    $results = $wpdb->get_results($wpdb->prepare(
+        "SELECT c.story_id, c.chapter_number, c.title, c.updated_at
+         FROM $table c
+         INNER JOIN (
+             SELECT story_id, MAX(chapter_number) AS max_chapter
+             FROM $table
+             WHERE story_id IN ($placeholders) AND status = 'published'
+             GROUP BY story_id
+         ) latest ON c.story_id = latest.story_id AND c.chapter_number = latest.max_chapter",
+        ...$ids
+    ));
+    $map = [];
+    foreach ($results as $row) {
+        $map[(int)$row->story_id] = $row;
+    }
+    return $map;
+}
+
+function hdk_fnh_clean_chapter_title($title, $chapter_number = 0) {
+    if (empty($title)) return '';
+    // Strip "Chương X: " or "Chương X - " prefix if already present in title
+    $patterns = [
+        '/^Chương\s+' . (int)$chapter_number . '\s*[:\-]\s*/iu',
+        '/^Chương\s+' . (int)$chapter_number . '\b/iu',
+    ];
+    foreach ($patterns as $pattern) {
+        $title = preg_replace($pattern, '', $title);
+    }
+    return trim($title);
+}
+
+function hdk_fnh_feature_card($story, $index = 0) {
+    $url = hdk_story_url($story->slug ?? '');
+    $title_raw = $story->title ?? '';
+    $title = esc_html($title_raw);
+    $cover = $story->cover_url ?: get_template_directory_uri() . '/assets/img/placeholder.svg';
+    $placeholder = get_template_directory_uri() . '/assets/img/placeholder.svg';
+    $chapters = (int)($story->chapter_count ?? 0);
+    $views = number_format((int)($story->total_views ?? 0));
+    $rating = isset($story->average_rating) ? round((float)$story->average_rating, 1) : 0;
+    $lazy = $index >= 2 ? ' loading="lazy"' : '';
+    ?>
+    <a href="<?php echo esc_url($url); ?>" class="fnh-feature-card motion-stagger" title="<?php echo esc_attr($title_raw); ?>">
+        <div class="fnh-feature-cover">
+            <img src="<?php echo esc_url($cover); ?>" alt="<?php echo esc_attr($title_raw); ?>" width="200" height="300" decoding="async"<?php echo $lazy; ?> onerror="this.src='<?php echo esc_url($placeholder); ?>'">
+            <?php if ($rating > 0): ?>
+            <span class="fnh-feature-rating"><?php echo hdk_icon('star', ['attrs' => ['fill' => 'currentColor']]); ?> <?php echo $rating; ?></span>
+            <?php endif; ?>
+            <span class="fnh-feature-cover-meta">
+                <span><?php echo hdk_icon('eye'); ?> <?php echo $views; ?></span>
+                <span><?php echo hdk_icon('book-open'); ?> <?php echo $chapters; ?> chương</span>
+            </span>
+        </div>
+        <div class="fnh-feature-body">
+            <h3 class="fnh-feature-title"><?php echo $title; ?></h3>
+            <div class="fnh-feature-status"><?php echo hdk_get_story_status_badge($story); ?></div>
+        </div>
+    </a>
+    <?php
+}
+
+function hdk_fnh_hot_card($story, $rank = 1) {
+    $url = hdk_story_url($story->slug ?? '');
+    $title_raw = $story->title ?? '';
+    $title = esc_html($title_raw);
+    $cover = $story->cover_url ?: get_template_directory_uri() . '/assets/img/placeholder.svg';
+    $placeholder = get_template_directory_uri() . '/assets/img/placeholder.svg';
+    $author = esc_html($story->author_name ?? '');
+    $chapters = (int)($story->chapter_count ?? 0);
+    $views = number_format((int)($story->total_views ?? 0));
+    $summary = wp_trim_words($story->summary ?? '', 30, '…');
+    ?>
+    <a href="<?php echo esc_url($url); ?>" class="fnh-hot-card motion-stagger" title="<?php echo esc_attr($title_raw); ?>">
+        <div class="fnh-hot-cover">
+            <img src="<?php echo esc_url($cover); ?>" alt="<?php echo esc_attr($title_raw); ?>" width="110" height="165" decoding="async" onerror="this.src='<?php echo esc_url($placeholder); ?>'">
+            <span class="fnh-hot-rank"><?php echo sprintf('%02d', $rank); ?></span>
+        </div>
+        <div class="fnh-hot-body">
+            <h3 class="fnh-hot-title"><?php echo $title; ?></h3>
+            <?php if ($author): ?>
+            <div class="fnh-hot-author"><?php echo $author; ?></div>
+            <?php endif; ?>
+            <p class="fnh-hot-summary"><?php echo esc_html($summary); ?></p>
+            <div class="fnh-hot-meta">
+                <?php echo hdk_get_story_status_badge($story); ?>
+                <span><?php echo hdk_icon('book-open'); ?> <?php echo $chapters; ?> chương</span>
+                <span><?php echo hdk_icon('eye'); ?> <?php echo $views; ?></span>
+            </div>
+        </div>
+    </a>
+    <?php
+}
+
+function hdk_fnh_latest_row($story, $chapter = null) {
+    $url = hdk_story_url($story->slug ?? '');
+    $title_raw = $story->title ?? '';
+    $title = esc_html($title_raw);
+    $cover = $story->cover_url ?: get_template_directory_uri() . '/assets/img/placeholder.svg';
+    $placeholder = get_template_directory_uri() . '/assets/img/placeholder.svg';
+    $chap_num = $chapter ? (int)$chapter->chapter_number : 0;
+    $chap_title_raw = $chapter ? $chapter->title : '';
+    $chap_title = hdk_fnh_clean_chapter_title($chap_title_raw, $chap_num);
+    ?>
+    <a href="<?php echo esc_url($url); ?>" class="fnh-latest-row motion-stagger" title="<?php echo esc_attr($title_raw); ?>">
+        <img src="<?php echo esc_url($cover); ?>" alt="<?php echo esc_attr($title_raw); ?>" class="fnh-latest-thumb" width="48" height="72" loading="lazy" decoding="async" onerror="this.src='<?php echo esc_url($placeholder); ?>'">
+        <div class="fnh-latest-info">
+            <h4 class="fnh-latest-title"><?php echo $title; ?></h4>
+            <div class="fnh-latest-meta">
+                <?php echo hdk_get_story_status_badge($story); ?>
+                <?php if ($chap_num): ?>
+                <span class="fnh-latest-chapter">Chương <?php echo $chap_num; ?><?php echo $chap_title ? ': ' . esc_html($chap_title) : ''; ?></span>
+                <?php endif; ?>
+            </div>
+        </div>
+    </a>
+    <?php
+}
+
+function hdk_fnh_ranking_item($story, $rank) {
+    $url = hdk_story_url($story->slug ?? '');
+    $title_raw = $story->title ?? '';
+    $title = esc_html($title_raw);
+    $cover = $story->cover_url ?: get_template_directory_uri() . '/assets/img/placeholder.svg';
+    $placeholder = get_template_directory_uri() . '/assets/img/placeholder.svg';
+    $author = esc_html($story->author_name ?? '');
+    $chapters = (int)($story->chapter_count ?? 0);
+    $views = (int)($story->total_views ?? 0);
+    $rank_class = $rank <= 3 ? ' fnh-rank-top' : '';
+    ?>
+    <a href="<?php echo esc_url($url); ?>" class="fnh-ranking-item<?php echo $rank_class; ?>" title="<?php echo esc_attr($title_raw); ?>">
+        <span class="fnh-ranking-num"><?php echo sprintf('%02d', $rank); ?></span>
+        <img src="<?php echo esc_url($cover); ?>" alt="<?php echo esc_attr($title_raw); ?>" class="fnh-ranking-thumb" width="40" height="60" loading="lazy" decoding="async" onerror="this.src='<?php echo esc_url($placeholder); ?>'">
+        <div class="fnh-ranking-info">
+            <span class="fnh-ranking-title"><?php echo $title; ?></span>
+            <span class="fnh-ranking-meta"><?php echo $author; ?> · <?php echo $chapters; ?> chương</span>
+        </div>
+        <span class="fnh-ranking-views"><?php echo hdk_icon('eye'); ?> <?php echo number_format($views); ?></span>
+    </a>
+    <?php
+}
+
+function hdk_get_category_icon_name($name, $slug = '') {
+    // Map by slug first (exact match)
+    $slug_map = [
+        'de-cu' => 'crown',
+        'ngon-tinh' => 'heart',
+        'co-dai' => 'castle',
+        'huyen-huyen' => 'sparkles',
+        'truyen-tranh' => 'book-heart',
+        'danh-muc' => 'grid-2x2',
+        'xuyen-khong' => 'rocket',
+        'hien-dai' => 'building',
+        'he-thong' => 'cpu',
+        'trong-sinh' => 'refresh-cw',
+        'dien-van' => 'feather',
+        'do-thi' => 'building-2',
+        'kiem-hiep' => 'swords',
+        'tien-hiep' => 'swords',
+        'dam-my' => 'flower-2',
+        'trinh-tham' => 'search',
+        'kinh-di' => 'ghost',
+        'linh-di' => 'ghost',
+        'hai-huoc' => 'laugh',
+        'lich-su' => 'scroll-text',
+        'quan-su' => 'shield',
+    ];
+    if (!empty($slug) && isset($slug_map[$slug])) {
+        return $slug_map[$slug];
+    }
+    // Fallback by name keyword matching
+    $name_lower = mb_strtolower($name, 'UTF-8');
+    $keyword_map = [
+        'đề cử' => 'crown', 'ngôn tình' => 'heart', 'cổ đại' => 'castle',
+        'huyền' => 'sparkles', 'truyện tranh' => 'book-heart', 'xuyên không' => 'rocket',
+        'hiện đại' => 'building', 'hệ thống' => 'cpu', 'trọng sinh' => 'refresh-cw',
+        'kiếm hiệp' => 'swords', 'tiên hiệp' => 'swords', 'đô thị' => 'building-2',
+        'trinh thám' => 'search', 'kinh dị' => 'ghost', 'hài' => 'laugh',
+        'lịch sử' => 'scroll-text', 'quân sự' => 'shield', 'đam mỹ' => 'flower-2',
+        'linh dị' => 'ghost', 'sắc' => 'heart', 'sủng' => 'heart', 'điền văn' => 'feather',
+    ];
+    foreach ($keyword_map as $keyword => $icon) {
+        if (mb_strpos($name_lower, $keyword) !== false) {
+            return $icon;
+        }
+    }
+    return 'book-open';
+}
+
+function hdk_fnh_quick_categories() {
+    global $wpdb;
+    $table = HDK_DB::table('hdk_categories');
+    $cats = $wpdb->get_results("SELECT id, name, slug, story_count FROM $table WHERE story_count > 0 ORDER BY sort_order, story_count DESC LIMIT 30");
+
+    if (empty($cats)) return;
+
+    $by_slug = [];
+    foreach ($cats as $c) { $by_slug[$c->slug] = $c; }
+
+    // Build fixed 12-item layout
+    // "Đề cử" links to /danh-sach-truyen, "Danh mục" links to /the-loai
+    $items = [];
+
+    // Slot 1: Đề cử (Recommendations)
+    $items[] = (object)[
+        'name' => 'Đề cử',
+        'slug' => 'de-cu',
+        'story_count' => 0,
+        'url' => hdk_page_url('danh-sach-truyen'),
+        'is_special' => true,
+    ];
+
+    // Slot 2-11: Match preferred slugs from DB (with fallback)
+    $preferred = ['ngon-tinh', 'co-dai', 'huyen-huyen', 'truyen-tranh', 'xuyen-khong', 'trong-sinh', 'dam-my', 'do-thi', 'kiem-hiep', 'kinh-di'];
+    foreach ($preferred as $slug) {
+        if (isset($by_slug[$slug])) {
+            $cat = $by_slug[$slug];
+            $items[] = (object)[
+                'name' => $cat->name,
+                'slug' => $cat->slug,
+                'story_count' => (int)$cat->story_count,
+                'url' => hdk_category_url($cat->slug),
+                'is_special' => false,
+            ];
+            unset($by_slug[$slug]);
+        } else {
+            // Fill slot with a fallback from top remaining
+            $keys = array_keys($by_slug);
+            if (!empty($keys)) {
+                $fallback = $by_slug[$keys[0]];
+                $items[] = (object)[
+                    'name' => $fallback->name,
+                    'slug' => $fallback->slug,
+                    'story_count' => (int)$fallback->story_count,
+                    'url' => hdk_category_url($fallback->slug),
+                    'is_special' => false,
+                ];
+                unset($by_slug[$keys[0]]);
+            }
+        }
+    }
+
+    // Slot 12: Danh mục (All Categories)
+    $items[] = (object)[
+        'name' => 'Danh mục',
+        'slug' => 'danh-muc',
+        'story_count' => 0,
+        'url' => hdk_page_url('the-loai'),
+        'is_special' => true,
+    ];
+
+    ?>
+    <div class="fnh-categories" role="navigation" aria-label="Danh mục thể loại">
+        <?php foreach ($items as $cat):
+            $icon = hdk_get_category_icon_name($cat->name, $cat->slug);
+            ?>
+            <a href="<?php echo esc_url($cat->url); ?>" class="fnh-cat-card motion-stagger" title="<?php echo esc_attr($cat->name); ?>">
+                <span class="fnh-cat-icon"><?php echo hdk_icon($icon); ?></span>
+                <span class="fnh-cat-name"><?php echo esc_html($cat->name); ?></span>
+            </a>
+        <?php endforeach; ?>
+    </div>
+    <?php
+}
+
+function hdk_fnh_daily_claim_btn() {
+    $daily_credits = (int)get_option('hdk_daily_credits', 10);
+    if (is_user_logged_in()):
+        ?>
+        <button type="button" class="fnh-daily-btn" id="daily-claim-btn" onclick="claimDaily()">
+            <?php echo hdk_icon('calendar'); ?> Điểm danh nhận <?php echo $daily_credits; ?> Linh Thạch
+        </button>
+        <?php
+    else:
+        ?>
+        <a href="<?php echo esc_url(hdk_login_url(home_url('/'))); ?>" class="fnh-daily-btn fnh-daily-guest">
+            <?php echo hdk_icon('log-in'); ?> Đăng nhập để điểm danh
+        </a>
+        <?php
+    endif;
+}
+
+function hdk_fnh_grid_card($story, $index = 0) {
+    $url = hdk_story_url($story->slug ?? '');
+    $title_raw = $story->title ?? '';
+    $title = esc_html($title_raw);
+    $cover = $story->cover_url ?: get_template_directory_uri() . '/assets/img/placeholder.svg';
+    $placeholder = get_template_directory_uri() . '/assets/img/placeholder.svg';
+    $chapters = (int)($story->chapter_count ?? 0);
+    $lazy = $index >= 4 ? ' loading="lazy"' : '';
+    ?>
+    <a href="<?php echo esc_url($url); ?>" class="fnh-grid-card motion-stagger" title="<?php echo esc_attr($title_raw); ?>">
+        <div class="fnh-grid-cover">
+            <img src="<?php echo esc_url($cover); ?>" alt="<?php echo esc_attr($title_raw); ?>" width="200" height="300" decoding="async"<?php echo $lazy; ?> onerror="this.src='<?php echo esc_url($placeholder); ?>'">
+        </div>
+        <div class="fnh-grid-body">
+            <h4 class="fnh-grid-title"><?php echo $title; ?></h4>
+            <div class="fnh-grid-meta">
+                <?php echo hdk_get_story_status_badge($story); ?>
+                <span><?php echo $chapters; ?> chương</span>
+            </div>
+        </div>
+    </a>
     <?php
 }
 

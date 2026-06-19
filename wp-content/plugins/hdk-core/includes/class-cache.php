@@ -32,7 +32,7 @@ class HDK_Cache {
     }
 
     public static function invalidate_home() {
-        $keys = ['home_new', 'home_new_marquee', 'home_hot', 'home_completed', 'home_free', 'home_editor', 'home_weekly'];
+        $keys = ['home_new', 'home_new_marquee', 'home_hot', 'home_completed', 'home_free', 'home_editor', 'home_weekly', 'home_female_picks', 'home_female_hot', 'home_female_latest', 'home_female_completed', 'home_female_rank_day', 'home_female_rank_week', 'home_female_rank_month'];
         foreach ($keys as $key) {
             self::delete($key);
         }
