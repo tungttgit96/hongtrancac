@@ -2456,31 +2456,14 @@ html[data-theme="dark"] .female-novel-home {
 
 .fnh-main {
     min-width: 0;
+    grid-column: 1 / -1;
 }
 
 .fnh-sidebar {
     display: flex;
     flex-direction: column;
     gap: 20px;
-    position: sticky;
-    top: calc(var(--header-height) + 16px);
-}
-
-/* Prevent motion-reveal transform from breaking sticky sidebar */
-.fnh-sidebar.motion-reveal {
-    transform: none;
-    opacity: 1;
-    transition: opacity 0.4s var(--motion-ease-out);
-}
-.fnh-sidebar.motion-reveal .motion-stagger {
-    opacity: 0;
-    transform: translateY(16px);
-    transition: opacity 0.3s var(--motion-ease-out), transform 0.3s var(--motion-ease-out);
-}
-.fnh-sidebar.motion-reveal.motion-visible .motion-stagger,
-.fnh-sidebar .motion-stagger.motion-visible {
-    opacity: 1;
-    transform: none;
+    grid-column: 1 / -1;
 }
 
 /* ---- FNH Section Header ---- */
@@ -2553,7 +2536,7 @@ html[data-theme="dark"] .female-novel-home {
     display: flex;
     align-items: center;
     gap: 8px;
-    font-size: var(--font-size-base);
+    font-size: 1.7rem;
     font-weight: 700;
     color: var(--color-text-primary);
 }
@@ -2567,6 +2550,53 @@ html[data-theme="dark"] .female-novel-home {
 .fnh-picks-block .fnh-feature-card:hover {
     transform: translateY(-3px);
     box-shadow: 0 8px 24px rgba(255,157,227,0.15);
+}
+
+/* ---- Picks Marquee Carousel ---- */
+@keyframes fnh-picks-scroll {
+    0% { transform: translateX(0); }
+    100% { transform: translateX(-50%); }
+}
+.fnh-picks-marquee {
+    overflow: hidden;
+}
+.fnh-picks-track {
+    display: flex;
+    animation: fnh-picks-scroll 60s linear infinite;
+    will-change: transform;
+    transform: translateZ(0);
+    backface-visibility: hidden;
+}
+.fnh-picks-track:hover {
+    animation-play-state: paused;
+}
+.fnh-picks-group {
+    display: flex;
+    gap: 12px;
+    flex-shrink: 0;
+    padding-right: 12px;
+}
+.fnh-picks-group .fnh-feature-card {
+    width: 160px;
+    flex-shrink: 0;
+}
+@media (prefers-reduced-motion: reduce) {
+    .fnh-picks-track {
+        animation: none !important;
+        transform: none !important;
+    }
+    .fnh-picks-marquee {
+        overflow-x: auto;
+        overflow-y: hidden;
+        scroll-snap-type: x proximity;
+        -webkit-overflow-scrolling: touch;
+    }
+    .fnh-picks-group[aria-hidden="true"] {
+        display: none;
+    }
+    .fnh-picks-group .fnh-feature-card {
+        scroll-snap-align: start;
+    }
 }
 
 /* ---- Quick Categories ---- */
@@ -2757,31 +2787,69 @@ html[data-theme="dark"] .female-novel-home {
 }
 
 /* ---- Hot Cards ---- */
-.fnh-hot-grid {
-    display: grid;
-    grid-template-columns: repeat(2, 1fr);
-    gap: 16px;
+.fnh-hot-block {
+    background: var(--color-bg);
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-md);
+    padding: 16px;
+    margin-bottom: 32px;
+}
+.fnh-hot-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 12px;
+}
+.fnh-hot-label {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 1.7rem;
+    font-weight: 700;
+    color: var(--color-text-primary);
+}
+.fnh-hot-label .hdk-icon {
+    color: var(--color-primary);
 }
 .fnh-hot-card {
     display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+/* ---- Hot + Rank Row ---- */
+.fnh-hot-rank-row {
+    display: flex;
+    gap: 16px;
+    margin-bottom: 32px;
+    align-items: stretch;
+}
+.fnh-hot-rank-row .fnh-hot-block {
+    margin-bottom: 0;
+}
+.fnh-hot-rank-row .fnh-top-stories {
+    margin-bottom: 0;
+    overflow-y: auto;
+}
+.fnh-hot-content {
+    display: flex;
     gap: 14px;
-    background: var(--color-bg);
-    border: 1px solid var(--color-border);
+    background: var(--color-bg-secondary);
+    border: 1px solid var(--color-border-light);
     border-radius: var(--radius-md);
     padding: 14px;
     text-decoration: none;
     color: var(--color-text-primary);
     transition: transform 0.3s var(--motion-ease-out), box-shadow 0.3s, border-color 0.3s;
-    position: relative;
     overflow: hidden;
 }
-.fnh-hot-card:hover {
-    transform: translateY(-4px);
+.fnh-hot-content:hover {
+    transform: translateY(-3px);
     box-shadow: 0 12px 32px rgba(255,157,227,0.18);
     border-color: var(--color-primary);
 }
 .fnh-hot-cover {
-    flex: 0 0 110px;
+    flex: 0 0 35%;
+    min-width: 0;
     position: relative;
     border-radius: var(--radius-sm);
     overflow: hidden;
@@ -2793,7 +2861,7 @@ html[data-theme="dark"] .female-novel-home {
     display: block;
     transition: transform 0.4s var(--motion-ease-out);
 }
-.fnh-hot-card:hover .fnh-hot-cover img {
+.fnh-hot-content:hover .fnh-hot-cover img {
     transform: scale(1.06);
 }
 .fnh-hot-rank {
@@ -2809,7 +2877,7 @@ html[data-theme="dark"] .female-novel-home {
     line-height: 1;
 }
 .fnh-hot-body {
-    flex: 1;
+    flex: 1 1 0;
     min-width: 0;
     display: flex;
     flex-direction: column;
@@ -3224,12 +3292,16 @@ html[data-theme="dark"] .female-novel-home {
         grid-template-columns: minmax(0, 1fr) 260px;
         gap: 20px;
     }
-    .fnh-feature-grid {
-        grid-template-columns: repeat(4, 1fr);
-        gap: 10px;
+    .fnh-hot-block {
+        padding: 12px;
+        margin-bottom: 20px;
     }
-    .fnh-hot-grid {
-        grid-template-columns: repeat(2, 1fr);
+    .fnh-picks-group {
+        gap: 10px;
+        padding-right: 10px;
+    }
+    .fnh-picks-group .fnh-feature-card {
+        width: 140px;
     }
     .fnh-latest-list {
         grid-template-columns: repeat(2, 1fr);
@@ -3265,10 +3337,21 @@ html[data-theme="dark"] .female-novel-home {
         margin-bottom: 20px;
     }
     .fnh-picks-title {
-        font-size: var(--font-size-sm);
+        font-size: 1.3rem;
     }
-    .fnh-sidebar {
-        position: static;
+    .fnh-picks-group {
+        gap: 8px;
+        padding-right: 8px;
+    }
+    .fnh-picks-group .fnh-feature-card {
+        width: 120px;
+    }
+    .fnh-hot-rank-row {
+        flex-direction: column;
+    }
+    .fnh-hot-rank-row .fnh-hot-block,
+    .fnh-hot-rank-row .fnh-top-stories {
+        flex: none !important;
     }
     .fnh-section {
         margin-bottom: 24px;
@@ -3282,31 +3365,7 @@ html[data-theme="dark"] .female-novel-home {
         width: 3px;
     }
 
-    /* Feature cards: keep 4 columns, compact */
-    .fnh-feature-grid {
-        grid-template-columns: repeat(4, 1fr);
-        gap: 6px;
-    }
-    .fnh-feature-body {
-        padding: 6px 6px 8px;
-    }
-    .fnh-feature-title {
-        font-size: 11px;
-    }
-    .fnh-feature-cover-meta {
-        padding: 3px 4px;
-        font-size: 9px;
-    }
-    .fnh-feature-status .badge {
-        font-size: 9px;
-        padding: 1px 5px;
-        min-height: 16px;
-    }
-
-    /* Hot cards: 2 -> 1 column */
-    .fnh-hot-grid {
-        grid-template-columns: 1fr;
-    }
+    /* Hot cards: 1 column (no grid change needed) */
 
     /* Latest list: 2 -> 1 column */
     .fnh-latest-list {
@@ -3338,21 +3397,13 @@ html[data-theme="dark"] .female-novel-home {
     .fnh-cat-icon {
         font-size: 20px;
     }
-    /* Feature cards: keep 4 columns, super compact */
-    .fnh-feature-grid {
-        grid-template-columns: repeat(4, 1fr);
-        gap: 4px;
+    /* Picks marquee: smaller cards */
+    .fnh-picks-group {
+        gap: 6px;
+        padding-right: 6px;
     }
-    .fnh-feature-body {
-        padding: 4px 4px 6px;
-        gap: 2px;
-    }
-    .fnh-feature-title {
-        font-size: 10px;
-    }
-    .fnh-feature-cover-meta {
-        padding: 2px 3px;
-        font-size: 8px;
+    .fnh-picks-group .fnh-feature-card {
+        width: 100px;
     }
     /* Grid cards remain 2 columns */
     .fnh-grid-wrap {
@@ -3377,9 +3428,6 @@ html[data-theme="dark"] .female-novel-home {
     }
     .fnh-cat-icon {
         font-size: 18px;
-    }
-    .fnh-hot-cover {
-        flex: 0 0 80px;
     }
     .fnh-hot-body {
         gap: 2px;

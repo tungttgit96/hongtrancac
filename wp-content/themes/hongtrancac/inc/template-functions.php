@@ -374,7 +374,7 @@ function hdk_fnh_clean_chapter_title($title, $chapter_number = 0) {
     return trim($title);
 }
 
-function hdk_fnh_feature_card($story, $index = 0) {
+function hdk_fnh_feature_card($story, $index = 0, $extra_attrs = '') {
     $url = hdk_story_url($story->slug ?? '');
     $title_raw = $story->title ?? '';
     $title = esc_html($title_raw);
@@ -384,8 +384,18 @@ function hdk_fnh_feature_card($story, $index = 0) {
     $views = number_format((int)($story->total_views ?? 0));
     $rating = isset($story->average_rating) ? round((float)$story->average_rating, 1) : 0;
     $lazy = $index >= 2 ? ' loading="lazy"' : '';
+    $attrs_str = '';
+    if (is_array($extra_attrs)) {
+        foreach ($extra_attrs as $name => $value) {
+            if ($value === false || $value === null) continue;
+            $attrs_str .= ' ' . esc_attr($name);
+            if ($value !== true) $attrs_str .= '="' . esc_attr($value) . '"';
+        }
+    } elseif (is_string($extra_attrs) && $extra_attrs !== '') {
+        $attrs_str = ' ' . $extra_attrs;
+    }
     ?>
-    <a href="<?php echo esc_url($url); ?>" class="fnh-feature-card motion-stagger" title="<?php echo esc_attr($title_raw); ?>">
+    <a href="<?php echo esc_url($url); ?>" class="fnh-feature-card motion-stagger" title="<?php echo esc_attr($title_raw); ?>"<?php echo $attrs_str; ?>>
         <div class="fnh-feature-cover">
             <img src="<?php echo esc_url($cover); ?>" alt="<?php echo esc_attr($title_raw); ?>" width="200" height="300" decoding="async"<?php echo $lazy; ?> onerror="this.src='<?php echo esc_url($placeholder); ?>'">
             <?php if ($rating > 0): ?>
@@ -404,7 +414,7 @@ function hdk_fnh_feature_card($story, $index = 0) {
     <?php
 }
 
-function hdk_fnh_hot_card($story, $rank = 1) {
+function hdk_fnh_hot_card($story, $rank = 1, $is_block = false) {
     $url = hdk_story_url($story->slug ?? '');
     $title_raw = $story->title ?? '';
     $title = esc_html($title_raw);
@@ -414,7 +424,27 @@ function hdk_fnh_hot_card($story, $rank = 1) {
     $chapters = (int)($story->chapter_count ?? 0);
     $views = number_format((int)($story->total_views ?? 0));
     $summary = wp_trim_words($story->summary ?? '', 30, '…');
+    if ($is_block):
     ?>
+    <a href="<?php echo esc_url($url); ?>" class="fnh-hot-content" title="<?php echo esc_attr($title_raw); ?>">
+        <div class="fnh-hot-cover">
+            <img src="<?php echo esc_url($cover); ?>" alt="<?php echo esc_attr($title_raw); ?>" width="110" height="165" decoding="async" onerror="this.src='<?php echo esc_url($placeholder); ?>'">
+            <span class="fnh-hot-rank"><?php echo sprintf('%02d', $rank); ?></span>
+        </div>
+        <div class="fnh-hot-body">
+            <h3 class="fnh-hot-title"><?php echo $title; ?></h3>
+            <?php if ($author): ?>
+            <div class="fnh-hot-author"><?php echo $author; ?></div>
+            <?php endif; ?>
+            <p class="fnh-hot-summary"><?php echo esc_html($summary); ?></p>
+            <div class="fnh-hot-meta">
+                <?php echo hdk_get_story_status_badge($story); ?>
+                <span><?php echo hdk_icon('book-open'); ?> <?php echo $chapters; ?> chương</span>
+                <span><?php echo hdk_icon('eye'); ?> <?php echo $views; ?></span>
+            </div>
+        </div>
+    </a>
+    <?php else: ?>
     <a href="<?php echo esc_url($url); ?>" class="fnh-hot-card motion-stagger" title="<?php echo esc_attr($title_raw); ?>">
         <div class="fnh-hot-cover">
             <img src="<?php echo esc_url($cover); ?>" alt="<?php echo esc_attr($title_raw); ?>" width="110" height="165" decoding="async" onerror="this.src='<?php echo esc_url($placeholder); ?>'">
@@ -433,7 +463,7 @@ function hdk_fnh_hot_card($story, $rank = 1) {
             </div>
         </div>
     </a>
-    <?php
+    <?php endif;
 }
 
 function hdk_fnh_latest_row($story, $chapter = null) {

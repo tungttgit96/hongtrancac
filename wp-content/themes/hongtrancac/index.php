@@ -7,17 +7,17 @@ get_header();
 
 // ---- Female Home Data Queries ----
 
-// Today's picks: 4 stories by average rating
+// Today's picks: 12 stories by average rating for marquee
 $fnh_picks = HDK_Cache::get_home_stories([
-    'per_page' => 4,
+    'per_page' => 12,
     'orderby' => 'average_rating',
     'order' => 'DESC',
     'exclude_hidden' => true
 ], 'home_female_picks');
 
-// Hot stories: 2 most viewed
+// Hot stories: 1 most viewed
 $fnh_hot = HDK_Cache::get_home_stories([
-    'per_page' => 2,
+    'per_page' => 1,
     'orderby' => 'total_views',
     'order' => 'DESC',
     'exclude_hidden' => true
@@ -95,27 +95,74 @@ $fnh_latest_chapters = hdk_fnh_get_latest_chapters($latest_ids);
                     <h2 class="fnh-picks-title"><?php echo hdk_icon('sparkles'); ?> Đề cử hôm nay</h2>
                     <a href="<?php echo esc_url(hdk_page_url('danh-sach-truyen')); ?>" class="fnh-section-link">Xem tất cả <?php echo hdk_icon('chevron-right'); ?></a>
                 </div>
-                <div class="fnh-feature-grid">
-                    <?php foreach ($fnh_picks['stories'] as $i => $story): ?>
-                        <?php hdk_fnh_feature_card($story, $i); ?>
-                    <?php endforeach; ?>
+                <div class="fnh-picks-marquee">
+                    <div class="fnh-picks-track">
+                        <div class="fnh-picks-group">
+                            <?php foreach ($fnh_picks['stories'] as $i => $story): ?>
+                                <?php hdk_fnh_feature_card($story, $i); ?>
+                            <?php endforeach; ?>
+                        </div>
+                        <div class="fnh-picks-group" aria-hidden="true">
+                            <?php foreach ($fnh_picks['stories'] as $i => $story): ?>
+                                <?php hdk_fnh_feature_card($story, $i + 12, ['tabindex' => '-1', 'aria-hidden' => 'true']); ?>
+                            <?php endforeach; ?>
+                        </div>
+                    </div>
                 </div>
             </section>
             <?php endif; ?>
 
-            <!-- Truyện hot -->
-            <?php if (!empty($fnh_hot['stories'])): ?>
-            <section class="fnh-section motion-reveal">
-                <div class="fnh-section-header">
-                    <h2 class="fnh-section-title"><?php echo hdk_icon('flame'); ?> Truyện hot</h2>
-                    <a href="<?php echo esc_url(hdk_page_url('bang-xep-hang')); ?>" class="fnh-section-link">Bảng xếp hạng <?php echo hdk_icon('chevron-right'); ?></a>
+            <!-- Truyện hot + Top truyện -->
+            <?php if (!empty($fnh_hot['stories'])): $hot_story = $fnh_hot['stories'][0]; ?>
+            <div class="fnh-hot-rank-row motion-reveal">
+                <section class="fnh-hot-block" style="flex: 0 0 70%">
+                    <div class="fnh-hot-card motion-stagger">
+                        <div class="fnh-hot-header">
+                            <h2 class="fnh-hot-label"><?php echo hdk_icon('flame'); ?> Truyện hot</h2>
+                            <a href="<?php echo esc_url(hdk_page_url('bang-xep-hang')); ?>" class="fnh-section-link">Bảng xếp hạng <?php echo hdk_icon('chevron-right'); ?></a>
+                        </div>
+                        <?php hdk_fnh_hot_card($hot_story, 1, true); ?>
+                    </div>
+                </section>
+                <div class="fnh-sidebar-block fnh-top-stories" style="flex: 0 0 30%">
+                    <h3 class="fnh-sidebar-title"><?php echo hdk_icon('crown'); ?> Top truyện</h3>
+                    <div class="fnh-rank-tabs" role="tablist" aria-label="Khoảng thời gian bảng xếp hạng">
+                        <button class="fnh-rank-tab active" role="tab" aria-selected="true" aria-controls="fnh-rank-panel-day" data-fnh-period="day" id="fnh-rank-tab-day">Ngày</button>
+                        <button class="fnh-rank-tab" role="tab" aria-selected="false" aria-controls="fnh-rank-panel-week" data-fnh-period="week" id="fnh-rank-tab-week" tabindex="-1">Tuần</button>
+                        <button class="fnh-rank-tab" role="tab" aria-selected="false" aria-controls="fnh-rank-panel-month" data-fnh-period="month" id="fnh-rank-tab-month" tabindex="-1">Tháng</button>
+                    </div>
+                    <div class="fnh-rank-panels">
+                        <div class="fnh-rank-panel" role="tabpanel" id="fnh-rank-panel-day" aria-labelledby="fnh-rank-tab-day" data-fnh-panel="day">
+                            <?php if (!empty($fnh_rank_day['stories'])):
+                                foreach ($fnh_rank_day['stories'] as $i => $story):
+                                    hdk_fnh_ranking_item($story, $i + 1);
+                                endforeach;
+                            else: ?>
+                                <div class="fnh-empty">Chưa có dữ liệu</div>
+                            <?php endif; ?>
+                        </div>
+                        <div class="fnh-rank-panel hidden" role="tabpanel" id="fnh-rank-panel-week" aria-labelledby="fnh-rank-tab-week" data-fnh-panel="week" hidden>
+                            <?php if (!empty($fnh_rank_week['stories'])):
+                                foreach ($fnh_rank_week['stories'] as $i => $story):
+                                    hdk_fnh_ranking_item($story, $i + 1);
+                                endforeach;
+                            else: ?>
+                                <div class="fnh-empty">Chưa có dữ liệu</div>
+                            <?php endif; ?>
+                        </div>
+                        <div class="fnh-rank-panel hidden" role="tabpanel" id="fnh-rank-panel-month" aria-labelledby="fnh-rank-tab-month" data-fnh-panel="month" hidden>
+                            <?php if (!empty($fnh_rank_month['stories'])):
+                                foreach ($fnh_rank_month['stories'] as $i => $story):
+                                    hdk_fnh_ranking_item($story, $i + 1);
+                                endforeach;
+                            else: ?>
+                                <div class="fnh-empty">Chưa có dữ liệu</div>
+                            <?php endif; ?>
+                        </div>
+                    </div>
+                    <a href="<?php echo esc_url(hdk_page_url('bang-xep-hang')); ?>" class="fnh-sidebar-more">Xem bảng xếp hạng đầy đủ <?php echo hdk_icon('chevron-right'); ?></a>
                 </div>
-                <div class="fnh-hot-grid">
-                    <?php foreach ($fnh_hot['stories'] as $i => $story): ?>
-                        <?php hdk_fnh_hot_card($story, $i + 1); ?>
-                    <?php endforeach; ?>
-                </div>
-            </section>
+            </div>
             <?php endif; ?>
 
             <!-- Mới cập nhật -->
@@ -151,7 +198,7 @@ $fnh_latest_chapters = hdk_fnh_get_latest_chapters($latest_ids);
 
         </div><!-- /fnh-main -->
 
-        <aside class="fnh-sidebar motion-reveal">
+        <aside class="fnh-sidebar">
 
             <!-- Đọc tiếp -->
             <?php if (!empty($fnh_reading)): ?>
@@ -175,53 +222,6 @@ $fnh_latest_chapters = hdk_fnh_get_latest_chapters($latest_ids);
                 </div>
             </div>
             <?php endif; ?>
-
-            <!-- Top truyện -->
-            <div class="fnh-sidebar-block">
-                <h3 class="fnh-sidebar-title"><?php echo hdk_icon('crown'); ?> Top truyện</h3>
-                <div class="fnh-rank-tabs" role="tablist" aria-label="Khoảng thời gian bảng xếp hạng">
-                    <button class="fnh-rank-tab active" role="tab" aria-selected="true" aria-controls="fnh-rank-panel-day" data-fnh-period="day" id="fnh-rank-tab-day">Ngày</button>
-                    <button class="fnh-rank-tab" role="tab" aria-selected="false" aria-controls="fnh-rank-panel-week" data-fnh-period="week" id="fnh-rank-tab-week" tabindex="-1">Tuần</button>
-                    <button class="fnh-rank-tab" role="tab" aria-selected="false" aria-controls="fnh-rank-panel-month" data-fnh-period="month" id="fnh-rank-tab-month" tabindex="-1">Tháng</button>
-                </div>
-                <div class="fnh-rank-panels">
-                    <div class="fnh-rank-panel" role="tabpanel" id="fnh-rank-panel-day" aria-labelledby="fnh-rank-tab-day" data-fnh-panel="day">
-                        <?php if (!empty($fnh_rank_day['stories'])):
-                            foreach ($fnh_rank_day['stories'] as $i => $story):
-                                hdk_fnh_ranking_item($story, $i + 1);
-                            endforeach;
-                        else: ?>
-                            <div class="fnh-empty">Chưa có dữ liệu</div>
-                        <?php endif; ?>
-                    </div>
-                    <div class="fnh-rank-panel hidden" role="tabpanel" id="fnh-rank-panel-week" aria-labelledby="fnh-rank-tab-week" data-fnh-panel="week" hidden>
-                        <?php if (!empty($fnh_rank_week['stories'])):
-                            foreach ($fnh_rank_week['stories'] as $i => $story):
-                                hdk_fnh_ranking_item($story, $i + 1);
-                            endforeach;
-                        else: ?>
-                            <div class="fnh-empty">Chưa có dữ liệu</div>
-                        <?php endif; ?>
-                    </div>
-                    <div class="fnh-rank-panel hidden" role="tabpanel" id="fnh-rank-panel-month" aria-labelledby="fnh-rank-tab-month" data-fnh-panel="month" hidden>
-                        <?php if (!empty($fnh_rank_month['stories'])):
-                            foreach ($fnh_rank_month['stories'] as $i => $story):
-                                hdk_fnh_ranking_item($story, $i + 1);
-                            endforeach;
-                        else: ?>
-                            <div class="fnh-empty">Chưa có dữ liệu</div>
-                        <?php endif; ?>
-                    </div>
-                </div>
-                <a href="<?php echo esc_url(hdk_page_url('bang-xep-hang')); ?>" class="fnh-sidebar-more">Xem bảng xếp hạng đầy đủ <?php echo hdk_icon('chevron-right'); ?></a>
-            </div>
-
-            <!-- Điểm danh -->
-            <div class="fnh-sidebar-block">
-                <h3 class="fnh-sidebar-title"><?php echo hdk_icon('gift'); ?> Quà tặng</h3>
-                <p class="fnh-sidebar-desc">Điểm danh mỗi ngày để nhận Linh Thạch đọc truyện miễn phí!</p>
-                <?php hdk_fnh_daily_claim_btn(); ?>
-            </div>
 
         </aside><!-- /fnh-sidebar -->
 
