@@ -383,6 +383,13 @@ function hdk_fnh_feature_card($story, $index = 0, $extra_attrs = '') {
     $chapters = (int)($story->chapter_count ?? 0);
     $views = number_format((int)($story->total_views ?? 0));
     $rating = isset($story->average_rating) ? round((float)$story->average_rating, 1) : 0;
+    $genre = '';
+    foreach (($story->categories ?? []) as $category) {
+        if (!empty($category->name)) {
+            $genre = $category->name;
+            break;
+        }
+    }
     $lazy = $index >= 2 ? ' loading="lazy"' : '';
     $attrs_str = '';
     if (is_array($extra_attrs)) {
@@ -403,12 +410,17 @@ function hdk_fnh_feature_card($story, $index = 0, $extra_attrs = '') {
             <?php endif; ?>
             <span class="fnh-feature-cover-meta">
                 <span><?php echo hdk_icon('eye'); ?> <?php echo $views; ?></span>
-                <span><?php echo hdk_icon('book-open'); ?> <?php echo $chapters; ?> chương</span>
+                <span><?php echo hdk_icon('book-open'); ?> <?php echo $chapters; ?></span>
             </span>
         </div>
         <div class="fnh-feature-body">
             <h3 class="fnh-feature-title"><?php echo $title; ?></h3>
-            <div class="fnh-feature-status"><?php echo hdk_get_story_status_badge($story); ?></div>
+            <div class="fnh-feature-status">
+                <?php echo hdk_get_story_status_badge($story); ?>
+                <?php if ($genre): ?>
+                <span class="badge badge-primary fnh-feature-genre" title="<?php echo esc_attr($genre); ?>"><?php echo esc_html($genre); ?></span>
+                <?php endif; ?>
+            </div>
         </div>
     </a>
     <?php

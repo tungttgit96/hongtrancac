@@ -2770,7 +2770,7 @@ html[data-theme="dark"] .female-novel-home {
     display: flex;
     align-items: center;
     gap: 6px;
-    flex-wrap: wrap;
+    flex-wrap: nowrap;
     margin-top: 2px;
     min-width: 0;
     overflow: hidden;
@@ -2782,8 +2782,16 @@ html[data-theme="dark"] .female-novel-home {
     font-size: 10px;
     min-height: 18px;
 }
+.fnh-feature-status > .badge:first-child {
+    flex-shrink: 0;
+}
 .fnh-feature-genre {
-    display: none;
+    flex: 1 1 auto;
+    min-width: 0;
+    max-width: 100%;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
 }
 
 /* ---- Hot Cards ---- */
