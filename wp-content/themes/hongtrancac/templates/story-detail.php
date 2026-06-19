@@ -51,6 +51,7 @@ get_header();
     <div class="story-header" style="display:flex;gap:24px;flex-wrap:wrap;">
         <div style="flex:0 0 200px;">
             <img src="<?php echo esc_url($story->cover_url); ?>" alt="<?php echo esc_attr($story->title); ?>"
+                 width="200" height="300"
                  style="width:100%;border-radius:var(--radius-md);box-shadow:var(--shadow-lg);aspect-ratio:2/3;object-fit:cover;object-position:center;">
         </div>
         <div style="flex:1;min-width:280px;">
@@ -74,7 +75,7 @@ get_header();
 
             <?php hdk_get_rating_widget($story->id, $story->average_rating * $story->total_ratings, $story->total_ratings); ?>
 
-            <div style="margin-top:16px;display:flex;gap:12px;flex-wrap:wrap;">
+            <div class="story-cta-group" style="margin-top:16px;display:flex;gap:12px;flex-wrap:wrap;">
                 <a href="<?php echo esc_url(hdk_story_url($story->slug, ['chuong' => 1])); ?>" class="btn btn-primary"><?php echo hdk_icon('book-open'); ?> Đọc từ đầu</a>
                 <?php if ($chapters): ?>
                     <a href="<?php echo esc_url(hdk_story_url($story->slug, ['chuong' => $chapters[count($chapters)-1]->chapter_number])); ?>" class="btn btn-outline"><?php echo hdk_icon('file-text'); ?> Chương mới nhất</a>
@@ -131,7 +132,7 @@ get_header();
             <span id="purchase-msg" style="margin-left:8px;font-weight:600;"></span>
         </div>
         <?php endif; ?>
-        <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:8px;">
+        <div class="story-chapter-grid" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:8px;">
             <?php foreach ($chapters as $chap):
                 $chap_price = $chapter_prices[(int)$chap->chapter_number] ?? HDK_DB::get_chapter_price($story, $chap->chapter_number);
                 $chap_price_mode = $chap->price_mode ?? ((int)($chap->price ?? 0) > 0 ? 'custom' : 'inherit');

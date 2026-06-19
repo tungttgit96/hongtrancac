@@ -31,14 +31,14 @@ $fnh_latest = HDK_Cache::get_home_stories([
     'exclude_hidden' => true
 ], 'home_female_latest');
 
-// Completed stories: 8 stories
+// Completed stories: 12 stories
 $fnh_completed = HDK_Cache::get_home_stories([
-    'per_page' => 8,
+    'per_page' => 12,
     'status' => 'completed',
     'orderby' => 'updated_at',
     'order' => 'DESC',
     'exclude_hidden' => true
-], 'home_female_completed');
+], 'home_female_completed_12');
 
 // Ranking preload: day, week, month
 $fnh_rank_day = HDK_Cache::get_home_ranking('views', 'day', 0, 1, 6, 'home_female_rank_day');
@@ -188,7 +188,7 @@ $fnh_latest_chapters = hdk_fnh_get_latest_chapters($latest_ids);
                     <h2 class="fnh-section-title"><?php echo hdk_icon('check-circle'); ?> Truyện hoàn thành</h2>
                     <a href="<?php echo esc_url(hdk_page_url('hoan-thanh')); ?>" class="fnh-section-link">Xem tất cả <?php echo hdk_icon('chevron-right'); ?></a>
                 </div>
-                <div class="fnh-grid-wrap">
+                <div class="fnh-grid-wrap fnh-completed-grid">
                     <?php foreach ($fnh_completed['stories'] as $i => $story): ?>
                         <?php hdk_fnh_grid_card($story, $i); ?>
                     <?php endforeach; ?>

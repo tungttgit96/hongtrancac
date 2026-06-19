@@ -142,6 +142,7 @@
 
         function openSearch() {
             if (!searchModal) return;
+            closeMobileDrawer();
             searchModal.classList.add('active');
             searchModal.setAttribute('aria-hidden', 'false');
             document.body.classList.add('search-open');
@@ -162,11 +163,20 @@
         }
 
         function openMobileDrawer() {
-            if (mobileDrawer) mobileDrawer.classList.add('open');
+            if (mobileDrawer) {
+                closeSearch();
+                mobileDrawer.classList.add('open');
+                if (mobileToggle) mobileToggle.setAttribute('aria-expanded', 'true');
+                document.body.classList.add('drawer-open');
+            }
         }
 
         function closeMobileDrawer() {
-            if (mobileDrawer) mobileDrawer.classList.remove('open');
+            if (mobileDrawer) {
+                mobileDrawer.classList.remove('open');
+                if (mobileToggle) mobileToggle.setAttribute('aria-expanded', 'false');
+                document.body.classList.remove('drawer-open');
+            }
         }
 
         function escapeHtml(value) {

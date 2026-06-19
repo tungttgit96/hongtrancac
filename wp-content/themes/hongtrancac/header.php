@@ -16,7 +16,7 @@
 <?php wp_body_open(); ?>
 
 <header class="site-header">
-    <div class="container" style="display:flex;align-items:center;justify-content:space-between;height:100%;gap:16px;">
+    <div class="container header-container">
         <a href="<?php echo home_url('/'); ?>" class="site-logo" style="font-size:var(--font-size-xl);font-weight:700;color:var(--color-primary);display:flex;align-items:center;gap:8px;text-decoration:none;">
             <?php echo hdk_icon('castle'); ?> Hồng Trần Các
         </a>
@@ -35,10 +35,10 @@
                 <?php echo hdk_icon('search'); ?>
             </button>
             <?php if (is_user_logged_in()): ?>
-                <span id="notif-bell" style="position:relative;cursor:pointer;min-height:var(--touch-target);min-width:var(--touch-target);display:inline-flex;align-items:center;justify-content:center;" onclick="toggleNotifDropdown()" aria-label="Thông báo">
+                <button type="button" id="notif-bell" style="position:relative;cursor:pointer;min-height:var(--touch-target);min-width:var(--touch-target);display:inline-flex;align-items:center;justify-content:center;border:none;background:none;font-family:inherit;color:inherit;font-size:inherit;" onclick="toggleNotifDropdown()" aria-label="Thông báo">
                     <?php echo hdk_icon('bell'); ?>
                     <span id="notif-badge" style="display:none;position:absolute;top:2px;right:2px;background:var(--color-danger);color:var(--color-on-danger);border-radius:10px;padding:0 5px;font-size:10px;font-weight:700;min-width:16px;text-align:center;line-height:16px;"></span>
-                </span>
+                </button>
                 <!-- Notification Dropdown -->
                 <div id="notif-dropdown" style="display:none;position:absolute;top:100%;right:0;min-width:320px;max-width:90vw;background:var(--color-bg);border:1px solid var(--color-border);border-radius:var(--radius-md);box-shadow:0 4px 16px rgba(0,0,0,0.12);z-index:150;max-height:400px;overflow-y:auto;margin-top:4px;">
                     <div style="padding:12px 16px;border-bottom:1px solid var(--color-border-light);display:flex;justify-content:space-between;align-items:center;">
@@ -85,7 +85,7 @@
                 <a href="<?php echo esc_url(hdk_login_url(home_url(add_query_arg([])))); ?>" class="btn btn-primary btn-sm auth-login-link">Đăng nhập</a>
                 <a href="<?php echo esc_url(hdk_register_url(home_url(add_query_arg([])))); ?>" class="btn btn-outline btn-sm auth-register-link">Đăng ký</a>
             <?php endif; ?>
-            <button type="button" class="btn btn-ghost btn-sm mobile-menu-toggle" style="display:none;min-height:var(--touch-target);">
+            <button type="button" class="btn btn-ghost btn-sm mobile-menu-toggle" aria-label="Mở menu" aria-expanded="false" style="display:none;min-height:var(--touch-target);">
                 <?php echo hdk_icon('menu'); ?>
             </button>
         </div>
@@ -107,27 +107,27 @@
 
 <!-- Mobile Drawer -->
 <div id="mobile-drawer" class="mobile-drawer" style="position:fixed;top:0;left:0;right:0;bottom:0;background:var(--color-overlay);z-index:150;display:none;">
-    <div style="background:var(--color-bg);width:280px;height:100%;padding:20px;overflow-y:auto;">
-        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:20px;">
-            <span style="font-weight:700;">Menu</span>
-            <button type="button" class="btn btn-ghost btn-sm" data-close-mobile-drawer aria-label="Đóng menu"><?php echo hdk_icon('x'); ?></button>
+    <div class="drawer-panel" style="background:var(--color-bg);width:280px;height:100%;overflow-y:auto;">
+        <div class="drawer-header">
+            <span class="drawer-title">Menu</span>
+            <button type="button" class="btn btn-ghost btn-sm drawer-close" data-close-mobile-drawer aria-label="Đóng menu"><?php echo hdk_icon('x'); ?></button>
         </div>
-        <nav style="display:flex;flex-direction:column;gap:4px;">
-            <a href="<?php echo home_url('/'); ?>" class="btn btn-ghost">Trang chủ</a>
-            <a href="<?php echo home_url('/danh-sach-truyen'); ?>" class="btn btn-ghost">Danh sách truyện</a>
-            <a href="<?php echo home_url('/bang-xep-hang'); ?>" class="btn btn-ghost">Bảng xếp hạng</a>
-            <a href="<?php echo home_url('/the-loai'); ?>" class="btn btn-ghost">Thể loại</a>
-            <a href="<?php echo home_url('/hoan-thanh'); ?>" class="btn btn-ghost">Hoàn thành</a>
-            <a href="<?php echo home_url('/truyen-free'); ?>" class="btn btn-ghost">Truyện Free</a>
+        <nav class="drawer-nav">
+            <a href="<?php echo home_url('/'); ?>" class="drawer-link">Trang chủ</a>
+            <a href="<?php echo home_url('/danh-sach-truyen'); ?>" class="drawer-link">Danh sách truyện</a>
+            <a href="<?php echo home_url('/bang-xep-hang'); ?>" class="drawer-link">Bảng xếp hạng</a>
+            <a href="<?php echo home_url('/the-loai'); ?>" class="drawer-link">Thể loại</a>
+            <a href="<?php echo home_url('/hoan-thanh'); ?>" class="drawer-link">Hoàn thành</a>
+            <a href="<?php echo home_url('/truyen-free'); ?>" class="drawer-link">Truyện Free</a>
             <?php if (is_user_logged_in()): ?>
-                <a href="<?php echo home_url('/tai-khoan'); ?>" class="btn btn-primary">Tài khoản</a>
+                <a href="<?php echo home_url('/tai-khoan'); ?>" class="drawer-link drawer-link--primary">Tài khoản</a>
                 <?php if (current_user_can('manage_options')): ?>
-                    <a href="<?php echo admin_url(); ?>" class="btn btn-outline">Admin</a>
+                    <a href="<?php echo admin_url(); ?>" class="drawer-link">Admin</a>
                 <?php endif; ?>
-                <a href="<?php echo wp_logout_url(home_url()); ?>" class="btn btn-ghost">Đăng xuất</a>
+                <a href="<?php echo wp_logout_url(home_url()); ?>" class="drawer-link">Đăng xuất</a>
             <?php else: ?>
-                <a href="<?php echo esc_url(hdk_login_url(home_url(add_query_arg([])))); ?>" class="btn btn-primary">Đăng nhập</a>
-                <a href="<?php echo esc_url(hdk_register_url(home_url(add_query_arg([])))); ?>" class="btn btn-outline">Đăng ký</a>
+                <a href="<?php echo esc_url(hdk_login_url(home_url(add_query_arg([])))); ?>" class="drawer-link drawer-link--primary">Đăng nhập</a>
+                <a href="<?php echo esc_url(hdk_register_url(home_url(add_query_arg([])))); ?>" class="drawer-link">Đăng ký</a>
             <?php endif; ?>
         </nav>
     </div>

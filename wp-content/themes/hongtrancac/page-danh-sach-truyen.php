@@ -54,7 +54,7 @@ get_header();
     <?php endif; ?>
 
     <!-- Filters -->
-    <form class="panel toolbar" method="get" action="<?php echo esc_url(home_url('/danh-sach-truyen/')); ?>" style="padding:16px;margin-bottom:20px;">
+    <form class="panel toolbar story-filter" method="get" action="<?php echo esc_url(home_url('/danh-sach-truyen/')); ?>" style="padding:16px;margin-bottom:20px;">
         <input type="search" id="search-input" name="keyword" aria-label="Tìm truyện" autocomplete="off" placeholder="Tìm truyện…" value="<?php echo esc_attr($search); ?>"
                style="flex:1;min-width:200px;padding:8px 16px;border:2px solid var(--color-input-border);background:var(--color-input-bg);color:var(--color-text-primary);border-radius:var(--radius-pill);font-family:var(--font-family);min-height:var(--touch-target);">
         <?php if ($has_audio): ?>
