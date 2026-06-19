@@ -230,6 +230,7 @@ function hdk_get_hero_section() {
     <section class="hero-banner">
         <div class="container">
             <div class="banner-shell">
+                <button class="banner-nav banner-nav-prev" type="button" aria-label="Truyện trước"><?php echo hdk_icon('chevron-left'); ?></button>
                 <div class="banner-grid">
                     <div class="banner-info">
                         <h1 class="banner-title"><?php echo esc_html($active->title); ?></h1>
@@ -268,6 +269,7 @@ function hdk_get_hero_section() {
                         <?php endforeach; ?>
                     </div>
                 </div>
+                <button class="banner-nav banner-nav-next" type="button" aria-label="Truyện sau"><?php echo hdk_icon('chevron-right'); ?></button>
             </div>
         </div>
     </section>

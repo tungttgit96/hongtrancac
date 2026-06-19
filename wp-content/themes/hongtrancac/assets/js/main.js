@@ -542,6 +542,21 @@
             });
         });
 
+        var bannerPrev = document.querySelector('.banner-nav-prev');
+        var bannerNext = document.querySelector('.banner-nav-next');
+        if (bannerPrev) {
+            bannerPrev.addEventListener('click', function() {
+                resetBannerInterval();
+                updateBannerActive((bannerActiveIndex - 1 + bannerTotal) % bannerTotal);
+            });
+        }
+        if (bannerNext) {
+            bannerNext.addEventListener('click', function() {
+                resetBannerInterval();
+                updateBannerActive((bannerActiveIndex + 1) % bannerTotal);
+            });
+        }
+
         resetBannerInterval();
     }
 
@@ -1187,5 +1202,53 @@
                 btn.disabled = false; btn.textContent = 'Gửi báo lỗi';
             });
     };
+
+    // ===== Floating Header: hide on scroll down, show on scroll up =====
+    (function() {
+        var header = document.querySelector('.site-header');
+        if (!header) return;
+
+        var lastY = window.scrollY || window.pageYOffset;
+        var ticking = false;
+        var deltaThreshold = 6;      // px of scroll before deciding direction
+        var showAtTop = 120;          // keep header visible within this distance from top
+
+        function overlayOpen() {
+            if (document.body.classList.contains('search-open')) return true;
+            var drawer = document.getElementById('mobile-drawer');
+            if (drawer && drawer.classList.contains('open')) return true;
+            var notif = document.getElementById('notif-dropdown');
+            if (notif && notif.style.display !== 'none' && notif.style.display !== '') return true;
+            var userMenu = document.getElementById('user-dropdown-menu');
+            if (userMenu && userMenu.style.display !== 'none' && userMenu.style.display !== '') return true;
+            return false;
+        }
+
+        function update() {
+            ticking = false;
+            var y = window.scrollY || window.pageYOffset;
+            var delta = y - lastY;
+
+            if (y <= showAtTop) {
+                header.classList.remove('is-hidden');
+            } else if (!overlayOpen()) {
+                if (delta > deltaThreshold) {
+                    header.classList.add('is-hidden');
+                } else if (delta < -deltaThreshold) {
+                    header.classList.remove('is-hidden');
+                }
+            }
+            lastY = y;
+        }
+
+        function onScroll() {
+            if (!ticking) {
+                ticking = true;
+                window.requestAnimationFrame(update);
+            }
+        }
+
+        window.addEventListener('scroll', onScroll, { passive: true });
+    })();
 
 })();

@@ -15,7 +15,7 @@
 <body <?php body_class(); ?>>
 <?php wp_body_open(); ?>
 
-<header class="site-header" style="background:var(--color-bg);border-bottom:1px solid var(--color-border);height:var(--header-height);">
+<header class="site-header">
     <div class="container" style="display:flex;align-items:center;justify-content:space-between;height:100%;gap:16px;">
         <a href="<?php echo home_url('/'); ?>" class="site-logo" style="font-size:var(--font-size-xl);font-weight:700;color:var(--color-primary);display:flex;align-items:center;gap:8px;text-decoration:none;">
             <?php echo hdk_icon('castle'); ?> Hồng Trần Các
