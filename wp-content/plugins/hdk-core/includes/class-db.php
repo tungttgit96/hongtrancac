@@ -859,6 +859,68 @@ class HDK_DB {
         $wpdb->update(self::table('hdk_chapter_reports'), ['status' => $status], ['id' => $id]);
     }
 
+    public static function create_story_submission($user_id, array $data) {
+        global $wpdb;
+        $now = current_time('mysql');
+        $inserted = $wpdb->insert(self::table('hdk_story_submissions'), [
+            'user_id' => (int)$user_id,
+            'title' => sanitize_text_field($data['title'] ?? ''),
+            'author_name' => sanitize_text_field($data['author_name'] ?? ''),
+            'cover_url' => esc_url_raw($data['cover_url'] ?? ''),
+            'summary' => wp_kses_post($data['summary'] ?? ''),
+            'story_status' => in_array($data['story_status'] ?? '', ['ongoing', 'completed', 'dropped'], true) ? $data['story_status'] : 'ongoing',
+            'category_ids' => wp_json_encode(array_values(array_filter(array_map('intval', (array)($data['category_ids'] ?? []))))),
+            'first_chapter_title' => sanitize_text_field($data['first_chapter_title'] ?? ''),
+            'first_chapter_content' => wp_kses_post($data['first_chapter_content'] ?? ''),
+            'moderation_status' => 'pending',
+            'created_at' => $now,
+            'updated_at' => $now,
+        ]);
+
+        return $inserted ? (int)$wpdb->insert_id : 0;
+    }
+
+    public static function get_user_story_submissions($user_id) {
+        global $wpdb;
+        return $wpdb->get_results($wpdb->prepare(
+            "SELECT * FROM " . self::table('hdk_story_submissions') . " WHERE user_id = %d ORDER BY created_at DESC",
+            $user_id
+        ));
+    }
+
+    public static function count_user_pending_story_submissions($user_id) {
+        global $wpdb;
+        return (int)$wpdb->get_var($wpdb->prepare(
+            "SELECT COUNT(*) FROM " . self::table('hdk_story_submissions') . " WHERE user_id = %d AND moderation_status = 'pending'",
+            $user_id
+        ));
+    }
+
+    public static function get_story_submission($submission_id) {
+        global $wpdb;
+        return $wpdb->get_row($wpdb->prepare(
+            "SELECT * FROM " . self::table('hdk_story_submissions') . " WHERE id = %d",
+            $submission_id
+        ));
+    }
+
+    public static function get_story_submissions($status = 'pending', $page = 1, $per_page = 20) {
+        global $wpdb;
+        $table = self::table('hdk_story_submissions');
+        $offset = (max(1, (int)$page) - 1) * $per_page;
+        $where = '1=1';
+        if (in_array($status, ['pending', 'approved', 'rejected'], true)) {
+            $where .= $wpdb->prepare(' AND s.moderation_status = %s', $status);
+        }
+        $total = (int)$wpdb->get_var("SELECT COUNT(*) FROM $table s WHERE $where");
+        $rows = $wpdb->get_results($wpdb->prepare(
+            "SELECT s.*, u.display_name, u.user_email FROM $table s LEFT JOIN {$wpdb->users} u ON u.ID = s.user_id WHERE $where ORDER BY s.created_at DESC LIMIT %d OFFSET %d",
+            $per_page,
+            $offset
+        ));
+        return ['rows' => $rows, 'total' => $total, 'pages' => (int)ceil($total / $per_page)];
+    }
+
     public static function get_all_comments($filters = [], $page = 1, $per_page = 20) {
         global $wpdb;
         $offset = ($page - 1) * $per_page;

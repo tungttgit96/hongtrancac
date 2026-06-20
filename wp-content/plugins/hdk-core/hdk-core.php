@@ -154,6 +154,7 @@ add_action('plugins_loaded', ['HDK_Schema', 'maybe_upgrade']);
 add_action('init', ['HDK_Rewrite', 'init']);
 add_action('rest_api_init', ['HDK_REST_API', 'init']);
 add_action('admin_menu', ['HDK_Admin', 'init']);
+add_action('admin_init', ['HDK_Admin', 'admin_init']);
 add_action('init', ['HDK_Sitemap', 'init']);
 add_action('template_redirect', ['HDK_Template_Loader', 'init']);
 HDK_SEO::init();

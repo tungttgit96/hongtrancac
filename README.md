@@ -33,6 +33,7 @@ Nền tảng đọc truyện chữ online xây dựng trên **WordPress** + cust
 - ❤️ Yêu thích, đánh giá sao, bình luận
 - 🔔 Thông báo (chương mới, trả lời bình luận, mua thành công)
 - 📖 Auto-save tiến độ đọc
+- ✍️ Gửi đăng truyện và chương đầu từ trang tài khoản, theo dõi trạng thái xét duyệt
 
 ### Ví Linh Thạch & Thanh toán
 - 💎 Hệ thống mua chương bằng "Linh Thạch" (coin)
@@ -50,6 +51,7 @@ Nền tảng đọc truyện chữ online xây dựng trên **WordPress** + cust
 - 🚩 Xử lý báo lỗi chương từ người dùng
 - 📊 Thống kê vận hành (views, top truyện, biểu đồ 7 ngày)
 - 🎨 Cấu hình banner trang chủ
+- ✅ Duyệt hoặc từ chối truyện do người dùng gửi trước khi xuất bản
 - 👁️ Cờ "Ẩn khỏi trang chủ / đề cử" cho từng truyện
 
 ### SEO & Bảo mật

@@ -8,6 +8,7 @@ class HDK_Admin {
         add_menu_page('HDK Stories', 'Hồng Trần Các', 'edit_stories', 'hdk-stories', [__CLASS__, 'stories_page'], 'dashicons-book', 25);
         add_submenu_page('hdk-stories', 'Tất cả truyện', 'Tất cả truyện', 'edit_stories', 'hdk-stories', [__CLASS__, 'stories_page']);
         add_submenu_page('hdk-stories', 'Thêm truyện mới', 'Thêm truyện mới', 'edit_stories', 'hdk-story-form', [__CLASS__, 'story_form_page']);
+        add_submenu_page('hdk-stories', 'Truyện chờ duyệt', 'Truyện chờ duyệt', 'publish_stories', 'hdk-story-submissions', [__CLASS__, 'story_submissions_page']);
         add_submenu_page(null, 'Sửa truyện', 'Sửa truyện', 'edit_stories', 'hdk-story-edit', [__CLASS__, 'story_form_page']);
         add_submenu_page('hdk-stories', 'Chapters', 'Chương', 'edit_stories', 'hdk-chapters', [__CLASS__, 'chapters_page']);
         add_submenu_page('hdk-stories', 'Thể loại', 'Thể loại', 'edit_stories', 'hdk-categories', [__CLASS__, 'categories_page']);
@@ -23,17 +24,6 @@ class HDK_Admin {
         add_submenu_page('hdk-stories', 'Báo lỗi', 'Báo lỗi', 'edit_stories', 'hdk-reports', [__CLASS__, 'reports_page']);
         add_submenu_page('hdk-stories', 'Thống kê', 'Thống kê', 'manage_options', 'hdk-stats', [__CLASS__, 'stats_page']);
 
-        add_action('admin_init', function() {
-            $admin = get_role('administrator');
-            if ($admin) {
-                $admin->add_cap('edit_stories');
-                $admin->add_cap('publish_stories');
-                $admin->add_cap('delete_stories');
-                $admin->add_cap('moderate_comments');
-            }
-            self::handle_form_submissions();
-        });
-
         add_action('admin_enqueue_scripts', function($hook) {
             if (str_contains($hook, 'hdk-')) {
                 wp_enqueue_media();
@@ -42,10 +32,36 @@ class HDK_Admin {
         });
     }
 
+    public static function admin_init() {
+        $admin = get_role('administrator');
+        if ($admin) {
+            $admin->add_cap('edit_stories');
+            $admin->add_cap('publish_stories');
+            $admin->add_cap('delete_stories');
+            $admin->add_cap('moderate_comments');
+        }
+        self::handle_form_submissions();
+    }
+
     // ========== FORM HANDLERS ==========
 
     public static function handle_form_submissions() {
+        global $wpdb;
         if (!current_user_can('edit_stories')) return;
+
+        if (isset($_POST['hdk_review_submission'])) {
+            if (!current_user_can('publish_stories')) {
+                wp_die('Bạn không có quyền duyệt truyện.');
+            }
+            check_admin_referer('hdk_review_submission_' . (int)($_POST['submission_id'] ?? 0));
+            $submission_id = (int)($_POST['submission_id'] ?? 0);
+            $decision = sanitize_key($_POST['decision'] ?? '');
+            $note = sanitize_textarea_field($_POST['review_note'] ?? '');
+            $result = self::review_story_submission($submission_id, $decision, $note);
+            $message = is_wp_error($result) ? 'error' : $decision;
+            wp_safe_redirect(admin_url('admin.php?page=hdk-story-submissions&message=' . $message));
+            exit;
+        }
 
         // Save Story
         if (isset($_POST['hdk_save_story']) && wp_verify_nonce($_POST['_wpnonce'], 'hdk_save_story')) {
@@ -505,6 +521,198 @@ class HDK_Admin {
     }
 
     // ========== STORIES PAGE ==========
+
+    private static function review_story_submission($submission_id, $decision, $note) {
+        global $wpdb;
+        $submission = HDK_DB::get_story_submission($submission_id);
+        if (!$submission || $submission->moderation_status !== 'pending') {
+            return new WP_Error('invalid_submission', 'Bài gửi không tồn tại hoặc đã được xử lý.');
+        }
+        if (!in_array($decision, ['approved', 'rejected'], true)) {
+            return new WP_Error('invalid_decision', 'Quyết định duyệt không hợp lệ.');
+        }
+
+        $now = current_time('mysql');
+        $submission_table = HDK_DB::table('hdk_story_submissions');
+        if ($decision === 'rejected') {
+            $updated = $wpdb->update($submission_table, [
+                'moderation_status' => 'rejected',
+                'review_note' => $note,
+                'reviewed_by' => get_current_user_id(),
+                'reviewed_at' => $now,
+                'updated_at' => $now,
+            ], ['id' => $submission_id, 'moderation_status' => 'pending']);
+            if ($updated !== 1) {
+                return new WP_Error('rejection_failed', 'Không thể cập nhật trạng thái bài gửi.');
+            }
+            HDK_DB::create_notification(
+                (int)$submission->user_id,
+                'story_submission',
+                'Truyện cần chỉnh sửa: ' . $submission->title,
+                $note ?: 'Bài gửi chưa được duyệt. Vui lòng kiểm tra lại nội dung.',
+                add_query_arg('tab', 'submissions', home_url('/tai-khoan/'))
+            );
+            return true;
+        }
+
+        $wpdb->query('START TRANSACTION');
+        try {
+            $author_slug = sanitize_title($submission->author_name);
+            $author_table = HDK_DB::table('hdk_authors');
+            $author_id = (int)$wpdb->get_var($wpdb->prepare("SELECT id FROM $author_table WHERE slug = %s", $author_slug));
+            if (!$author_id) {
+                $wpdb->insert($author_table, [
+                    'name' => $submission->author_name,
+                    'slug' => $author_slug,
+                    'created_at' => $now,
+                    'updated_at' => $now,
+                ]);
+                $author_id = (int)$wpdb->insert_id;
+                if (!$author_id) {
+                    throw new RuntimeException($wpdb->last_error ?: 'Không thể tạo tác giả.');
+                }
+            }
+
+            $stories_table = HDK_DB::table('hdk_stories');
+            $base_slug = sanitize_title($submission->title) ?: 'truyen-' . $submission_id;
+            $slug = $base_slug;
+            $suffix = 2;
+            while ($wpdb->get_var($wpdb->prepare("SELECT id FROM $stories_table WHERE slug = %s", $slug))) {
+                $slug = $base_slug . '-' . $suffix++;
+            }
+            $wpdb->insert($stories_table, [
+                'title' => $submission->title,
+                'slug' => $slug,
+                'author_id' => $author_id,
+                'cover_url' => $submission->cover_url,
+                'summary' => $submission->summary,
+                'status' => $submission->story_status,
+                'is_free' => 1,
+                'total_chapters' => $submission->first_chapter_content ? 1 : 0,
+                'published_at' => $now,
+                'created_at' => $now,
+                'updated_at' => $now,
+            ]);
+            $story_id = (int)$wpdb->insert_id;
+            if (!$story_id) {
+                throw new RuntimeException($wpdb->last_error ?: 'Không thể tạo truyện.');
+            }
+
+            $category_ids = array_values(array_filter(array_unique(array_map('intval', (array)json_decode($submission->category_ids ?: '[]', true)))));
+            if ($category_ids) {
+                $category_ids = array_map('intval', $wpdb->get_col(
+                    "SELECT id FROM " . HDK_DB::table('hdk_categories') . " WHERE id IN (" . implode(',', $category_ids) . ")"
+                ));
+            }
+            foreach ($category_ids as $category_id) {
+                $wpdb->insert(HDK_DB::table('hdk_story_categories'), [
+                    'story_id' => $story_id,
+                    'category_id' => $category_id,
+                ]);
+                $wpdb->query($wpdb->prepare(
+                    "UPDATE " . HDK_DB::table('hdk_categories') . " SET story_count = story_count + 1 WHERE id = %d",
+                    $category_id
+                ));
+            }
+
+            if ($submission->first_chapter_content) {
+                $plain_content = wp_strip_all_tags($submission->first_chapter_content);
+                $chapter_inserted = $wpdb->insert(HDK_DB::table('hdk_chapters'), [
+                    'story_id' => $story_id,
+                    'chapter_number' => 1,
+                    'title' => $submission->first_chapter_title ?: 'Chương 1',
+                    'content' => $submission->first_chapter_content,
+                    'word_count' => count(preg_split('/\s+/u', trim($plain_content), -1, PREG_SPLIT_NO_EMPTY)),
+                    'status' => 'published',
+                    'created_at' => $now,
+                    'updated_at' => $now,
+                ]);
+                if (!$chapter_inserted) {
+                    throw new RuntimeException($wpdb->last_error ?: 'Không thể tạo chương đầu tiên.');
+                }
+            }
+
+            $wpdb->query($wpdb->prepare("UPDATE $author_table SET story_count = story_count + 1 WHERE id = %d", $author_id));
+
+            $updated = $wpdb->update($submission_table, [
+                'moderation_status' => 'approved',
+                'review_note' => $note,
+                'reviewed_by' => get_current_user_id(),
+                'published_story_id' => $story_id,
+                'reviewed_at' => $now,
+                'updated_at' => $now,
+            ], ['id' => $submission_id, 'moderation_status' => 'pending']);
+            if ($updated !== 1) {
+                throw new RuntimeException('Không thể cập nhật trạng thái bài gửi.');
+            }
+
+            $wpdb->query('COMMIT');
+            HDK_DB::create_notification(
+                (int)$submission->user_id,
+                'story_submission',
+                'Truyện đã được duyệt: ' . $submission->title,
+                $note ?: 'Truyện của bạn đã được xuất bản.',
+                home_url('/' . $slug)
+            );
+            do_action('hdk_story_updated', $story_id);
+            return $story_id;
+        } catch (Throwable $error) {
+            $wpdb->query('ROLLBACK');
+            return new WP_Error('approval_failed', $error->getMessage());
+        }
+    }
+
+    public static function story_submissions_page() {
+        $status = sanitize_key($_GET['status'] ?? 'pending');
+        if (!in_array($status, ['pending', 'approved', 'rejected', 'all'], true)) $status = 'pending';
+        $page = max(1, (int)($_GET['paged'] ?? 1));
+        $data = HDK_DB::get_story_submissions($status === 'all' ? '' : $status, $page, 20);
+        $labels = ['pending' => 'Chờ duyệt', 'approved' => 'Đã duyệt', 'rejected' => 'Từ chối'];
+        ?>
+        <div class="wrap">
+            <h1>Truyện người dùng gửi</h1>
+            <?php if (isset($_GET['message'])): ?>
+                <div class="notice <?php echo $_GET['message'] === 'error' ? 'notice-error' : 'notice-success'; ?> is-dismissible"><p><?php echo $_GET['message'] === 'error' ? 'Không thể xử lý bài gửi.' : 'Đã cập nhật bài gửi.'; ?></p></div>
+            <?php endif; ?>
+            <p class="subsubsub">
+                <?php foreach (['pending' => 'Chờ duyệt', 'approved' => 'Đã duyệt', 'rejected' => 'Từ chối', 'all' => 'Tất cả'] as $key => $label): ?>
+                    <a href="<?php echo esc_url(admin_url('admin.php?page=hdk-story-submissions&status=' . $key)); ?>" class="<?php echo $status === $key ? 'current' : ''; ?>"><?php echo esc_html($label); ?></a><?php echo $key !== 'all' ? ' | ' : ''; ?>
+                <?php endforeach; ?>
+            </p>
+            <table class="wp-list-table widefat fixed striped">
+                <thead><tr><th>Truyện</th><th>Người gửi</th><th>Nội dung</th><th>Trạng thái</th><th>Ngày gửi</th><th style="width:280px;">Duyệt</th></tr></thead>
+                <tbody>
+                <?php if (empty($data['rows'])): ?>
+                    <tr><td colspan="6">Chưa có bài gửi.</td></tr>
+                <?php else: foreach ($data['rows'] as $item): ?>
+                    <tr>
+                        <td><strong><?php echo esc_html($item->title); ?></strong><br><span class="description">Tác giả: <?php echo esc_html($item->author_name); ?></span></td>
+                        <td><?php echo esc_html($item->display_name ?: 'User #' . $item->user_id); ?><br><a href="mailto:<?php echo esc_attr($item->user_email); ?>"><?php echo esc_html($item->user_email); ?></a></td>
+                        <td><details><summary>Xem tóm tắt và chương đầu</summary><p><?php echo wp_kses_post($item->summary); ?></p><?php if ($item->first_chapter_content): ?><hr><strong><?php echo esc_html($item->first_chapter_title ?: 'Chương 1'); ?></strong><div style="max-height:260px;overflow:auto;"><?php echo wp_kses_post($item->first_chapter_content); ?></div><?php endif; ?></details></td>
+                        <td><?php echo esc_html($labels[$item->moderation_status] ?? $item->moderation_status); ?><?php if ($item->review_note): ?><br><span class="description"><?php echo esc_html($item->review_note); ?></span><?php endif; ?></td>
+                        <td><?php echo esc_html(mysql2date('H:i d/m/Y', $item->created_at)); ?></td>
+                        <td>
+                            <?php if ($item->moderation_status === 'pending'): ?>
+                                <form method="post">
+                                    <?php wp_nonce_field('hdk_review_submission_' . $item->id); ?>
+                                    <input type="hidden" name="submission_id" value="<?php echo (int)$item->id; ?>">
+                                    <input type="hidden" name="hdk_review_submission" value="1">
+                                    <textarea name="review_note" rows="2" class="large-text" placeholder="Ghi chú cho người gửi"></textarea>
+                                    <button class="button button-primary" name="decision" value="approved" type="submit">Duyệt &amp; xuất bản</button>
+                                    <button class="button" name="decision" value="rejected" type="submit">Từ chối</button>
+                                </form>
+                            <?php elseif ($item->published_story_id): ?>
+                                <?php $published_story = HDK_DB::get_story((int)$item->published_story_id); ?>
+                                <?php if ($published_story): ?><a class="button" href="<?php echo esc_url(home_url('/' . $published_story->slug)); ?>">Xem truyện</a><?php endif; ?>
+                            <?php endif; ?>
+                        </td>
+                    </tr>
+                <?php endforeach; endif; ?>
+                </tbody>
+            </table>
+        </div>
+        <?php
+    }
 
     public static function stories_page() {
         global $wpdb;

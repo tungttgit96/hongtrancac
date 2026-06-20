@@ -36,6 +36,90 @@ $listening_count = count($listening_history);
 $account_message = '';
 $account_error = '';
 
+if (isset($_GET['submitted']) && $_GET['submitted'] === '1') {
+    $account_message = 'Đã gửi truyện để biên tập viên xét duyệt.';
+}
+
+if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['hdk_submit_story'])) {
+    if (!isset($_POST['_wpnonce']) || !wp_verify_nonce($_POST['_wpnonce'], 'hdk_submit_story')) {
+        $account_error = 'Phiên đăng truyện hết hạn, vui lòng thử lại.';
+    } else {
+        $title = sanitize_text_field($_POST['story_title'] ?? '');
+        $author_name = sanitize_text_field($_POST['author_name'] ?? '');
+        $summary = wp_kses_post($_POST['story_summary'] ?? '');
+        $story_status = sanitize_key($_POST['story_status'] ?? 'ongoing');
+        $category_ids = array_values(array_filter(array_map('intval', (array)($_POST['story_categories'] ?? []))));
+        if ($category_ids) {
+            $category_ids = array_map('intval', $wpdb->get_col(
+                "SELECT id FROM " . HDK_DB::table('hdk_categories') . " WHERE id IN (" . implode(',', array_unique($category_ids)) . ")"
+            ));
+        }
+        $chapter_title = sanitize_text_field($_POST['first_chapter_title'] ?? '');
+        $chapter_content = wp_kses_post($_POST['first_chapter_content'] ?? '');
+        $cover_url = esc_url_raw($_POST['story_cover_url'] ?? '');
+        $cover_file = $_FILES['story_cover_file'] ?? null;
+        $has_cover_upload = is_array($cover_file)
+            && !empty($cover_file['name'])
+            && (int)($cover_file['error'] ?? UPLOAD_ERR_NO_FILE) !== UPLOAD_ERR_NO_FILE;
+
+        if (HDK_DB::count_user_pending_story_submissions($user_id) >= 5) {
+            $account_error = 'Bạn đang có 5 truyện chờ duyệt. Vui lòng đợi biên tập viên xử lý trước khi gửi thêm.';
+        } elseif (strlen($title) < 3) {
+            $account_error = 'Tên truyện cần ít nhất 3 ký tự.';
+        } elseif ($author_name === '') {
+            $account_error = 'Vui lòng nhập tên tác giả.';
+        } elseif (strlen(wp_strip_all_tags($summary)) < 30) {
+            $account_error = 'Tóm tắt cần ít nhất 30 ký tự.';
+        } elseif (empty($category_ids)) {
+            $account_error = 'Vui lòng chọn ít nhất một thể loại.';
+        } elseif (!in_array($story_status, ['ongoing', 'completed', 'dropped'], true)) {
+            $account_error = 'Trạng thái truyện không hợp lệ.';
+        }
+
+        if (!$account_error && $has_cover_upload) {
+            $allowed_cover_mimes = ['jpg|jpeg' => 'image/jpeg', 'png' => 'image/png', 'webp' => 'image/webp'];
+            $upload_error = (int)($cover_file['error'] ?? UPLOAD_ERR_NO_FILE);
+            if ($upload_error !== UPLOAD_ERR_OK) {
+                $account_error = 'Ảnh bìa: lỗi upload, vui lòng thử lại.';
+            } elseif ((int)($cover_file['size'] ?? 0) > 5 * 1024 * 1024) {
+                $account_error = 'Ảnh bìa: dung lượng tối đa 5MB.';
+            } else {
+                if (!function_exists('wp_check_filetype_and_ext')) require_once ABSPATH . 'wp-admin/includes/file.php';
+                $checked = wp_check_filetype_and_ext($cover_file['tmp_name'], $cover_file['name'], $allowed_cover_mimes);
+                if (empty($checked['type']) || !in_array($checked['type'], $allowed_cover_mimes, true)) {
+                    $account_error = 'Ảnh bìa: chỉ chấp nhận JPG, PNG hoặc WebP.';
+                } else {
+                    $uploaded = wp_handle_upload($cover_file, ['test_form' => false, 'mimes' => $allowed_cover_mimes]);
+                    if (!empty($uploaded['error'])) {
+                        $account_error = 'Ảnh bìa: ' . $uploaded['error'];
+                    } else {
+                        $cover_url = esc_url_raw($uploaded['url']);
+                    }
+                }
+            }
+        }
+
+        if (!$account_error) {
+            $submission_id = HDK_DB::create_story_submission($user_id, [
+                'title' => $title,
+                'author_name' => $author_name,
+                'cover_url' => $cover_url,
+                'summary' => $summary,
+                'story_status' => $story_status,
+                'category_ids' => $category_ids,
+                'first_chapter_title' => $chapter_title,
+                'first_chapter_content' => $chapter_content,
+            ]);
+            if (!$submission_id) {
+                $account_error = 'Không thể lưu bài gửi. Vui lòng thử lại.';
+            } else {
+                wp_safe_redirect(hdk_page_url('tai-khoan', ['tab' => 'submissions', 'submitted' => '1']));
+                exit;
+            }
+        }
+    }
+}
+
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['hdk_account_settings'])) {
     if (!isset($_POST['_wpnonce']) || !wp_verify_nonce($_POST['_wpnonce'], 'hdk_account_settings')) {
         $account_error = 'Phiên cập nhật hết hạn, vui lòng thử lại.';
@@ -159,7 +243,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['hdk_account_settings'
 }
 
 $tab = isset($_GET['tab']) ? sanitize_text_field($_GET['tab']) : 'favorites';
-$valid_tabs = ['favorites', 'reading', 'purchased', 'history', 'listening', 'comments', 'wallet', 'notifications', 'settings'];
+$valid_tabs = ['favorites', 'reading', 'purchased', 'history', 'listening', 'comments', 'wallet', 'notifications', 'submissions', 'settings'];
 if (!in_array($tab, $valid_tabs)) $tab = 'favorites';
 
 $page = max(1, (int)($_GET['paged'] ?? 1));
@@ -219,6 +303,7 @@ $avatar_html = $custom_avatar
         'comments' => hdk_icon('message-square') . ' Bình luận của tôi',
         'wallet' => hdk_icon('gem') . ' Ví Linh Thạch',
         'notifications' => hdk_icon('bell') . ' Thông báo',
+        'submissions' => hdk_icon('file-plus-2') . ' Đăng truyện',
         'settings' => hdk_icon('settings') . ' Cài đặt tài khoản',
     ];
     ?>
@@ -537,6 +622,115 @@ $avatar_html = $custom_avatar
                 </div>
                 <?php hdk_get_pagination($notif_data['pages'], $page); ?>
             <?php endif; ?>
+            <?php break;
+
+        case 'submissions':
+            $categories = $wpdb->get_results("SELECT id, name FROM " . HDK_DB::table('hdk_categories') . " ORDER BY sort_order, name");
+            $submissions = HDK_DB::get_user_story_submissions($user_id);
+            $submission_labels = [
+                'pending' => ['Chờ duyệt', 'badge-warning'],
+                'approved' => ['Đã xuất bản', 'badge-success'],
+                'rejected' => ['Từ chối', 'badge-danger'],
+            ];
+            $selected_categories = array_map('intval', (array)($_POST['story_categories'] ?? []));
+            ?>
+            <div class="story-submission-layout">
+                <section class="panel panel-pad story-submission-form-panel">
+                    <h2>Đăng truyện mới</h2>
+                    <p class="story-submission-intro">Điền thông tin truyện và gửi xét duyệt. Truyện chỉ xuất hiện công khai sau khi biên tập viên chấp thuận; mỗi tài khoản được có tối đa 5 bài đang chờ.</p>
+                    <form method="post" enctype="multipart/form-data" class="story-submission-form">
+                        <?php wp_nonce_field('hdk_submit_story'); ?>
+                        <input type="hidden" name="hdk_submit_story" value="1">
+
+                        <div class="form-grid-2">
+                            <p>
+                                <label for="story-title">Tên truyện <span aria-hidden="true">*</span></label>
+                                <input type="text" id="story-title" name="story_title" required minlength="3" maxlength="500" value="<?php echo esc_attr($_POST['story_title'] ?? ''); ?>">
+                            </p>
+                            <p>
+                                <label for="story-author">Tên tác giả <span aria-hidden="true">*</span></label>
+                                <input type="text" id="story-author" name="author_name" required maxlength="255" value="<?php echo esc_attr($_POST['author_name'] ?? $user->display_name); ?>">
+                            </p>
+                        </div>
+
+                        <div class="form-grid-2">
+                            <p>
+                                <label for="story-status">Tình trạng</label>
+                                <select id="story-status" name="story_status">
+                                    <option value="ongoing" <?php selected($_POST['story_status'] ?? 'ongoing', 'ongoing'); ?>>Đang ra</option>
+                                    <option value="completed" <?php selected($_POST['story_status'] ?? '', 'completed'); ?>>Hoàn thành</option>
+                                    <option value="dropped" <?php selected($_POST['story_status'] ?? '', 'dropped'); ?>>Tạm ngừng</option>
+                                </select>
+                            </p>
+                            <p>
+                                <label for="story-cover-url">URL ảnh bìa</label>
+                                <input type="url" id="story-cover-url" name="story_cover_url" value="<?php echo esc_attr($_POST['story_cover_url'] ?? ''); ?>" placeholder="https://...">
+                            </p>
+                        </div>
+
+                        <p>
+                            <label for="story-cover-file">Hoặc tải ảnh bìa</label>
+                            <input type="file" id="story-cover-file" name="story_cover_file" accept="image/jpeg,image/png,image/webp">
+                            <small>JPG, PNG hoặc WebP, tối đa 5MB. Ảnh tải lên sẽ thay URL phía trên.</small>
+                        </p>
+
+                        <fieldset class="story-category-fieldset">
+                            <legend>Thể loại <span aria-hidden="true">*</span></legend>
+                            <div class="story-category-options">
+                                <?php foreach ($categories as $category): ?>
+                                    <label><input type="checkbox" name="story_categories[]" value="<?php echo (int)$category->id; ?>" <?php checked(in_array((int)$category->id, $selected_categories, true)); ?>> <?php echo esc_html($category->name); ?></label>
+                                <?php endforeach; ?>
+                            </div>
+                        </fieldset>
+
+                        <p>
+                            <label for="story-summary">Tóm tắt <span aria-hidden="true">*</span></label>
+                            <textarea id="story-summary" name="story_summary" rows="6" required minlength="30"><?php echo esc_textarea($_POST['story_summary'] ?? ''); ?></textarea>
+                        </p>
+
+                        <div class="story-first-chapter">
+                            <h3>Chương đầu tiên <span>(không bắt buộc)</span></h3>
+                            <p>
+                                <label for="first-chapter-title">Tiêu đề chương</label>
+                                <input type="text" id="first-chapter-title" name="first_chapter_title" maxlength="500" value="<?php echo esc_attr($_POST['first_chapter_title'] ?? ''); ?>" placeholder="Chương 1">
+                            </p>
+                            <p>
+                                <label for="first-chapter-content">Nội dung chương</label>
+                                <textarea id="first-chapter-content" name="first_chapter_content" rows="12"><?php echo esc_textarea($_POST['first_chapter_content'] ?? ''); ?></textarea>
+                            </p>
+                        </div>
+
+                        <button type="submit" class="btn btn-primary"><?php echo hdk_icon('send-horizontal'); ?> Gửi xét duyệt</button>
+                    </form>
+                </section>
+
+                <section class="story-submission-history">
+                    <h2>Truyện đã gửi</h2>
+                    <?php if (empty($submissions)): ?>
+                        <div class="empty-state panel panel-pad"><p>Bạn chưa gửi truyện nào.</p></div>
+                    <?php else: ?>
+                        <div class="story-submission-list">
+                            <?php foreach ($submissions as $submission):
+                                $submission_label = $submission_labels[$submission->moderation_status] ?? [$submission->moderation_status, ''];
+                                $published_story = $submission->published_story_id ? HDK_DB::get_story((int)$submission->published_story_id) : null;
+                                ?>
+                                <article class="panel panel-pad story-submission-item">
+                                    <img src="<?php echo esc_url($submission->cover_url ?: get_template_directory_uri() . '/assets/img/placeholder.svg'); ?>" alt="" loading="lazy">
+                                    <div>
+                                        <div class="story-submission-item-head">
+                                            <h3><?php echo esc_html($submission->title); ?></h3>
+                                            <span class="badge <?php echo esc_attr($submission_label[1]); ?>"><?php echo esc_html($submission_label[0]); ?></span>
+                                        </div>
+                                        <p>Tác giả: <?php echo esc_html($submission->author_name); ?> · Gửi <?php echo esc_html(mysql2date('d/m/Y H:i', $submission->created_at)); ?></p>
+                                        <?php if ($submission->review_note): ?><div class="story-review-note"><strong>Phản hồi:</strong> <?php echo esc_html($submission->review_note); ?></div><?php endif; ?>
+                                        <?php if ($published_story): ?><a class="btn btn-outline btn-sm" href="<?php echo esc_url(home_url('/' . $published_story->slug)); ?>">Xem truyện</a><?php endif; ?>
+                                    </div>
+                                </article>
+                            <?php endforeach; ?>
+                        </div>
+                    <?php endif; ?>
+                </section>
+            </div>
             <?php break;
 
         case 'settings':

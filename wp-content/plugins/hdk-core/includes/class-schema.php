@@ -117,6 +117,30 @@ class HDK_Schema {
             INDEX idx_category (category_id)
         ) $charset;";
 
+        // Reader story submissions (kept separate until an editor approves them)
+        $sql[] = "CREATE TABLE IF NOT EXISTS {$wpdb->prefix}hdk_story_submissions (
+            id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+            user_id BIGINT UNSIGNED NOT NULL,
+            title VARCHAR(500) NOT NULL,
+            author_name VARCHAR(255) NOT NULL,
+            cover_url VARCHAR(500),
+            summary TEXT,
+            story_status ENUM('ongoing','completed','dropped') DEFAULT 'ongoing',
+            category_ids TEXT,
+            first_chapter_title VARCHAR(500),
+            first_chapter_content LONGTEXT,
+            moderation_status ENUM('pending','approved','rejected') DEFAULT 'pending',
+            review_note TEXT,
+            reviewed_by BIGINT UNSIGNED DEFAULT 0,
+            published_story_id BIGINT UNSIGNED DEFAULT 0,
+            created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+            updated_at DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+            reviewed_at DATETIME NULL,
+            INDEX idx_user (user_id),
+            INDEX idx_moderation_status (moderation_status),
+            INDEX idx_created (created_at)
+        ) $charset;";
+
         // Story-Character pivot
         $sql[] = "CREATE TABLE IF NOT EXISTS {$wpdb->prefix}hdk_story_characters (
             story_id BIGINT UNSIGNED NOT NULL,
@@ -309,7 +333,7 @@ class HDK_Schema {
     }
 
     public static function maybe_upgrade() {
-        $target_version = '2026.06.17.1';
+        $target_version = '2026.06.20.1';
         $current_version = get_option('hdk_schema_version', '0');
 
         if (version_compare($current_version, $target_version, '>=')) {
