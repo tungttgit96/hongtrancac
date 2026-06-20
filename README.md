@@ -23,6 +23,7 @@ Nền tảng đọc truyện chữ online xây dựng trên **WordPress** + cust
 - 🏆 Bảng xếp hạng (lượt xem / yêu thích / đánh giá × ngày / tuần / tháng / năm)
 - 📂 Danh sách truyện với filter (thể loại, trạng thái, sắp xếp)
 - ⭐ Đề cử biên tập + 🔥 Hot tuần trên trang chủ
+- 🖼️ Banner trang chủ có layout riêng cho desktop và mobile, hỗ trợ autoplay, thumbnail và nút chuyển truyện
 
 ### Người dùng
 - 👤 Trang tài khoản độc giả (`/tai-khoan`): hồ sơ, tủ truyện, đang đọc, đã mua, lịch sử đọc/nghe, bình luận, cài đặt tài khoản
@@ -61,6 +62,16 @@ Nền tảng đọc truyện chữ online xây dựng trên **WordPress** + cust
 - ⚡ CSS design tokens nằm trong `main.css` thay vì inline `<head>`
 - 🗄️ Cache transient cho các section trang chủ (banner fallback, mới cập nhật, hot, đề cử, hot tuần)
 - ✅ Smoke checks trong `docs/review/website-smoke-checks.md`
+
+### Banner trang chủ
+
+Banner được tách thành hai phân đoạn độc lập để mỗi kích thước màn hình có bố cục phù hợp:
+
+- **Desktop (`> 768px`)**: bố cục 3 cột gồm thông tin truyện, ảnh bìa chính và lưới 6 thumbnail; hiển thị nhãn đề cử và vị trí slide.
+- **Mobile (`<= 768px`)**: hero card compact với nền ảnh blur, ảnh bìa, nội dung rút gọn và dải thumbnail vuốt ngang.
+- Template nằm trong `wp-content/themes/hongtrancac/inc/template-functions.php`.
+- Responsive styles nằm trong `wp-content/themes/hongtrancac/assets/css/main.css`.
+- Điều khiển autoplay, active state và chuyển slide theo từng component nằm trong `wp-content/themes/hongtrancac/assets/js/main.js`.
 
 ---
 

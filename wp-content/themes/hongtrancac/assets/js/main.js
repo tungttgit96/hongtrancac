@@ -521,18 +521,21 @@
     })();
 
     // ===== Hero Banner =====
-    var bannerCards = document.querySelectorAll('.banner-card');
-    var bannerCover = document.getElementById('banner-cover-img');
-    var bannerTitle = document.querySelector('.banner-title');
-    var bannerSummary = document.querySelector('.banner-summary');
-    var bannerLink = document.querySelector('.banner-read-link');
-    var bannerViews = document.querySelector('.banner-views');
-    var bannerInfo = document.querySelector('.banner-info');
-    var bannerActiveIndex = 0;
-    var bannerTotal = bannerCards.length;
-    var bannerInterval = null;
+    function initBanner(banner) {
+        var bannerCards = banner.querySelectorAll('.banner-card');
+        var bannerCover = banner.querySelector('.banner-cover-img');
+        var bannerTitle = banner.querySelector('.banner-title');
+        var bannerSummary = banner.querySelector('.banner-summary');
+        var bannerLink = banner.querySelector('.banner-read-link');
+        var bannerViews = banner.querySelector('.banner-views');
+        var bannerInfo = banner.querySelector('.banner-info');
+        var bannerBackdrop = banner.querySelector('.banner-mobile-backdrop');
+        var bannerPosition = banner.querySelector('.banner-position');
+        var bannerActiveIndex = 0;
+        var bannerTotal = bannerCards.length;
+        var bannerInterval = null;
+        var bannerCoverTimer = null;
 
-    function initBanner() {
         if (!bannerCards.length || !bannerCover) return;
 
         bannerCards.forEach(function(card, index) {
@@ -542,8 +545,8 @@
             });
         });
 
-        var bannerPrev = document.querySelector('.banner-nav-prev');
-        var bannerNext = document.querySelector('.banner-nav-next');
+        var bannerPrev = banner.querySelector('.banner-nav-prev');
+        var bannerNext = banner.querySelector('.banner-nav-next');
         if (bannerPrev) {
             bannerPrev.addEventListener('click', function() {
                 resetBannerInterval();
@@ -557,66 +560,75 @@
             });
         }
 
+        function updateBannerActive(index) {
+            var card = bannerCards[index];
+            if (!card) return;
+
+            bannerActiveIndex = index;
+            bannerCards.forEach(function(c) {
+                c.classList.remove('active');
+                c.setAttribute('aria-pressed', 'false');
+            });
+            card.classList.add('active');
+            card.setAttribute('aria-pressed', 'true');
+            if (banner.classList.contains('banner-mobile') && banner.offsetParent !== null) {
+                card.scrollIntoView({ behavior: 'smooth', block: 'nearest', inline: 'center' });
+            }
+
+            bannerCover.style.opacity = '0';
+            bannerCover.style.transform = 'translateY(8px) scale(0.98)';
+            if (bannerCoverTimer) clearTimeout(bannerCoverTimer);
+            bannerCoverTimer = setTimeout(function() {
+                bannerCover.src = card.dataset.cover;
+                bannerCover.alt = card.dataset.title;
+                bannerCover.style.opacity = '1';
+                bannerCover.style.transform = 'translateY(0) scale(1)';
+            }, 250);
+
+            if (bannerBackdrop) bannerBackdrop.style.backgroundImage = 'url("' + card.dataset.cover.replace(/"/g, '\\"') + '")';
+            if (bannerTitle) bannerTitle.textContent = card.dataset.title;
+            if (bannerSummary) bannerSummary.textContent = card.dataset.summary;
+            if (bannerLink) bannerLink.href = card.dataset.url;
+            if (bannerPosition) {
+                bannerPosition.textContent = String(index + 1).padStart(2, '0') + ' / ' + String(bannerTotal).padStart(2, '0');
+            }
+            if (bannerViews) {
+                var views = parseInt(card.dataset.views, 10) || 0;
+                bannerViews.textContent = views.toLocaleString('vi-VN') + ' lượt xem';
+            }
+            if (bannerInfo) {
+                bannerInfo.classList.remove('is-changing');
+                void bannerInfo.offsetWidth;
+                bannerInfo.classList.add('is-changing');
+            }
+        }
+
+        function resetBannerInterval() {
+            if (bannerInterval) clearInterval(bannerInterval);
+            if (bannerTotal > 1) {
+                bannerInterval = setInterval(function() {
+                    updateBannerActive((bannerActiveIndex + 1) % bannerTotal);
+                }, 12000);
+            }
+        }
+
+        bannerCards.forEach(function(card, index) {
+            card.setAttribute('aria-pressed', index === 0 ? 'true' : 'false');
+        });
         resetBannerInterval();
-    }
-
-    function updateBannerActive(index) {
-        var card = bannerCards[index];
-        if (!card) return;
-
-        bannerActiveIndex = index;
-        bannerCards.forEach(function(c) { c.classList.remove('active'); });
-        card.classList.add('active');
-
-        var cover = bannerCover;
-        cover.style.opacity = '0';
-        cover.style.transform = 'translateX(10px)';
-        setTimeout(function() {
-            cover.src = card.dataset.cover;
-            cover.alt = card.dataset.title;
-            cover.style.opacity = '1';
-            cover.style.transform = 'translateX(0)';
-        }, 350);
-
-        if (bannerTitle) bannerTitle.textContent = card.dataset.title;
-        if (bannerSummary) bannerSummary.textContent = card.dataset.summary;
-        if (bannerLink) bannerLink.href = card.dataset.url;
-        if (bannerViews) {
-            var views = parseInt(card.dataset.views, 10) || 0;
-            bannerViews.textContent = views.toLocaleString('vi-VN') + ' lượt xem';
-        }
-        if (bannerInfo) {
-            bannerInfo.classList.remove('is-changing');
-            void bannerInfo.offsetWidth;
-            bannerInfo.classList.add('is-changing');
-        }
-    }
-
-    function resetBannerInterval() {
-        if (bannerInterval) clearInterval(bannerInterval);
-        if (bannerTotal > 1) {
-            bannerInterval = setInterval(function() {
-                updateBannerActive((bannerActiveIndex + 1) % bannerTotal);
-            }, 12000);
-        }
-    }
-
-    initBanner();
-
-    // Pause auto-rotate when user hovers/focuses the banner
-    var heroBanner = document.querySelector('.hero-banner');
-    if (heroBanner) {
-        heroBanner.addEventListener('mouseenter', function() {
+        banner.addEventListener('mouseenter', function() {
             if (bannerInterval) clearInterval(bannerInterval);
             bannerInterval = null;
         });
-        heroBanner.addEventListener('mouseleave', resetBannerInterval);
-        heroBanner.addEventListener('focusin', function() {
+        banner.addEventListener('mouseleave', resetBannerInterval);
+        banner.addEventListener('focusin', function() {
             if (bannerInterval) clearInterval(bannerInterval);
             bannerInterval = null;
         });
-        heroBanner.addEventListener('focusout', resetBannerInterval);
+        banner.addEventListener('focusout', resetBannerInterval);
     }
+
+    document.querySelectorAll('[data-banner-component]').forEach(initBanner);
 
     // Favorite toggle
     document.addEventListener('click', function(e) {

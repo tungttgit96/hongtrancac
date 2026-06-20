@@ -229,10 +229,15 @@ function hdk_get_hero_section() {
     ?>
     <section class="hero-banner">
         <div class="container">
-            <div class="banner-shell">
+            <!-- Desktop banner -->
+            <div class="banner-shell banner-desktop" data-banner-component>
                 <button class="banner-nav banner-nav-prev" type="button" aria-label="Truyện trước"><?php echo hdk_icon('chevron-left'); ?></button>
                 <div class="banner-grid">
                     <div class="banner-info">
+                        <div class="banner-meta">
+                            <span class="banner-kicker">Khám phá hôm nay</span>
+                            <span class="banner-position">01 / <?php echo sprintf('%02d', count($stories)); ?></span>
+                        </div>
                         <h1 class="banner-title"><?php echo esc_html($active->title); ?></h1>
                         <p class="banner-summary"><?php echo esc_html($active->summary_trimmed); ?></p>
                         <div class="banner-actions">
@@ -241,14 +246,13 @@ function hdk_get_hero_section() {
                         </div>
                     </div>
 
-                    <div class="banner-cover" id="banner-cover-wrapper">
+                    <div class="banner-cover">
                         <img src="<?php echo esc_url($active->cover_url); ?>"
                              alt="<?php echo esc_attr($active->title); ?>"
-                             class="banner-cover-img"
-                             id="banner-cover-img">
+                             class="banner-cover-img">
                     </div>
 
-                    <div class="banner-cards" id="banner-cards">
+                    <div class="banner-cards">
                         <?php foreach ($stories as $index => $story): ?>
                             <button class="banner-card <?php echo $index === 0 ? 'active' : ''; ?>"
                                     type="button"
@@ -270,6 +274,44 @@ function hdk_get_hero_section() {
                     </div>
                 </div>
                 <button class="banner-nav banner-nav-next" type="button" aria-label="Truyện sau"><?php echo hdk_icon('chevron-right'); ?></button>
+            </div>
+
+            <!-- Mobile banner -->
+            <div class="banner-shell banner-mobile" data-banner-component>
+                <div class="banner-mobile-stage">
+                    <div class="banner-mobile-backdrop" style="<?php echo esc_attr('background-image:url("' . esc_url($active->cover_url) . '")'); ?>"></div>
+                    <button class="banner-nav banner-nav-prev" type="button" aria-label="Truyện trước"><?php echo hdk_icon('chevron-left'); ?></button>
+                    <div class="banner-cover">
+                        <img src="<?php echo esc_url($active->cover_url); ?>"
+                             alt="<?php echo esc_attr($active->title); ?>"
+                             class="banner-cover-img">
+                    </div>
+                    <div class="banner-info">
+                        <span class="banner-kicker">Truyện nổi bật</span>
+                        <h1 class="banner-title"><?php echo esc_html($active->title); ?></h1>
+                        <p class="banner-summary"><?php echo esc_html($active->summary_trimmed); ?></p>
+                        <span class="banner-views"><?php echo number_format((int)($active->total_views ?? 0)); ?> lượt xem</span>
+                        <a href="<?php echo esc_url($active->url); ?>" class="btn btn-primary banner-read-link">Đọc ngay</a>
+                    </div>
+                    <button class="banner-nav banner-nav-next" type="button" aria-label="Truyện sau"><?php echo hdk_icon('chevron-right'); ?></button>
+                </div>
+
+                <div class="banner-cards" aria-label="Danh sách truyện nổi bật">
+                    <?php foreach ($stories as $index => $story): ?>
+                        <button class="banner-card <?php echo $index === 0 ? 'active' : ''; ?>"
+                                type="button"
+                                data-index="<?php echo (int)$index; ?>"
+                                data-title="<?php echo esc_attr($story->title); ?>"
+                                data-summary="<?php echo esc_attr($story->summary_trimmed); ?>"
+                                data-url="<?php echo esc_url($story->url); ?>"
+                                data-cover="<?php echo esc_url($story->cover_url); ?>"
+                                data-views="<?php echo (int)($story->total_views ?? 0); ?>"
+                                aria-label="<?php echo esc_attr('Hiển thị truyện ' . $story->title); ?>">
+                            <img src="<?php echo esc_url($story->cover_url); ?>" alt="" loading="lazy">
+                            <span class="banner-card-rank"><?php echo sprintf('%02d', $index + 1); ?></span>
+                        </button>
+                    <?php endforeach; ?>
+                </div>
             </div>
         </div>
     </section>
