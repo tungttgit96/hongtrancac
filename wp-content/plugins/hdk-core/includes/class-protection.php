@@ -108,18 +108,32 @@ class HDK_Protection {
     }
 
     private static function get_ip() {
-        $headers = ['HTTP_CLIENT_IP', 'HTTP_X_FORWARDED_FOR', 'HTTP_X_REAL_IP', 'REMOTE_ADDR'];
-        foreach ($headers as $h) {
-            if (!empty($_SERVER[$h])) {
-                $ip = $_SERVER[$h];
-                if (strpos($ip, ',') !== false) {
-                    $parts = explode(',', $ip);
-                    $ip = trim($parts[0]);
+        $trusted_proxies = apply_filters('hdk_trusted_proxy_ips', []);
+        return self::resolve_ip($_SERVER, is_array($trusted_proxies) ? $trusted_proxies : []);
+    }
+
+    public static function resolve_ip($server, $trusted_proxies = []) {
+        $remote = trim((string)($server['REMOTE_ADDR'] ?? ''));
+        if (!filter_var($remote, FILTER_VALIDATE_IP)) {
+            $remote = '127.0.0.1';
+        }
+
+        $trusted_proxies = array_map('strval', $trusted_proxies);
+        if (!in_array($remote, $trusted_proxies, true)) {
+            return $remote;
+        }
+
+        foreach (['HTTP_X_FORWARDED_FOR', 'HTTP_X_REAL_IP'] as $header) {
+            if (empty($server[$header])) continue;
+            foreach (explode(',', (string)$server[$header]) as $candidate) {
+                $candidate = trim($candidate);
+                if (filter_var($candidate, FILTER_VALIDATE_IP)) {
+                    return $candidate;
                 }
-                return filter_var($ip, FILTER_VALIDATE_IP) ? $ip : '127.0.0.1';
             }
         }
-        return '127.0.0.1';
+
+        return $remote;
     }
 
     private static function deny($reason, $code = 403) {

@@ -58,27 +58,37 @@ class HDK_Cache {
         global $wpdb;
         $now = current_time('mysql');
         $table = HDK_DB::table('hdk_chapters');
-        $wpdb->query($wpdb->prepare(
-            "UPDATE $table SET status = 'published', scheduled_at = NULL, updated_at = %s WHERE status = 'scheduled' AND scheduled_at <= %s",
-            $now, $now
-        ));
-
-        // Get affected story IDs before UPDATE (scheduled_at will be NULL after update)
-        $affected = $wpdb->get_col($wpdb->prepare(
-            "SELECT DISTINCT story_id FROM $table WHERE status = 'scheduled' AND scheduled_at <= %s",
+        $due = $wpdb->get_results($wpdb->prepare(
+            "SELECT id, story_id, chapter_number, title FROM $table WHERE status = 'scheduled' AND scheduled_at <= %s ORDER BY story_id, chapter_number",
             $now
         ));
-        
-        foreach ($affected as $story_id) {
-            $story = HDK_DB::get_story($story_id);
-            if (!$story) continue;
-            $chapter = $wpdb->get_row($wpdb->prepare(
-                "SELECT chapter_number, title FROM $table
-                 WHERE story_id = %d AND status = 'published'
-                 ORDER BY chapter_number DESC LIMIT 1",
+        if (!$due) return;
+
+        $published_by_story = [];
+        foreach ($due as $chapter) {
+            $wpdb->query($wpdb->prepare(
+                "UPDATE $table SET status = 'published', scheduled_at = NULL, updated_at = %s WHERE id = %d AND status = 'scheduled'",
+                $now, (int)$chapter->id
+            ));
+            if ((int)$wpdb->rows_affected === 1) {
+                $published_by_story[(int)$chapter->story_id][] = $chapter;
+            }
+        }
+
+        foreach ($published_by_story as $story_id => $chapters) {
+            $chapter_count = (int)$wpdb->get_var($wpdb->prepare(
+                "SELECT COUNT(*) FROM $table WHERE story_id = %d AND status = 'published'",
                 $story_id
             ));
-            if ($chapter) {
+            $wpdb->update(HDK_DB::table('hdk_stories'), [
+                'total_chapters' => $chapter_count,
+                'updated_at' => $now,
+            ], ['id' => $story_id]);
+            self::invalidate_chapter($story_id);
+
+            $story = HDK_DB::get_story($story_id);
+            if (!$story) continue;
+            foreach ($chapters as $chapter) {
                 HDK_DB::notify_favoriting_users(
                     $story_id, $chapter->chapter_number,
                     $chapter->title ?: 'Chương ' . $chapter->chapter_number,
