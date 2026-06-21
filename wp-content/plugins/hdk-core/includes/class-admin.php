@@ -205,6 +205,7 @@ class HDK_Admin {
         if (isset($_GET['hdk_comment_action']) && isset($_GET['comment_id'])) {
             if (!current_user_can('moderate_comments')) return;
             $cid = (int)$_GET['comment_id'];
+            check_admin_referer('hdk_comment_' . $cid);
             $action = $_GET['hdk_comment_action'];
             if ($action === 'approve') wp_set_comment_status($cid, 'approve');
             elseif ($action === 'unapprove') wp_set_comment_status($cid, 'hold');
@@ -218,6 +219,7 @@ class HDK_Admin {
         if (isset($_GET['hdk_report_action']) && isset($_GET['report_id'])) {
             if (!current_user_can('edit_stories')) return;
             $rid = (int)$_GET['report_id'];
+            check_admin_referer('hdk_report_' . $rid);
             if ($_GET['hdk_report_action'] === 'resolve') {
                 HDK_DB::update_report_status($rid, 'resolved');
             }

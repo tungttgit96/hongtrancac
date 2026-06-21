@@ -283,14 +283,22 @@ class HDK_REST_API {
         $chapter_number = (int)$request->get_param('chapter_number');
         $content = sanitize_textarea_field($request->get_param('content') ?? '');
         $parent_id = (int)$request->get_param('parent_id');
+        $user_id = get_current_user_id();
 
-        if (empty($content)) return new WP_Error('empty_comment', 'Comment cannot be empty', ['status' => 400]);
+        $policy = HDK_Comment_Policy::validate($user_id, $story_id, $chapter_number, $content, $parent_id);
+        if (is_wp_error($policy)) return $policy;
+
+        $user = wp_get_current_user();
 
         $comment_data = [
             'comment_post_ID' => 0,
             'comment_content' => $content,
-            'user_id' => get_current_user_id(),
-            'comment_approved' => 1,
+            'comment_author' => $user->display_name,
+            'comment_author_email' => $user->user_email,
+            'comment_author_url' => $user->user_url,
+            'comment_author_IP' => $_SERVER['REMOTE_ADDR'] ?? '',
+            'comment_agent' => $_SERVER['HTTP_USER_AGENT'] ?? '',
+            'user_id' => $user_id,
             'comment_meta' => [
                 'hdk_story_id' => $story_id,
                 'hdk_chapter_number' => $chapter_number,
@@ -298,7 +306,13 @@ class HDK_REST_API {
         ];
         if ($parent_id) $comment_data['comment_parent'] = $parent_id;
 
+        $approval = HDK_Comment_Policy::approval($comment_data);
+        if (is_wp_error($approval)) return $approval;
+        $comment_data['comment_approved'] = $approval;
+
         $comment_id = wp_insert_comment($comment_data);
+        if (!$comment_id) return new WP_Error('comment_failed', 'Không thể lưu bình luận.', ['status' => 500]);
+        HDK_Comment_Policy::record_submission($user_id);
 
         $story = HDK_DB::get_story($story_id);
         $story_slug = $story->slug ?? '';
@@ -306,7 +320,7 @@ class HDK_REST_API {
         // Notify parent comment author
         if ($parent_id > 0) {
             $parent = get_comment($parent_id);
-            if ($parent && $parent->user_id && $parent->user_id != get_current_user_id()) {
+            if ($parent && $parent->user_id && $parent->user_id != $user_id) {
                 HDK_DB::create_notification(
                     $parent->user_id, 'comment_reply',
                     'Có người trả lời bình luận của bạn',
@@ -376,56 +390,19 @@ class HDK_REST_API {
             return new WP_Error('free', 'This chapter is in free range', ['status' => 400]);
         }
 
-        // Check already purchased
-        $purchased = $wpdb->get_var($wpdb->prepare(
-            "SELECT id FROM " . HDK_DB::table('hdk_purchased_chapters') . " WHERE user_id = %d AND story_id = %d AND chapter_number = %d",
-            $user_id, $story_id, $chapter_number
-        ));
-        if ($purchased) return rest_ensure_response(['success' => true, 'already_purchased' => true]);
+        $result = HDK_Purchase_Service::purchase_chapter($user_id, $story, $chapter_number, $price);
+        if (is_wp_error($result)) return $result;
 
-        // Check if full story purchased
-        $has_full = $wpdb->get_var($wpdb->prepare(
-            "SELECT id FROM " . HDK_DB::table('hdk_purchased_chapters') . " WHERE user_id = %d AND story_id = %d AND is_full = 1",
-            $user_id, $story_id
-        ));
-        if ($has_full) return rest_ensure_response(['success' => true, 'already_purchased' => true]);
+        if (empty($result['already_purchased'])) {
+            HDK_DB::create_notification(
+                $user_id, 'purchase_success',
+                'Mua chương thành công',
+                'Bạn đã mua chương ' . $chapter_number . ' - ' . $story->title,
+                home_url('/' . $story->slug . '?chuong=' . $chapter_number)
+            );
+        }
 
-        // Check credits
-        $credits = (int)$wpdb->get_var($wpdb->prepare(
-            "SELECT credits FROM " . HDK_DB::table('hdk_user_credits') . " WHERE user_id = %d", $user_id
-        ));
-        if ($credits < $price) return new WP_Error('insufficient_credits', 'Không đủ Linh Thạch. Cần ' . $price . ' Linh Thạch, bạn có ' . $credits . ' Linh Thạch.', ['status' => 402]);
-
-        // Deduct credits and update stats
-        $wpdb->query($wpdb->prepare(
-            "UPDATE " . HDK_DB::table('hdk_user_credits') . " SET credits = credits - %d, total_spent = total_spent + %d WHERE user_id = %d AND credits >= %d",
-            $price, $price, $user_id, $price
-        ));
-
-        // Record purchase
-        $wpdb->insert(HDK_DB::table('hdk_purchased_chapters'), [
-            'user_id' => $user_id,
-            'story_id' => $story_id,
-            'chapter_number' => $chapter_number,
-            'is_full' => 0,
-            'credits_spent' => $price,
-            'created_at' => current_time('mysql'),
-        ]);
-
-        // Log transaction
-        HDK_DB::log_credit_transaction($user_id, 'spend', -$price, 'chapter_purchase', $story_id,
-            'Mua chương ' . $chapter_number . ' - ' . $story->title);
-
-        // Notify buyer
-        HDK_DB::create_notification(
-            $user_id, 'purchase_success',
-            'Mua chương thành công',
-            'Bạn đã mua chương ' . $chapter_number . ' - ' . $story->title,
-            home_url('/' . $story->slug . '?chuong=' . $chapter_number)
-        );
-
-        $remaining = $credits - $price;
-        return rest_ensure_response(['success' => true, 'credits_spent' => $price, 'credits_remaining' => $remaining]);
+        return rest_ensure_response($result);
     }
 
     public static function purchase_full_story($request) {
@@ -442,50 +419,19 @@ class HDK_REST_API {
         $price = (int)($story->full_price ?? 0);
         if ($price <= 0) return new WP_Error('free', 'Full purchase not available', ['status' => 400]);
 
-        // Check already purchased full
-        $has_full = $wpdb->get_var($wpdb->prepare(
-            "SELECT id FROM " . HDK_DB::table('hdk_purchased_chapters') . " WHERE user_id = %d AND story_id = %d AND is_full = 1",
-            $user_id, $story_id
-        ));
-        if ($has_full) return rest_ensure_response(['success' => true, 'already_purchased' => true]);
+        $result = HDK_Purchase_Service::purchase_full($user_id, $story, $price);
+        if (is_wp_error($result)) return $result;
 
-        // Check credits
-        $credits = (int)$wpdb->get_var($wpdb->prepare(
-            "SELECT credits FROM " . HDK_DB::table('hdk_user_credits') . " WHERE user_id = %d", $user_id
-        ));
-        if ($credits < $price) return new WP_Error('insufficient_credits', 'Không đủ Linh Thạch. Cần ' . $price . ' Linh Thạch, bạn có ' . $credits . ' Linh Thạch.', ['status' => 402]);
+        if (empty($result['already_purchased'])) {
+            HDK_DB::create_notification(
+                $user_id, 'purchase_success',
+                'Mua full truyện thành công',
+                'Bạn đã mua toàn bộ truyện ' . $story->title,
+                home_url('/' . $story->slug)
+            );
+        }
 
-        // Deduct credits and update stats
-        $wpdb->query($wpdb->prepare(
-            "UPDATE " . HDK_DB::table('hdk_user_credits') . " SET credits = credits - %d, total_spent = total_spent + %d WHERE user_id = %d AND credits >= %d",
-            $price, $price, $user_id, $price
-        ));
-
-        // Record full purchase (delete existing single chapter purchases for this story)
-        $wpdb->delete(HDK_DB::table('hdk_purchased_chapters'), ['user_id' => $user_id, 'story_id' => $story_id, 'is_full' => 0]);
-        $wpdb->insert(HDK_DB::table('hdk_purchased_chapters'), [
-            'user_id' => $user_id,
-            'story_id' => $story_id,
-            'chapter_number' => 0,
-            'is_full' => 1,
-            'credits_spent' => $price,
-            'created_at' => current_time('mysql'),
-        ]);
-
-        // Log transaction
-        HDK_DB::log_credit_transaction($user_id, 'spend', -$price, 'full_purchase', $story_id,
-            'Mua full truyện - ' . $story->title);
-
-        // Notify buyer
-        HDK_DB::create_notification(
-            $user_id, 'purchase_success',
-            'Mua full truyện thành công',
-            'Bạn đã mua toàn bộ truyện ' . $story->title,
-            home_url('/' . $story->slug)
-        );
-
-        $remaining = $credits - $price;
-        return rest_ensure_response(['success' => true, 'credits_spent' => $price, 'credits_remaining' => $remaining]);
+        return rest_ensure_response($result);
     }
 
     public static function get_favorites($request) {

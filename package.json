@@ -7,7 +7,7 @@
     "doc": "docs"
   },
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "test": "php tests/run.php && find wp-content/themes/hongtrancac wp-content/plugins/hdk-core -name '*.php' -print0 | xargs -0 -n1 php -l && node --check wp-content/themes/hongtrancac/assets/js/main.js"
   },
   "repository": {
     "type": "git",

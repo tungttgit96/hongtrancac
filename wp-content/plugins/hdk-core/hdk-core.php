@@ -127,6 +127,8 @@ require_once HDK_PLUGIN_DIR . 'includes/class-activator.php';
 require_once HDK_PLUGIN_DIR . 'includes/class-db.php';
 require_once HDK_PLUGIN_DIR . 'includes/class-schema.php';
 require_once HDK_PLUGIN_DIR . 'includes/class-rewrite.php';
+require_once HDK_PLUGIN_DIR . 'includes/class-purchase-service.php';
+require_once HDK_PLUGIN_DIR . 'includes/class-comment-policy.php';
 require_once HDK_PLUGIN_DIR . 'includes/class-rest-api.php';
 require_once HDK_PLUGIN_DIR . 'includes/class-seo.php';
 require_once HDK_PLUGIN_DIR . 'includes/class-sitemap.php';
